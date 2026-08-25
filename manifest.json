@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "corpus_version": "2.2",
+  "updated_at": "2026-08-25",
+  "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
+  "repositories": {
+    "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
+    "backend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio-back",
+    "analytics": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio-ia",
+    "documentation": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio-documentacion"
+  },
+  "documents": [
+    {"id":"INDEX-CORPUS","path":"corpus-guide.md","scope":"system","authoritative_for":["reading order","corpus status"],"load_when":["starting project work","planning documentation changes"]},
+    {"id":"D1","path":"product/vision-and-objectives.md","scope":"product","authoritative_for":["vision","scope","success criteria"],"load_when":["starting any feature","prioritizing scope"]},
+    {"id":"D2","path":"product/glossary.md","scope":"system","authoritative_for":["terminology","closed enumerations"],"load_when":["writing code","writing documentation","designing contracts"]},
+    {"id":"D3","path":"domain/actors-roles-permissions.md","scope":"domain","authoritative_for":["actors","roles","access rules"],"load_when":["authentication","authorization","user flows"]},
+    {"id":"D4","path":"domain/domain-model.md","scope":"domain","authoritative_for":["entities","relationships","integrity constraints"],"load_when":["database changes","API design","analytics schema"]},
+    {"id":"D5","path":"domain/business-rules.md","scope":"domain","authoritative_for":["business rules","constants","calculations"],"load_when":["implementing validation","implementing calculations","changing behavior"]},
+    {"id":"D6","path":"domain/lifecycles-and-states.md","scope":"domain","authoritative_for":["states","transitions","forbidden transitions"],"load_when":["implementing stateful entities","designing workflows"]},
+    {"id":"D10","path":"domain/edge-cases.md","scope":"domain","authoritative_for":["edge cases","failure behavior"],"load_when":["implementing a feature","writing tests","reviewing completion"]},
+    {"id":"D7","path":"flows/functional-flows.md","scope":"product","authoritative_for":["end-to-end functional flows"],"load_when":["implementing a user journey","designing UI","designing API"]},
+    {"id":"D8","path":"requirements/functional-requirements.md","scope":"product","authoritative_for":["functional requirements","priority","dependencies"],"load_when":["planning","estimating","acceptance review"]},
+    {"id":"D9","path":"requirements/non-functional-requirements.md","scope":"system","authoritative_for":["quality attributes","verification criteria"],"load_when":["test strategy","security","performance","reliability"]},
+    {"id":"D13","path":"requirements/traceability.md","scope":"system","authoritative_for":["requirement traceability","coverage gaps"],"load_when":["changing scope","auditing coverage","preparing a release"]},
+    {"id":"ARCH-SYSTEM","path":"architecture/system-overview.md","scope":"system","authoritative_for":["repository topology","system boundaries","integration ownership"],"load_when":["starting technical work","changing an integration"]},
+    {"id":"ARCH-FRONTEND","path":"architecture/frontend.md","scope":"frontend","authoritative_for":["frontend boundary","frontend responsibilities"],"load_when":["frontend architecture","frontend integration"]},
+    {"id":"ARCH-BACKEND","path":"architecture/backend.md","scope":"backend","authoritative_for":["backend boundary","backend responsibilities"],"load_when":["backend architecture","API design","persistence"]},
+    {"id":"ARCH-ANALYTICS","path":"architecture/analytics-engine.md","scope":"analytics","authoritative_for":["batch pipeline","analytics boundary"],"load_when":["analytics work","model lifecycle"]},
+    {"id":"ARCH-DATA-INTERFACE","path":"architecture/data-interface.md","scope":"backend,analytics","authoritative_for":["backend-analytics data contract"],"load_when":["changing datasets","changing snapshots","persisting scores"]},
+    {"id":"D11","path":"decisions/design-decisions.md","scope":"system","authoritative_for":["product design decisions"],"load_when":["questioning existing behavior","proposing a design change"]},
+    {"id":"ADR-0001","path":"decisions/adr/0001-monorepo-and-batch-engine.md","scope":"historical","authoritative_for":["superseded monorepo decision"],"load_when":["reviewing repository history"]},
+    {"id":"ADR-0002","path":"decisions/adr/0002-three-repositories.md","scope":"system","authoritative_for":["three-code-repository decision"],"load_when":["changing repository boundaries"]},
+    {"id":"ADR-0003","path":"decisions/adr/0003-central-documentation-repository.md","scope":"system","authoritative_for":["documentation ownership","documentation topology"],"load_when":["adding documentation","moving documentation"]},
+    {"id":"D12","path":"planning/risks-and-assumptions.md","scope":"project","authoritative_for":["assumptions","risks","capacity","scope cuts"],"load_when":["planning","committing dates","recording an unresolved point"]},
+    {"id":"OPS-LOCAL-DB","path":"operations/local-database.md","scope":"backend","authoritative_for":["local PostgreSQL workflow","Prisma migration workflow"],"load_when":["setting up backend locally","changing database schema"]},
+    {"id":"DELIVERY-GITHUB","path":"delivery/github-workflow.md","scope":"delivery","authoritative_for":["branches","pull requests","releases"],"load_when":["creating a branch","opening a pull request","preparing a release"]},
+    {"id":"DELIVERY-PERMISSIONS","path":"delivery/repository-permissions.md","scope":"delivery","authoritative_for":["repository permissions","branch protection"],"load_when":["administering repositories","reviewing access"]}
+  ]
+}
