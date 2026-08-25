@@ -2,6 +2,8 @@
 
 ## Ramas
 
+Estas reglas aplican a frontend, backend e IA:
+
 - `main`: producción. Siempre estable, protegida y etiquetada por versión.
 - `develop`: integración del próximo incremento. Todas las features parten de aquí.
 - `feature/<issue>-<descripcion>`: trabajo funcional corto.
@@ -10,6 +12,12 @@
 - `hotfix/<issue>-<descripcion>`: corrección urgente creada desde `main`.
 
 No se mantiene una rama permanente `test`. El entorno de prueba se despliega desde `release/*`; así el código candidato queda congelado sin sumar una tercera rama larga que deba sincronizarse continuamente.
+
+### Excepción del repositorio documental
+
+`proyecto-gimnasio-documentacion` mantiene únicamente `main`. Las correcciones pequeñas pueden entrar por push directo; los cambios normativos, estructurales o coordinados con código deberían usar una rama corta y PR para dejar visible la discusión. En todos los casos se ejecuta la validación `quality` después del push.
+
+La rama `main` documental conserva historial lineal y bloquea force-push y eliminación, pero no exige aprobación, Code Owner ni status check previo al cambio.
 
 ## Flujo normal
 

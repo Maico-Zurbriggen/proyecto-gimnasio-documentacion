@@ -2,7 +2,7 @@
 
 ## Situación actual: repositorio personal
 
-Los tres repositorios pertenecen inicialmente a la cuenta personal `Maico-Zurbriggen`. GitHub sólo ofrece dos niveles en este tipo de repositorio:
+Los cuatro repositorios pertenecen inicialmente a la cuenta personal `Maico-Zurbriggen`. GitHub sólo ofrece dos niveles en este tipo de repositorio:
 
 - propietario, con control completo;
 - colaboradores, con lectura y escritura.
@@ -35,6 +35,18 @@ Crear un ruleset activo dirigido a la rama por defecto con estas reglas:
 - deshabilitar auto-merge en `Settings → General → Pull Requests`.
 
 El propietario conserva la capacidad administrativa de editar o eliminar estas reglas. Ninguna configuración dentro de un repositorio personal puede quitarle ese control final.
+
+## Repositorio documental
+
+`proyecto-gimnasio-documentacion` usa solamente `main` y una protección reducida:
+
+- historial lineal;
+- force-push y eliminación bloqueados;
+- sin aprobación obligatoria, Code Owner ni status check previo;
+- push directo permitido para que las correcciones documentales no dependan del ciclo de release del código;
+- CI `quality` posterior al push para detectar manifiesto inconsistente, duplicados o enlaces rotos.
+
+Para cambios normativos o que acompañen código se prefiere un PR relacionado, aunque GitHub no lo impone.
 
 ## Ruleset de `develop`
 
