@@ -1,12 +1,14 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 2.2 · **Fecha** 2026-08-25 · **Estado** completo, con dos puntos abiertos declarados en D12/§5
+**Versión del corpus** 2.3 · **Fecha** 2026-08-28 · **Estado** completo, con dos puntos abiertos declarados en D12/§5 y tres decisiones de integración generativa pendientes
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
 La v2.1 incorpora el **candidato de rutina**: el solicitante moldea la rutina generada antes de enviarla a revisión, sin tocar la prescripción y sin mover la puerta del entrenador. Toca D3, D5, D6, D7, D8, D10, D11 y D12. Ver D11/DD-33.
 
 La v2.2 centraliza el corpus en un repositorio documental único, organiza las rutas por responsabilidad y agrega `manifest.json` como mapa determinista para agentes. No modifica reglas funcionales.
+
+La v2.3 incorpora una [propuesta de integración generativa](architecture/generative-ai-integration.md) con ambientes, trabajo local, promoción y pruebas. Declara tres diferencias que requieren ADR antes de cambiar la arquitectura o los requisitos vigentes.
 
 ---
 

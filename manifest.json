@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "corpus_version": "2.2",
-  "updated_at": "2026-08-25",
+  "corpus_version": "2.3",
+  "updated_at": "2026-08-28",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
@@ -27,6 +27,7 @@
     {"id":"ARCH-BACKEND","path":"architecture/backend.md","scope":"backend","authoritative_for":["backend boundary","backend responsibilities"],"load_when":["backend architecture","API design","persistence"]},
     {"id":"ARCH-ANALYTICS","path":"architecture/analytics-engine.md","scope":"analytics","authoritative_for":["batch pipeline","analytics boundary"],"load_when":["analytics work","model lifecycle"]},
     {"id":"ARCH-DATA-INTERFACE","path":"architecture/data-interface.md","scope":"backend,analytics","authoritative_for":["backend-analytics data contract"],"load_when":["changing datasets","changing snapshots","persisting scores"]},
+    {"id":"ARCH-GENERATIVE-AI","path":"architecture/generative-ai-integration.md","scope":"system","authoritative_for":["proposed generative AI integration","AI local development","AI test strategy"],"load_when":["generative AI work","configuring AI environments","testing AI integration"]},
     {"id":"D11","path":"decisions/design-decisions.md","scope":"system","authoritative_for":["product design decisions"],"load_when":["questioning existing behavior","proposing a design change"]},
     {"id":"ADR-0001","path":"decisions/adr/0001-monorepo-and-batch-engine.md","scope":"historical","authoritative_for":["superseded monorepo decision"],"load_when":["reviewing repository history"]},
     {"id":"ADR-0002","path":"decisions/adr/0002-three-repositories.md","scope":"system","authoritative_for":["three-code-repository decision"],"load_when":["changing repository boundaries"]},
