@@ -1,89 +1,87 @@
 # Integración de IA generativa, ambientes y pruebas
 
-**Estado:** propuesta de integración · **Fecha:** 2026-08-28 · **Fuente de alcance:** “Alcance de la IA — capa generativa”, v2.1
+**Estado:** aceptada · **Fecha:** 2026-08-29 · **Decisión:** [ADR 0004](../decisions/adr/0004-servicio-generativo-online-en-el-polo.md)
 
-Este documento resume cómo integrar la capa generativa, cómo trabajar localmente y cómo promover cambios. No reemplaza las reglas de negocio de [D5](../domain/business-rules.md), los requisitos de [D8](../requirements/functional-requirements.md) ni las decisiones de [D11](../decisions/design-decisions.md).
+## Alcance y autoridad
 
-## 1. Alcance y límite de autoridad
+La primera entrega generativa usa un único LLM para interpretar lenguaje natural, proponer el tipo y contenido de una rutina, explicar el criterio y ofrecer alternativas. La predicción de cargas y progreso futuro pertenece al pipeline analítico posterior.
 
-La primera entrega usa un único LLM para interpretar pedidos en lenguaje natural, proponer el tipo y contenido de una rutina, explicar el criterio y ofrecer alternativas. La predicción de cargas y progreso futuro queda fuera de esta entrega.
+El LLM siempre produce una salida candidata. El backend conserva autorización y reglas de negocio: minimiza el contexto, controla catálogo, compatibilidad, rangos y permisos, y convierte una salida válida en candidato. Un entrenador debe aprobar toda rutina antes de que llegue al alumno. El modelo no activa rutinas ni emite consejo médico.
 
-El modelo produce siempre un **candidato**, nunca una orden ejecutable. El backend Express conserva la autoridad: aporta sólo ejercicios válidos y el contexto mínimo, valida esquema, catálogo, compatibilidad, rangos y permisos, permite confirmar parámetros y persiste trazabilidad. Un entrenador debe aprobar la propuesta antes de que llegue al alumno. El modelo no activa rutinas, no prescribe ante lesiones ni emite consejo médico.
-
-### Integración recomendada
+## Topología
 
 ```text
-React (Vercel) -> API Express (Vercel) -> PostgreSQL (Neon)
-                         |
-                         v
-              Servicio generativo Python
-              (Cloud Run Service o Polo)
-
-Trabajos predictivos futuros -> Cloud Run Jobs -> snapshots/resultados versionados
+React/Vercel -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
+                       |                     |
+                       +---- Neon -----------+
 ```
 
-- El backend implementa un puerto `RoutineGenerator`; los adaptadores `fake`, `remote` y, si se necesita, otro proveedor mantienen reemplazable al modelo.
-- El servicio Python expone una API privada y versionada. Recibe contexto minimizado y devuelve JSON estructurado; no accede a PostgreSQL ni decide autorización.
-- El backend valida la respuesta. Si es inválida, realiza un solo reintento y después activa el camino de contingencia.
-- Cada resultado registra modelo/configuración, versión del contrato, contexto de entrada o su referencia, fecha, validaciones, reintentos y decisión del entrenador. Los logs no guardan datos de salud ni prompts sensibles.
-- La capa generativa online y los trabajos predictivos batch son despliegues distintos, aunque puedan compartir repositorio y librerías Python.
+- Ngrok expone sólo la API Python; el LLM permanece local o privado en el Polo.
+- La API Python acepta trabajos con `202`; un worker los procesa fuera de la petición.
+- El servicio Python persiste estados y resultados en estructuras de integración. El LLM no conoce PostgreSQL.
+- El frontend consulta estado exclusivamente al backend.
+- Backend e IA se despliegan de manera independiente mediante contratos versionados.
 
-Antes de implementar se deben cerrar mediante ADR tres diferencias con el corpus actual:
+## Flujo de generación
 
-1. D11/DD-31 asigna tipo de rutina y adaptación a tablas deterministas; el nuevo alcance los asigna al LLM. Se recomienda que el LLM genere el candidato y que las tablas continúen como restricciones auditables y fallback, no como autoridad eliminable.
-2. RF-058, RF-113 y RNF-04/11/18 exigen continuidad determinista; el alcance recibido permite que crear o adaptar quede temporalmente indisponible y sólo conserva el formulario. Se recomienda mantener el formulario y un generador determinista mínimo; si se descarta, deben modificarse esos requisitos de forma explícita.
-3. La arquitectura vigente describe Python sólo como motor batch. El servicio generativo online requiere un nuevo límite desplegable y actualizar `architecture/analytics-engine.md`, los `AGENTS.md` afectados y el contrato backend–IA.
+1. El solicitante confirma parámetros estructurados.
+2. Backend crea una solicitud idempotente con contexto anonimizado.
+3. El servicio IA acepta la solicitud y el worker llama al LLM.
+4. Cada intento tiene un límite configurable inicial de 120 segundos.
+5. Una respuesta inválida o un fallo técnico admite un único reintento.
+6. IA registra resultado, modelo, configuración, contrato e instante.
+7. Backend valida la salida y, si es válida, presenta el candidato.
+8. Al confirmarse, la rutina queda PROPUESTA y pasa al entrenador.
 
-## 2. Ambientes y trabajo local
+Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El alumno conserva acceso a los presets publicados de su gimnasio; solicitar uno crea un candidato que también necesita aprobación del entrenador.
+
+## Datos y aislamiento
+
+El contexto enviado excluye datos identificatorios que no aportan a la rutina. El Polo recibe un identificador técnico, objetivo, nivel, frecuencia, condiciones pertinentes, equipamiento, catálogo permitido y preferencias. Ningún log guarda prompts completos, credenciales ni datos de salud.
+
+El servicio IA sólo puede leer y escribir las estructuras de integración acordadas. No accede a tablas de identidad ni modifica rutinas, sesiones o aprobaciones. Backend es el único que transforma un resultado en entidad de dominio.
+
+Una única API y configuración del modelo atienden inicialmente ambos ambientes. La credencial de consumo determina en el servidor si se usa Neon Test o Neon Producción. Las conexiones, roles y secretos son distintos y nunca se eligen mediante datos enviados por el cliente.
+
+## Trabajo local y ambientes
 
 | Recurso | Local | Test (`test`) | Producción (`main`) |
 | --- | --- | --- | --- |
-| Frontend | Vite, `localhost` | Vercel | Vercel |
-| Backend | Express, `localhost` | Vercel | Vercel |
-| PostgreSQL | Docker Compose | Proyecto/branch Neon aislado | Proyecto Neon aislado |
-| IA generativa | `AI_MODE=fake` por defecto; Python local opcional | Cloud Run Service o Polo | Cloud Run Service o Polo |
-| Predictivo futuro | job Python manual | Cloud Run Jobs | Cloud Run Jobs |
+| Frontend | Vite | Vercel Preview estable | Vercel Production |
+| Backend | Express, conectado a Neon Test | Vercel + Neon Test | Vercel + Neon Producción |
+| IA online | Python local opcional o servicio compartido del Polo | API y worker en el Polo | misma API/worker, credencial aislada |
+| LLM | API del Polo cuando sea accesible | LLM del Polo | mismo LLM/configuración inicial |
+| Analítica futura | jobs manuales sobre datos sintéticos/test | jobs batch | jobs batch |
 
-Cada repositorio publica un `.env.example`; los `.env` reales y credenciales nunca se versionan. El desarrollador levanta PostgreSQL con Compose, aplica migraciones desde backend, inicia backend y frontend con npm y usa el adaptador `fake` para trabajar sin GPU, costo ni red. Quien modifica la integración de IA levanta además el servicio Python o apunta al ambiente compartido de test con credenciales personales y límites de uso.
+El desarrollo ordinario no levanta PostgreSQL local: frontend y backend locales usan Neon Test. No se permiten resets, seeds destructivos ni migraciones automáticas sobre la base compartida. La creación segura de migraciones requiere resolver la estrategia declarada en [Base de datos de desarrollo](../operations/local-database.md).
 
-El fake debe implementar el mismo contrato y ofrecer fixtures de éxito, incompatibilidad, timeout, JSON inválido y servicio caído. Frontend consume únicamente OpenAPI del backend; backend e IA comparten un JSON Schema versionado o generan tipos desde una única definición. Los cambios incompatibles usan una nueva versión y permiten una transición coordinada.
+Los tests unitarios y de contrato sustituyen el transporte HTTP o el conector LLM dentro del proceso de prueba; eso no constituye un modo fake de la aplicación. Las integraciones reales se ejecutan al promover a `test` y cuando cambia modelo, prompt o parámetros.
 
-Cada desarrollador usa su propia base local. Test y producción no comparten base, credenciales, almacenamiento ni servicio de IA. Las migraciones se generan y prueban localmente, pero CI las aplica una sola vez por ambiente; la aplicación no las ejecuta al arrancar.
-
-## 3. Camino de un cambio a producción
+## Promoción
 
 ```text
-feature/* -> pull request a develop -> develop
-develop -> pull request de promoción a test -> test estable
-test -> pull request de release a main -> producción
+feature/* -> PR -> develop -> PR -> test -> PR -> main
 ```
 
-Las ramas de feature nacen desde `develop`. Todo PR ejecuta formato, tipos, pruebas unitarias y de contrato; requiere la revisión de otra persona. Al promover a `test`, se despliegan frontend, backend, IA y migraciones en recursos de test, se ejecutan integración, evaluación del modelo y E2E. La promoción de `test` a `main` requiere aprobación del dueño del repositorio, checks verdes y smoke test posterior. Debe poder revertirse la aplicación y conservarse compatibilidad de base de datos durante el rollback.
+- Todo PR ejecuta formato, tipos, unitarias y contratos, con aprobación de otra persona.
+- `test` despliega Neon Test, Vercel y la versión test del servicio IA; allí se ejecutan integración, evaluación y E2E.
+- `main` exige aprobación del dueño, checks verdes y smoke test posterior.
+- Un cambio de modelo, prompt o parámetros necesita además una evaluación comparativa y validación de al menos un entrenador.
+- Los cambios incompatibles backend–IA se despliegan por etapas y conservan compatibilidad temporal.
 
-Este flujo reemplazaría el staging mediante `release/*` documentado actualmente en [GitHub workflow](../delivery/github-workflow.md); debe aprobarse y actualizarse allí antes de configurar las reglas de ramas.
+## Estrategia de pruebas
 
-## 4. Estrategia de pruebas recomendada
-
-No conviene comparar el texto exacto del LLM. Se versiona un conjunto fijo de casos y se verifican invariantes objetivas más una rúbrica humana.
-
-| Nivel | Qué prueba | Cuándo |
+| Nivel | Qué verifica | Cuándo |
 | --- | --- | --- |
-| Unidad | reglas, permisos, validadores, composición de contexto y parser | cada PR |
-| Contrato | esquema backend–IA, compatibilidad entre versiones y fixtures del fake | cada PR |
-| Integración | timeout, reintento único, fallback, persistencia y aislamiento de datos | cada PR/promoción |
-| Evaluación del modelo | catálogo, compatibilidad, rangos, cobertura, números respaldados, lenguaje médico y latencia | cambios de modelo, prompt o parámetros; antes de `test` |
-| E2E | pedido, confirmación, candidato, regeneración, envío al entrenador, aprobación y contingencia | en `test` antes de `main` |
-| Humana | claridad, utilidad, motivo de rechazo y magnitud de edición | muestra de releases y monitoreo |
+| Unidad | reglas, permisos, minimización, parser y máquina de estados | cada PR |
+| Contrato | OpenAPI backend–IA, idempotencia y compatibilidad | cada PR |
+| Persistencia | permisos del rol IA, reclamo durable y aislamiento de ambientes | cada PR/promoción |
+| Integración | ngrok, timeout, reintento, caída del LLM y recuperación del worker | en `test` |
+| Evaluación | catálogo, compatibilidad, rangos, números respaldados y lenguaje médico | cambios de IA |
+| E2E | solicitud, polling, candidato, revisión, aprobación y presets de contingencia | antes de `main` |
 
-El conjunto de regresión debe cubrir perfiles incompletos o contradictorios, condiciones físicas, equipamiento ausente, distintos niveles, prompt injection, rutinas extensas, respuesta mal formada y caída del proveedor. Como puertas iniciales: 100 % de respuestas con esquema válido después del reintento, 0 ejercicios fuera del catálogo o incompatibles después de validar, 0 números no respaldados en explicaciones, y cumplimiento del límite de latencia de RNF-04. La calidad se sigue además con tasa de rechazo del entrenador, regeneraciones, porcentaje editado, fallos de validación, fallback, latencia y costo por candidato.
+El dataset fijo cubre contexto incompleto, condiciones físicas, equipamiento ausente, prompt injection, respuestas mal formadas, timeout y caída del servicio. No se compara texto exacto: se verifican invariantes y una rúbrica humana. Las métricas incluyen latencia, reintentos, salida inválida, indisponibilidad, rechazo del entrenador y magnitud de edición.
 
-Los casos aprobados por entrenadores pasan al dataset de regresión sin datos personales. Un cambio de modelo, prompt, cuantización o parámetros se trata como cambio de código: versión nueva, evaluación comparativa contra la versión activa, despliegue en test y promoción explícita. Nunca se prueba en producción con usuarios como sustituto de la evaluación previa.
+## Operación mínima
 
-## 5. Orden de implementación
-
-1. Resolver las tres decisiones abiertas y registrar el ADR.
-2. Congelar el esquema backend–IA y construir el adaptador `fake`.
-3. Implementar validación, auditoría, reintento y contingencia en backend.
-4. Implementar el servicio Python y conectarlo sólo en test.
-5. Construir el dataset de regresión con revisión de un entrenador.
-6. Habilitar producción después de superar contrato, evaluación, E2E y aprobación humana.
+API Python, worker, LLM y agente ngrok deben arrancar con la máquina, reiniciarse ante fallos y exponer salud observable. El dominio ngrok debe ser estable. Si API, worker, túnel o LLM fallan, la generación se declara no disponible sin degradar el resto del sistema.

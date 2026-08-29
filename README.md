@@ -7,6 +7,7 @@ Fuente única de verdad funcional, técnica y operativa de la plataforma de entr
 - Agentes de IA: leer primero [AGENTS.md](AGENTS.md) y después [manifest.json](manifest.json).
 - Personas que conocen por primera vez el proyecto: comenzar por [la guía del corpus](corpus-guide.md).
 - Arquitectura general: [architecture/system-overview.md](architecture/system-overview.md).
+- Integración generativa: [architecture/generative-ai-integration.md](architecture/generative-ai-integration.md).
 - Implementación de una funcionalidad: consultar el conjunto indicado por `load_when` en el manifiesto, no un documento aislado.
 
 ## Organización

@@ -1,36 +1,48 @@
-# Arquitectura del sistema
+# Arquitectura del repositorio de IA
 
-## Distribución
+## Dos límites ejecutables
+
+`proyecto-gimnasio-ia` contiene componentes separados:
+
+1. **Servicio generativo online:** API Python y worker asíncrono desplegados en el Polo.
+2. **Analítica batch:** extracción, features, entrenamiento, evaluación y scoring predictivo futuros.
+
+Compartir repositorio no permite que un componente use la frontera del otro ni que el trabajo batch entre en una petición.
+
+## Servicio generativo
 
 ```text
-React SPA ──REST/JSON──> Express API ──> PostgreSQL
-                                             ^
-                                             |
-                                      Python batch
+Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
+                              |
+                              v
+                         Neon PostgreSQL
 ```
 
-Este repositorio contiene únicamente el motor batch Python. La separación física no lo convierte en un servicio online.
+- Expone HTTP versionado para backend; nunca para frontend.
+- Acepta una solicitud idempotente con `202` y la delega a un worker durable.
+- Orquesta el LLM mediante un conector privado y valida el esquema de su respuesta.
+- Usa únicamente contexto minimizado y estructuras de integración autorizadas.
+- Escribe estados y resultados técnicos; no crea, aprueba ni activa rutinas.
+- Una única instancia atiende inicialmente test y producción con credenciales y conexiones aisladas.
+- No existe modo fake ejecutable; los tests sí pueden usar dobles internos.
 
-## Fronteras
+## Analítica batch
 
-- No expone HTTP.
-- Lee vistas o snapshots versionados acordados con el backend.
+- Lee vistas o snapshots versionados acordados con backend.
 - Escribe resultados precalculados con versión, instante y explicación.
-- No modifica fuentes transaccionales ni comparte código con el backend.
-- Los cambios de interfaz de datos requieren documentación y PR relacionados.
+- No modifica fuentes transaccionales.
+- Ejecuta extracción, validación, features point-in-time, entrenamiento, evaluación y persistencia idempotente.
+- Si un modelo no supera un criterio simple, se conserva el criterio simple.
 
-## Pipeline
+## Operación en el Polo
 
-1. Extraer un snapshot con instante de corte explícito.
-2. Validar esquema, calidad y ausencia de información futura.
-3. Construir features point-in-time.
-4. Entrenar y evaluar contra un criterio de referencia simple.
-5. Persistir métricas y resultados versionados de forma idempotente.
+API, worker, LLM y agente ngrok son procesos distintos. Deben arrancar con la máquina, reiniciarse ante fallos y exponer salud observable. Ngrok publica sólo la API Python mediante un dominio estable; el LLM queda local o privado.
 
 ## Invariantes
 
-- Ninguna feature usa información posterior al instante predicho.
-- Ninguna salida se publica sin versión y contexto reproducible.
+- Ningún dato identificatorio innecesario llega al LLM.
+- Ninguna salida se publica sin modelo, configuración, instante y contexto mínimo reproducible.
+- El rol PostgreSQL de IA no accede a identidad ni modifica entidades de dominio.
+- Ninguna feature batch usa información posterior al instante predicho.
 - Falta de datos no equivale a cero.
 - Los datos simulados se identifican y no se presentan como reales.
-- Si un modelo no supera al criterio simple, se conserva la regla simple.

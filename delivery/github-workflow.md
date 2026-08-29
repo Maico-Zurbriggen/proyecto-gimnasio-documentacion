@@ -4,72 +4,68 @@
 
 Estas reglas aplican a frontend, backend e IA:
 
-- `main`: producción. Siempre estable, protegida y etiquetada por versión.
-- `develop`: integración del próximo incremento. Todas las features parten de aquí.
-- `feature/<issue>-<descripcion>`: trabajo funcional corto.
-- `fix/<issue>-<descripcion>`: correcciones sobre `develop`.
-- `release/<version>`: estabilización y despliegue al entorno de prueba.
-- `hotfix/<issue>-<descripcion>`: corrección urgente creada desde `main`.
+- `main`: producción, estable y etiquetada.
+- `test`: ambiente estable de integración y aceptación.
+- `develop`: integración del próximo incremento.
+- `feature/<issue>-<descripcion>`: trabajo funcional desde `develop`.
+- `fix/<issue>-<descripcion>`: corrección desde `develop`.
+- `hotfix/<issue>-<descripcion>`: corrección urgente desde `main`.
 
-No se mantiene una rama permanente `test`. El entorno de prueba se despliega desde `release/*`; así el código candidato queda congelado sin sumar una tercera rama larga que deba sincronizarse continuamente.
+No se usan ramas `release/*`. El mismo commit promovido de `develop` a `test` y luego a `main` mantiene trazabilidad entre ambientes. Un hotfix vuelve después a `develop` y `test` para evitar divergencia.
 
-### Excepción del repositorio documental
+### Repositorio documental
 
-`proyecto-gimnasio-documentacion` mantiene únicamente `main`. Las correcciones pequeñas pueden entrar por push directo; los cambios normativos, estructurales o coordinados con código deberían usar una rama corta y PR para dejar visible la discusión. En todos los casos se ejecuta la validación `quality` después del push.
-
-La rama `main` documental conserva historial lineal y bloquea force-push y eliminación, pero no exige aprobación, Code Owner ni status check previo al cambio.
+`proyecto-gimnasio-documentacion` mantiene únicamente `main`. Puede aceptar push directo por su protección reducida, aunque los cambios normativos o coordinados con código deberían usar una rama corta y PR para dejar visible la discusión. Siempre se ejecuta `quality`.
 
 ## Flujo normal
 
 ```text
-feature/* -> PR -> develop -> release/* -> PR -> main
-                              |              |
-                           staging        producción
+feature/* -> PR -> develop -> PR -> test -> PR -> main
+                                  |             |
+                                test        producción
 ```
 
 1. Crear o asignar un issue con criterios de aceptación.
 2. Crear la rama desde `develop`.
-3. Abrir un draft PR temprano y mantenerlo acotado.
-4. Requerir CI verde y la revisión de una persona distinta de quien hizo el último push.
-5. Hacer squash merge a `develop` y borrar la rama.
-6. En un hito, crear `release/<version>` y desplegarla al entorno de prueba.
-7. Durante QA sólo entran correcciones de estabilización en la release.
-8. Fusionar la release a `main`, crear tag y volver a integrar cualquier corrección en `develop`.
+3. Abrir PR y mantenerlo acotado.
+4. Exigir CI verde y aprobación de una persona distinta de quien hizo el último push.
+5. Hacer squash merge a `develop`.
+6. Abrir PR de promoción `develop -> test`; desplegar y ejecutar integración, evaluación y E2E.
+7. Corregir fallos mediante ramas desde `develop` y volver a promover, sin commits exclusivos en `test`.
+8. Abrir PR `test -> main`; exigir aprobación del dueño, checks y smoke test posterior.
 
-Un `hotfix/*` sale de `main`, vuelve a `main` por PR y luego se integra también en `develop`.
+Backend e IA se despliegan independientemente. Cuando cambia un contrato incompatible, primero se agrega una versión compatible, después se promueven consumidores y finalmente se retira la anterior.
+
+Un cambio de modelo, prompt o parámetros requiere dataset de regresión verde y validación de al menos un entrenador antes de `main`.
 
 ## Protección recomendada
 
-Para `main` y `develop`:
+Para `develop` y `test`:
 
-- prohibir push directo y force-push;
-- exigir PR y una aprobación;
-- invalidar aprobaciones cuando haya nuevos commits;
-- exigir resolución de conversaciones;
-- exigir el check `quality` de GitHub Actions;
-- exigir rama actualizada antes del merge;
-- permitir squash merge y borrar ramas automáticamente.
+- prohibir push directo, force-push y eliminación;
+- exigir PR y una aprobación de otra persona;
+- invalidar aprobaciones ante nuevos commits;
+- exigir conversaciones resueltas y check `quality`;
+- permitir squash merge.
 
-Para `main`, agregar un environment `production` con aprobación manual. Para `release/*`, desplegar a un environment `staging`.
+Para `main`:
 
-### Reglas adicionales de `main`
+- aplicar las reglas anteriores;
+- exigir aprobación del Code Owner propietario;
+- impedir bypass de las reglas;
+- deshabilitar auto-merge;
+- exigir el environment `production` con aprobación manual del dueño.
 
-- exigir una aprobación y que sea del `CODEOWNERS` definido;
-- exigir aprobación de una persona distinta de quien realizó el último push;
-- impedir que administradores y roles con bypass omitan las reglas;
-- deshabilitar auto-merge en la configuración general del repositorio;
-- exigir el environment `production` con aprobación manual antes del despliegue.
-
-La aprobación de un PR habilita el merge, pero no lo ejecuta automáticamente. La persona responsable de la release verifica CI, aprobación y versión antes de realizarlo manualmente.
+Los despliegues de `test` usan el environment `test`. La aprobación habilita el merge, pero no lo ejecuta automáticamente.
 
 ## Commits y versiones
 
-Usar Conventional Commits en inglés, por ejemplo:
+Usar Conventional Commits en inglés:
 
 ```text
 feat(training): persist completed sets
 fix(auth): enforce student ownership
-docs(repo): define branching workflow
+docs(ai): define online generation boundary
 ```
 
-Las releases usan SemVer y tags `vX.Y.Z`. Mientras el producto no sea estable se comienza en `v0.x.y`.
+Las releases usan SemVer y tags `vX.Y.Z`; mientras el producto no sea estable, `v0.x.y`.

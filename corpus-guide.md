@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 2.3 · **Fecha** 2026-08-28 · **Estado** completo, con dos puntos abiertos declarados en D12/§5 y tres decisiones de integración generativa pendientes
+**Versión del corpus** 2.4 · **Fecha** 2026-08-29 · **Estado** alineado con ADR 0004, con cuatro puntos abiertos declarados en D12/§5
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -9,6 +9,8 @@ La v2.1 incorpora el **candidato de rutina**: el solicitante moldea la rutina ge
 La v2.2 centraliza el corpus en un repositorio documental único, organiza las rutas por responsabilidad y agrega `manifest.json` como mapa determinista para agentes. No modifica reglas funcionales.
 
 La v2.3 incorpora una [propuesta de integración generativa](architecture/generative-ai-integration.md) con ambientes, trabajo local, promoción y pruebas. Declara tres diferencias que requieren ADR antes de cambiar la arquitectura o los requisitos vigentes.
+
+La v2.4 acepta [ADR 0004](decisions/adr/0004-servicio-generativo-online-en-el-polo.md): servicio Python y worker en el Polo, ingreso por ngrok, LLM separado, generación asíncrona, Neon Test compartida y presets como contingencia. También adopta la promoción `develop → test → main` y alinea reglas, requisitos y arquitectura.
 
 ---
 
@@ -30,13 +32,13 @@ La v2.3 incorpora una [propuesta de integración generativa](architecture/genera
 | [D12](planning/risks-and-assumptions.md)                | 10 supuestos, **37 constantes con su origen**, 16 riesgos, aritmética del esfuerzo y orden de recorte | Sos responsable del plan. **Leelo antes de comprometer fechas**                |
 | [D13](requirements/traceability.md)                     | Qué requerimiento responde a qué necesidad, y qué quedó sin cubrir                                    | Preparás la defensa o discutís alcance con el cliente                          |
 
-## Las cuatro tablas que son el producto
+## Las cuatro tablas que sostienen la prescripción
 
-Si el ciclo de adaptación se construye mal, se construye mal por estas cuatro. Son determinísticas, están escritas y son discutibles con un entrenador real:
+Son determinísticas, auditables y discutibles con un entrenador real. En generación inicial validan la salida del LLM; en diagnóstico y adaptación determinan el comportamiento:
 
 | Tabla                         | Dónde              | Qué determina                                                                                  |
 | ----------------------------- | ------------------ | ---------------------------------------------------------------------------------------------- |
-| Derivación del tipo de rutina | D5/RN-39a          | Frecuencia, estructura de días, series, repeticiones, descansos y cobertura mínima de patrones |
+| Restricciones del tipo de rutina | D5/RN-39a       | Valida frecuencia, días, series, repeticiones, descansos y cobertura mínima del tipo propuesto |
 | Compatibilidad                | D5/RN-44a a RN-44d | Cuándo un ejercicio está contraindicado, excede el nivel o falta el equipamiento               |
 | Criterios de diagnóstico      | D5/RN-79a          | Cuál de las cinco situaciones tiene cada ejercicio y el conjunto                               |
 | Reglas de ajuste              | D5/RN-89a          | Qué ajuste, de qué tipo y de qué magnitud, corresponde a cada situación                        |
@@ -53,4 +55,6 @@ Si el ciclo de adaptación se construye mal, se construye mal por estas cuatro. 
 4. **Congelar D4 y D5.** Un error en DD-02, DD-03, DD-04 o DD-26 se paga con un rediseño imposible a mitad del plazo.
 5. **Verificar la fuente del catálogo** (D12/S-09): tiene que traer, o permitir derivar, el equipamiento requerido y las articulaciones exigidas por cada ejercicio. Sin eso, la compatibilidad se cura a mano.
 6. **Verificar que existe una fuente de datos con historial por usuario y por serie** (D12/S-03). De eso depende que el aprendizaje automático predictivo, que es núcleo, tenga sustento.
-7. **Cerrar los dos puntos abiertos** de D12/§5.
+7. **Cerrar los puntos de producto abiertos** de D12/§5.
+8. **Resolver la creación de migraciones** sin ejecutar `migrate dev` sobre Neon Test compartida (D12/I-07).
+9. **Confirmar la operación en el Polo**: contrato LLM, dominio ngrok estable, procesos permanentes y rollback (D12/I-08).

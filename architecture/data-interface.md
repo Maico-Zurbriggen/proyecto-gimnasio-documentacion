@@ -2,7 +2,22 @@
 
 ## Principio
 
-PostgreSQL es la frontera operativa inicial, pero el motor no depende de tablas internas sin un acuerdo explícito. Cada job declara:
+PostgreSQL contiene dos interfaces diferentes para IA: estructuras operativas de generación online y datasets versionados para analítica batch. Backend es dueño de ambas definiciones y de sus migraciones.
+
+## Generación online
+
+- Backend crea la solicitud idempotente con contexto minimizado.
+- El servicio IA reclama trabajos y escribe estados o resultados sólo en estructuras designadas.
+- El resultado registra identificador, intento, modelo, configuración, contrato e instante.
+- Backend valida y convierte una salida válida en candidato; IA no escribe rutinas ni aprobaciones.
+- El rol IA recibe privilegios mínimos y separados para Neon Test y Neon Producción.
+- La credencial autenticada ante IA selecciona internamente la conexión; el cliente nunca envía una URL de base.
+
+Las solicitudes abandonadas, respuestas inválidas y fallos se eliminan a los 30 días. Los resultados aceptados conservan contexto mínimo y versiones según la política de auditoría.
+
+## Analítica batch
+
+Cada job declara:
 
 - nombre y versión del dataset de entrada;
 - columnas, tipos, nulabilidad y unidades;
@@ -11,18 +26,19 @@ PostgreSQL es la frontera operativa inicial, pero el motor no depende de tablas 
 - tabla o artefacto de salida;
 - versión del componente y parámetros.
 
-## Desarrollo local
+El motor batch sólo escribe salidas designadas y no actualiza sesiones, rutinas, usuarios ni otras fuentes transaccionales.
 
-Cada integrante configura `DATABASE_URL` en `.env`. Se prefieren snapshots y seeds sintéticos para tests reproducibles. Nunca se copian datos personales reales al repositorio ni a notebooks.
+## Desarrollo y pruebas
+
+Backend e IA locales usan Neon Test con roles personales o de servicio restringidos. Nunca se copian datos personales reales al repositorio, fixtures o datasets de regresión. Las pruebas unitarias y de contrato usan datos sintéticos y PostgreSQL efímero en CI cuando necesitan modificar el esquema.
 
 ## Cambios
 
 Un cambio incompatible requiere:
 
-1. documentación de la nueva versión;
-2. migración o vista preparada por el backend;
-3. compatibilidad temporal cuando sea necesaria;
+1. nueva versión del contrato;
+2. migración o vista preparada por backend;
+3. compatibilidad temporal;
 4. PR relacionados en backend e IA;
-5. actualización de fixtures y tests de contrato.
-
-El motor sólo escribe en estructuras de salida designadas. No actualiza sesiones, rutinas, usuarios ni otras fuentes transaccionales.
+5. fixtures y tests de contrato actualizados;
+6. despliegue por etapas antes de retirar la versión anterior.

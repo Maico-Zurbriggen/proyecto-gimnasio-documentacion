@@ -41,7 +41,7 @@ Cuando dos documentos parezcan incompatibles, no elegir silenciosamente: verific
 
 - Frontend: `Maico-Zurbriggen/proyecto-gimnasio`.
 - Backend: `Maico-Zurbriggen/proyecto-gimnasio-back`.
-- Motor analítico: `Maico-Zurbriggen/proyecto-gimnasio-ia`.
+- Servicio de IA y analítica: `Maico-Zurbriggen/proyecto-gimnasio-ia`.
 
 ## Verificación
 

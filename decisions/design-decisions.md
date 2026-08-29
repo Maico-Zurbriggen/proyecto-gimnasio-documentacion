@@ -11,6 +11,8 @@
 
 **Cambios de la v2.0:** DD-33, el candidato de rutina.
 
+**Cambios de la v2.1:** DD-31 se ajusta al alcance generativo confirmado y a ADR 0004: el LLM construye el candidato inicial; las tablas explícitas permanecen como validación y para el ciclo de adaptación.
+
 ---
 
 ### DD-01 · Jerarquía de las fuentes
@@ -204,12 +206,12 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Fundamento.** (a) reintroduce el superadministrador multi-gimnasio, que está fuera de alcance y arrastra un cuarto ámbito de permisos. (c) contradice DD-29.
 **Consecuencia asumida.** El sistema tiene una operación que no es accesible desde ninguna pantalla y que hay que ejecutar y documentar aparte. Es el precio de que el modelo de alta sea cerrado y coherente.
 
-### DD-31 · Los criterios de decisión son determinísticos y están escritos
+### DD-31 · La generación y las reglas tienen autoridades distintas
 
-**Contexto.** El cliente definió la inteligencia como núcleo. La versión anterior del corpus describía el ciclo de adaptación completo sin especificar ninguno de sus criterios, lo que lo volvía no implementable.
-**Elegida.** El diagnóstico (RN-79a), los ajustes (RN-89a), la compatibilidad (RN-44a a RN-44d) y la derivación del tipo de rutina (RN-39a) se especifican como **tablas determinísticas y auditables**. Los componentes aprendidos actúan en la ordenación de alternativas de sustitución, en la estimación de riesgo y en la segmentación. Los generativos, en la interpretación de lenguaje natural y en la redacción.
-**Fundamento.** Un criterio escrito es implementable, verificable, discutible con un entrenador real y defendible ante un tribunal. Un criterio aprendido sobre los datos que este proyecto puede reunir no sería ninguna de esas cuatro cosas. Y una regla explícita es un criterio de referencia contra el cual medir cualquier componente aprendido que se incorpore después (RF-073).
-**Consecuencia asumida, y hay que declararla sin adornos.** El corazón del ciclo de adaptación es un motor de reglas, no un modelo aprendido. Presentarlo como "inteligencia artificial que decide" sin esta aclaración sería inexacto. Lo que el sistema tiene de aprendido está en la periferia del ciclo, y lo que tiene de generativo está en la conversación y en la redacción. Ver D12/R-16 y D13/N-15.
+**Contexto.** El alcance generativo v2.1 asigna al LLM la interpretación, el tipo y la construcción completa de la rutina. A la vez, compatibilidad, estructura y adaptación necesitan criterios verificables que impidan publicar una salida insegura o imposible.
+**Elegida.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. RN-39a y RN-44a a RN-44d no generan esa rutina: son barreras determinísticas y auditables que toda salida debe superar. El diagnóstico RN-79a y los ajustes RN-89a permanecen determinísticos. Los componentes aprendidos actúan en alternativas, riesgo y segmentación.
+**Fundamento.** Esta división cumple el alcance sin transferir autoridad de seguridad al modelo. El candidato puede variar; catálogo, compatibilidad, rangos y puerta del entrenador no.
+**Consecuencia asumida.** Una salida inválida se descarta y admite un reintento; después la generación queda no disponible. No existe construcción determinística alternativa. Los presets del gimnasio conservan una vía manual revisada. Ver ADR 0004, D12/R-08 y D13/N-15.
 
 ### DD-32 · Existe una vía de corrección tardía, nominal y auditada
 

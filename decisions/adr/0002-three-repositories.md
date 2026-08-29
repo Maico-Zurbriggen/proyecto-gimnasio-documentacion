@@ -1,6 +1,6 @@
 # ADR 0002: separación en tres repositorios
 
-- Estado: aceptada
+- Estado: aceptada, parcialmente reemplazada por ADR 0003 y ADR 0004
 - Fecha: 2026-08-24
 
 ## Contexto
@@ -13,16 +13,16 @@ Mantener tres repositorios:
 
 - `proyecto-gimnasio`: SPA React;
 - `proyecto-gimnasio-back`: API Express, Prisma y PostgreSQL;
-- `proyecto-gimnasio-ia`: procesos batch Python.
+- `proyecto-gimnasio-ia`: servicio generativo online y procesos batch Python.
 
-El backend publica OpenAPI como contrato HTTP. El frontend genera cliente y tipos desde una versión explícita del contrato. El motor se integra por estructuras persistidas o snapshots acordados y nunca mediante imports entre repositorios.
+El backend publica OpenAPI para frontend. IA publica OpenAPI para su servicio de orquestación; backend genera o valida su cliente desde una versión explícita. La analítica batch se integra por estructuras persistidas o snapshots acordados. Nunca hay imports entre repositorios.
 
-El corpus funcional D1–D13 se copia en los tres repositorios. Todo cambio normativo debe aplicarse mediante PR relacionados para mantener las copias sincronizadas.
+El corpus funcional y técnico vive exclusivamente en `proyecto-gimnasio-documentacion` según ADR 0003. Los repositorios de código conservan sólo README y AGENTS locales y enlazan la fuente canónica.
 
 ## Consecuencias
 
 - Cada repositorio instala, prueba, versiona y despliega de manera autónoma.
 - Se eliminan workspaces y dependencias por ruta local.
 - Los cambios transversales requieren coordinación y PR relacionados.
-- La documentación compartida puede divergir; cada cambio debe indicar los repositorios afectados.
-- El motor sigue siendo batch: dividir repositorios no lo convierte en microservicio online.
+- La documentación compartida no se copia; cada cambio indica los repositorios afectados.
+- ADR 0004 agrega un servicio generativo online al repositorio IA sin alterar la frontera de los jobs batch.
