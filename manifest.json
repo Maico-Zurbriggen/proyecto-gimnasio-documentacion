@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "corpus_version": "2.4",
+  "corpus_version": "2.5",
   "updated_at": "2026-08-29",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
