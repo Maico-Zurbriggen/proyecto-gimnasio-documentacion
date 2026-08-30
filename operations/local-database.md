@@ -34,7 +34,7 @@ En PowerShell, usar `Copy-Item .env.example .env`. La persona responsable entreg
 Flujo del autor:
 
 1. Partir de `develop` actualizado y levantar el contenedor con `docker compose -f compose.migrations.yaml up -d --wait`.
-2. Definir temporalmente `DATABASE_URL=postgresql://gym_migrator:gym_migrator@localhost:55432/gym_migrations?schema=public` en esa terminal.
+2. Definir temporalmente `DATABASE_URL=postgresql://gym_migrator@localhost:55432/gym_migrations?schema=public` en esa terminal. El contenedor acepta conexiones sin contraseña únicamente porque es efímero y publica el puerto sólo sobre `127.0.0.1`.
 3. Modificar `schema.prisma` y ejecutar `npm run db:migrate -- --name <nombre_descriptivo>`.
 4. Revisar el SQL generado, ejecutar `npm run db:status` y `npm run check`.
 5. Destruir y recrear el contenedor, y ejecutar `npm run db:deploy` para verificar todo el historial desde una base vacía.
