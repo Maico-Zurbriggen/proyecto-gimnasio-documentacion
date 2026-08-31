@@ -2,14 +2,16 @@
 
 |                |                    |
 | -------------- | ------------------ |
-| **Versión**    | 2.1                |
-| **Fecha**      | 2026-08-24         |
+| **Versión**    | 2.2                |
+| **Fecha**      | 2026-08-28         |
 | **Estado**     | Normativo          |
 | **Depende de** | D2, D3, D4, D5, D6 |
 
 **Cambios de la v1.0:** flujos nuevos FL-00 (aprovisionamiento), FL-19 (invitación), FL-20 (inventario), FL-21 (paneles agregados) · FL-01 rehecho: el alta es por invitación y el alumno ya no declara equipamiento · FL-08 corregido: la contradicción entre RN-51, RN-59 y el registro diferido bajo rutina archivada · FL-09 y FL-10 remiten a los criterios de D5/§9.1 y §9.2, que en la v1.0 no existían.
 
 **Cambios de la v2.0:** FL-04 gana el **candidato de rutina** —el solicitante moldea la rutina generada antes de enviarla a revisión, a mano, pidiendo alternativas o volviendo al lenguaje natural (pasos 6 a 8, A3 a A7)— y FL-03 lo hereda. Ver D5/RN-124 a RN-129, D5/§5.2 y D11/DD-33.
+
+**Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** FL-16 (estimación de riesgo de abandono) queda **derogado** al pasar RF-061 a RF-063 a WON'T · FL-13 pierde "riesgo de abandono alto" del orden de urgencia · el orden de las alternativas de sustitución en FL-04/A4 y FL-06 lo produce ahora la capa generativa, con el orden determinista de RN-49a como fallback.
 
 Los cursos alternativos y de excepción no son un apéndice: son la mayor parte del trabajo.
 
@@ -191,7 +193,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 | A1 · Generación no disponible                             | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. El solicitante puede elegir un preset publicado de su gimnasio; su copia sigue el mismo candidato y la revisión de RN-35 (RN-99)                 |
 | A2 · La interpretación del lenguaje natural es incorrecta | El solicitante corrige los parámetros en el paso 2. Por eso el paso 2 existe                                                                                                                                            |
 | A3 · Ajusta el candidato **a mano**                       | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
-| A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno, ordenadas por el componente (RN-49a, RF-059). El solicitante elige de esa lista; no escribe valores |
+| A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno (RN-49a), ordenadas por la capa generativa sobre ese subconjunto ya prefiltrado (RF-059) y revalidadas por RN-44a-d (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a. El solicitante elige de esa lista; no escribe valores |
 | A5 · Vuelve a **describirla en lenguaje natural**         | Regenera desde el paso 2, con los parámetros corregidos y las preferencias ya declaradas como entrada (RN-128). Consume el tope de RN-127                                                                               |
 | A6 · Abandona el candidato sin confirmar                  | No queda rutina, no se avisa a nadie y la propuesta anterior, si existía, sigue intacta: RN-36a se aplica al confirmar, no al generar. Ver CB-73                                                                        |
 | A7 · El solicitante es el entrenador                      | El ajuste del paso 7 no tiene las restricciones de D5/§5.2, porque ya tiene escritura sobre la rutina. Al confirmar, la rutina entra en FL-02 con él mismo como revisor                                                 |
@@ -256,9 +258,9 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 |           |                                                                                |
 | --------- | ------------------------------------------------------------------------------ |
-| **Actor** | Alumno · **Precondiciones** Sesión EN_CURSO · **Reglas** RN-56, RN-102, RN-49a |
+| **Actor** | Alumno · **Precondiciones** Sesión EN_CURSO · **Reglas** RN-56, RN-102, RN-49a, RN-99 |
 
-**Curso normal.** El alumno indica que no puede hacer un ejercicio. El sistema propone hasta cinco alternativas admisibles (RN-49a), excluidas las contraindicadas y las que exigen equipamiento ausente del inventario. Elige una; las series restantes se registran contra el ejercicio ejecutado, marcadas como sustituidas, y cuentan como cumplidas.
+**Curso normal.** El alumno indica que no puede hacer un ejercicio. El sistema arma el subconjunto de alternativas admisibles (RN-49a: mismo patrón dominante, compatibles, con equipamiento presente en el inventario) y pide su orden a la capa generativa (RF-059), que devuelve hasta cinco, revalidadas por RN-44a-d antes de mostrarse (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a sobre el mismo subconjunto, sin interrumpir la sesión (RN-99). Elige una; las series restantes se registran contra el ejercicio ejecutado, marcadas como sustituidas, y cuentan como cumplidas.
 
 **Alternativos.** A1: elige un ejercicio del catálogo prescribible por su cuenta → se admite y se registra igual. A2: declara el motivo → se conserva y alimenta el diagnóstico.
 
@@ -351,11 +353,11 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ## FL-13 · Consulta de la cartera priorizada
 
-**Curso normal.** El entrenador ve sus alumnos con asignación vigente, ordenados según el criterio único de urgencia (RF-107): primero los que tienen una rutina propuesta o una propuesta de adaptación pendientes de su revisión; luego riesgo de abandono alto; luego incompatibilidad sobrevenida sin resolver; luego estancamiento; luego caída de adherencia; luego sin señal. Cada fila muestra fecha de la última sesión, adherencia de cuatro semanas y señales detectadas.
+**Curso normal.** El entrenador ve sus alumnos con asignación vigente, ordenados según el criterio único de urgencia (RF-107): primero los que tienen una rutina propuesta o una propuesta de adaptación pendientes de su revisión; luego incompatibilidad sobrevenida sin resolver; luego estancamiento; luego caída de adherencia; luego sin señal. Cada fila muestra fecha de la última sesión, adherencia de cuatro semanas y señales detectadas. *(El "riesgo de abandono alto" se retiró de este orden al pasar RF-061 a RF-063 a WON'T — replanteo de IA, [D11/DD-34](../decisions/design-decisions.md).)*
 
 **Alternativos.** A1: filtra por señal. A2: un alumno sin datos suficientes → aparece con "sin datos suficientes", nunca con cero.
 
-**Excepción.** E1: la estimación de riesgo nunca se calculó → la columna dice "no disponible" y el orden se resuelve con los criterios restantes (RN-100). E2: cartera vacía → estado explicativo, no una tabla vacía.
+**Excepción.** E1: cartera vacía → estado explicativo, no una tabla vacía.
 
 ---
 
@@ -385,15 +387,13 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ---
 
-## FL-16 · Estimación de riesgo de abandono
+## ~~FL-16 · Estimación de riesgo de abandono~~ — Derogado (replanteo de IA, 2026-08-28)
 
-|           |                                                                                                                   |
-| --------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Actor** | Sistema (proceso diferido semanal) · Administrador (a demanda) · **Reglas** RN-100, RN-101, RN-98, RN-103, RN-107 |
+**Derogado.** RF-061 a RF-063 pasaron a WON'T en el replanteo de IA ([D11/DD-34](../decisions/design-decisions.md)); RN-100 y RN-101 quedan derogadas. No hay proceso de estimación de riesgo. El texto original se conserva tachado para trazabilidad.
 
-**Curso normal.** El proceso calcula, para cada alumno con datos suficientes, una estimación con sus factores principales, y la registra con la versión del componente, el contexto y el instante. Entrenadores y administradores la ven; el alumno evaluado nunca.
-
-**Excepción.** E1: nunca se ejecutó → toda la información de riesgo se presenta como no disponible y nada más se degrada. E2: historial insuficiente → no se calcula; se distingue de riesgo bajo. E3: los datos son simulados → la estimación se marca como tal y se excluye de toda presentación como real (RN-107).
+> ~~**Actor:** Sistema (proceso diferido semanal) · Administrador (a demanda) · **Reglas** RN-100, RN-101, RN-98, RN-103, RN-107.~~
+> ~~**Curso normal.** El proceso calcula, para cada alumno con datos suficientes, una estimación con sus factores principales, y la registra con la versión del componente, el contexto y el instante. Entrenadores y administradores la ven; el alumno evaluado nunca.~~
+> ~~**Excepción.** E1: nunca se ejecutó → toda la información de riesgo se presenta como no disponible y nada más se degrada. E2: historial insuficiente → no se calcula; se distingue de riesgo bajo. E3: los datos son simulados → la estimación se marca como tal y se excluye de toda presentación como real (RN-107).~~
 
 ---
 

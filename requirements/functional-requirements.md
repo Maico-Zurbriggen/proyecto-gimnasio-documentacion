@@ -2,16 +2,24 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 3.1        |
-| **Fecha**      | 2026-08-24 |
-| **Estado**     | Normativo  |
+| **Versión**    | 3.3        |
+| **Fecha**      | 2026-08-28 |
+| **Estado**     | Normativo, con RF-121 y RF-122 pendientes de validación con el cliente (ver nota de la v3.2) |
 | **Depende de** | D1 a D7    |
 
-**Identificadores estables.** RF-001 a RF-113 conservan su numeración aunque su enunciado, tipo o prioridad hayan cambiado. RF-114 a RF-118 son nuevos en la v3.0; RF-119 y RF-120, en la v3.1. RF-004 (autorregistro con rol alumno) queda **derogado** por el alta por invitación; su identificador no se reutiliza para otra cosa.
+**Identificadores estables.** RF-001 a RF-113 conservan su numeración aunque su enunciado, tipo o prioridad hayan cambiado. RF-114 a RF-118 son nuevos en la v3.0; RF-119 y RF-120, en la v3.1; RF-121 y RF-122, en la v3.2. RF-004 (autorregistro con rol alumno) queda **derogado** por el alta por invitación; RF-061, RF-062 y RF-063 (estimación de riesgo de abandono) pasan a **WON'T** en el replanteo de IA de la v3.3; ninguno de esos identificadores se reutiliza para otra cosa.
 
 **Cambios de la v2.0:** alta por invitación (RF-116) y aprovisionamiento (RF-115) · inventario del gimnasio (RF-114) y catálogo prescribible (RF-118) · desbloqueo de sesión (RF-117) · **tres ciclos de dependencias eliminados** · nutrición cerrada como pauta orientativa · enunciados corregidos donde dependían de reglas que no existían.
 
 **Cambios de la v3.0:** el **candidato de rutina** ajustable por el solicitante antes del envío a revisión (RF-119) y la diferencia visible para el entrenador revisor (RF-120). Ver D5/§5.2, D7/FL-04 y D11/DD-33.
+
+**Cambios de la v3.1 → v3.2:** sugerencia de carga de sesión (RF-121) y proyección de trayectoria de fuerza y mediciones corporales (RF-122), incorporadas al diseñar la arquitectura de IA predictiva. **A diferencia del resto del corpus, estas dos no provienen de un pedido explícito del cliente**: surgieron de identificar un hueco entre RF-030 (precarga con la última ejecución) y RN-89a (ajuste de la prescripción cada dos semanas), y de acotar un pedido de "predecir cuánto músculo va a ganar" a lo que el sistema puede sostener con los datos que efectivamente captura. Quedan documentadas con prioridad SHOULD/COULD y deben confirmarse con el cliente antes de comprometerse a construirlas — ver [predictive-ai.md](../architecture/predictive-ai.md) para el fundamento completo.
+
+**Cambios de la v3.2 → v3.3 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** se reduce la IA predictiva a dos componentes por-alumno (RF-121, RF-122).
+- **RF-059 y RF-060** (alternativas de sustitución): de tipo `ML` a `AI` — el orden lo produce la capa generativa sobre el subconjunto del catálogo ya prefiltrado por patrón y compatibilidad, con revalidación determinista posterior (RF-113). Siguen MUST.
+- **RF-061, RF-062, RF-063** (riesgo de abandono): pasan a **WON'T** ⬇. Se descartan por costo/esfuerzo relativos al valor esperado con los datos disponibles (S-03). No se degradan a una regla simple: se retiran del alcance. El criterio de urgencia de la cartera (RF-107) deja de incluir el riesgo de abandono. Degradar un MUST exige acuerdo explícito del cliente (D12/§4).
+- **RF-064** (segmentación): de tipo `ML` a `AI` — la descripción de perfil la produce la capa generativa a partir de los indicadores ya calculados, sin clustering, y es efímera (no se persiste). Sigue SHOULD.
+- **RF-122**: de `COULD` a `SHOULD` ⬆.
 
 **Tipos:** WEB · AI · ML · DATA · HYBRID **Prioridad:** MUST · SHOULD · COULD · WON'T
 **Marcas:** 🆕 nuevo · ✎ enunciado modificado · ⬆⬇ cambio de prioridad · ⛔ derogado
@@ -111,7 +119,7 @@
 
 | ID     | Requerimiento                                                                                                                                                                          | Tipo   | Prior. | Depende                |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---------------------- |
-| RF-107 | Definir un criterio único y ordenado de urgencia para la cartera: pendientes de revisión, riesgo alto, incompatibilidad sobrevenida, estancamiento, caída de adherencia, sin señal     | DATA   | MUST ✎ | RF-042, RF-046, RF-061 |
+| RF-107 | Definir un criterio único y ordenado de urgencia para la cartera: pendientes de revisión, incompatibilidad sobrevenida, estancamiento, caída de adherencia, sin señal ✎ (v3.3: se retira "riesgo alto" al pasar RF-061 a WON'T)  | DATA   | MUST ✎ | RF-042, RF-046 |
 | RF-036 | Presentar la cartera del entrenador ordenada según ese criterio, con fecha de última sesión, adherencia reciente y señales detectadas                                                  | DATA   | MUST   | RF-107, RF-066         |
 | RF-037 | Acceder a una vista consolidada del alumno: perfil, objetivos, condiciones, rutina vigente, historial, indicadores y mediciones                                                        | HYBRID | MUST   | RF-035, RF-040, RF-005 |
 | RF-038 | Modificar la rutina de un alumno asignado registrando autor e instante y avisando al alumno, sin alterar las sesiones ejecutadas                                                       | WEB    | MUST   | RF-023, RF-028         |
@@ -155,14 +163,20 @@
 
 ## Módulo 10 · Aprendizaje automático
 
+Tras el replanteo de IA de la v3.3 ([D11/DD-34](../decisions/design-decisions.md)), sólo RF-121 y RF-122 son componentes aprendidos. RF-059/RF-060 (alternativas de sustitución) y RF-064 (descripción de perfil) pasaron a la capa generativa — ver [generative-ai.md](../architecture/generative-ai.md). RF-061 a RF-063 pasan a WON'T.
+
 | ID     | Requerimiento                                                                                                                                                                        | Tipo   | Prior. | Depende        |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | -------------- |
-| RF-059 | Proponer para un ejercicio un conjunto ordenado de alternativas del catálogo prescribible con el mismo patrón de movimiento y efecto de entrenamiento equivalente                    | ML     | MUST ✎ | RF-016, RF-118 |
-| RF-060 | Excluir de las recomendaciones los ejercicios contraindicados por las condiciones vigentes del alumno o de nivel superior al suyo                                                    | ML     | MUST ✎ | RF-059, RF-009 |
-| RF-061 | Estimar para cada alumno el nivel de riesgo de que interrumpa su actividad, a partir de su historial de asistencia, adherencia y cumplimiento                                        | ML     | MUST   | RF-042, RF-071 |
-| RF-062 | Presentar junto a cada estimación sus factores principales y su fecha de cálculo, restringiendo su visibilidad a entrenadores y administradores y no exponiéndola al alumno evaluado | HYBRID | MUST   | RF-061, RF-005 |
-| RF-063 | Actualizar las estimaciones con periodicidad definida y a demanda de un administrador, sin que su ejecución o su ausencia condicione la disponibilidad del resto del sistema         | ML     | MUST   | RF-061         |
-| RF-064 | Agrupar a los alumnos en perfiles de comportamiento según sus patrones de frecuencia, volumen e intensidad, y presentarlos a entrenadores y administradores                          | ML     | SHOULD | RF-040, RF-042 |
+| RF-059 | Proponer para un ejercicio un conjunto ordenado de alternativas del catálogo prescribible con el mismo patrón de movimiento y efecto de entrenamiento equivalente, mediante la capa generativa sobre el subconjunto ya prefiltrado por patrón y compatibilidad, con revalidación determinista posterior (RF-113) | AI     | MUST ✎ | RF-016, RF-118 |
+| RF-060 | Excluir de las recomendaciones los ejercicios contraindicados por las condiciones vigentes del alumno o de nivel superior al suyo (exclusión dura en código, RN-44a-d)               | AI     | MUST ✎ | RF-059, RF-009 |
+| RF-061 | **WON'T (v3.3)** ⬇. Estimar para cada alumno el nivel de riesgo de que interrumpa su actividad — retirado del alcance en el replanteo de IA por costo/esfuerzo frente al valor esperado con los datos disponibles (S-03) | ML     | WON'T ⬇ | —              |
+| RF-062 | **WON'T (v3.3)** ⬇. Presentar la estimación de riesgo con sus factores y su fecha, restringida a entrenadores y administradores — sin efecto al retirarse RF-061                     | HYBRID | WON'T ⬇ | —              |
+| RF-063 | **WON'T (v3.3)** ⬇. Actualizar las estimaciones de riesgo con periodicidad definida y a demanda — sin efecto al retirarse RF-061                                                     | ML     | WON'T ⬇ | —              |
+| RF-064 | Presentar a entrenadores y administradores una descripción del perfil de comportamiento del alumno (frecuencia, volumen e intensidad relativos), redactada por la capa generativa a partir de los indicadores ya calculados y el objetivo vigente, **sin clustering y sin persistirse** | AI     | SHOULD ✎ | RF-040, RF-042 |
+| RF-121 | Sugerir la carga y las repeticiones de la próxima serie de un ejercicio a partir de la tendencia reciente del alumno en ese ejercicio (carga máxima estimada, cumplimiento, esfuerzo percibido), presentada como valor precargado adicional a —nunca en reemplazo de— el mínimo de RF-030; sin tendencia suficiente, se conserva exclusivamente RF-030                                                          | ML     | SHOULD 🆕 | RF-030, RF-071 |
+| RF-122 | Proyectar, a partir de la tendencia de las últimas semanas, la carga máxima estimada por ejercicio y las mediciones corporales del alumno bajo el supuesto de que continúa con un patrón de entrenamiento similar, presentando la proyección junto con su incertidumbre y **sin emplear términos de composición corporal (masa muscular, grasa corporal) que el sistema no mide**                              | ML     | SHOULD 🆕⬆ | RF-010, RF-071 |
+
+**Por qué RF-121 y RF-122 no reemplazan nada existente.** RF-030 sigue siendo el mínimo garantizado (última ejecución, MUST); RF-121 es una sugerencia adicional que se descarta ante indisponibilidad o tendencia insuficiente, igual que cualquier otra capacidad inteligente (RNF-11, RNF-12). RN-89a sigue siendo la única vía que modifica la prescripción vigente; RF-121 no prescribe, sólo precarga un valor que el alumno confirma o corrige (FL-05, paso 6). RF-122 no estima composición corporal: proyecta exclusivamente indicadores que el sistema ya deriva o registra (carga máxima estimada, perímetros), y su presentación debe declarar que es una proyección bajo continuidad de patrón, no una promesa de resultado — mismo principio que ya rige RF-012 y RF-108.
 
 ## Módulo 11 · Administración y analítica
 
@@ -180,8 +194,8 @@
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---------------------- |
 | RF-070 | Disponer de un mecanismo repetible de carga inicial del catálogo desde una fuente externa, con clasificación muscular, articulaciones, equipamiento requerido y recursos visuales, que declare qué ejercicios quedaron sin clasificar y no deje el catálogo a medias ante un fallo | DATA   | MUST ✎ | RF-013, RF-016, RF-099 |
 | RF-071 | Disponer de un mecanismo para generar información histórica simulada, e identificar de manera inequívoca los registros simulados frente a los reales                                                                                                                               | DATA   | MUST   | RF-029, RF-033         |
-| RF-072 | Registrar para cada resultado de un componente inteligente la versión que lo generó, el contexto de entrada considerado y el instante de cálculo, de modo que sea reproducible                                                                                                     | HYBRID | MUST   | RF-059, RF-061         |
-| RF-073 | Disponer de un procedimiento reproducible de evaluación de los componentes de recomendación y estimación sobre un conjunto reservado de tamaño declarado, que incluya la comparación contra un criterio de referencia simple, y conservar ambas métricas                           | HYBRID | MUST ✎ | RF-059, RF-061, RF-071 |
+| RF-072 | Registrar para cada resultado de un componente inteligente la versión que lo generó, el contexto de entrada considerado y el instante de cálculo, de modo que sea reproducible; para el orden generativo de RF-059 se conserva la salida producida, no se reejecuta ✎             | HYBRID | MUST ✎ | RF-059, RF-121         |
+| RF-073 | Disponer de un procedimiento reproducible de evaluación de los componentes de recomendación y estimación sobre un conjunto reservado de tamaño declarado, que incluya la comparación contra un criterio de referencia simple, y conservar ambas métricas                           | HYBRID | MUST ✎ | RF-121, RF-122, RF-071 |
 | RF-105 | Anonimizar los datos personales del usuario dado de baja dentro del plazo establecido, conservando las sesiones y series desvinculadas de la identidad                                                                                                                             | WEB    | MUST   | RF-006                 |
 | RF-106 | Excluir los registros simulados de toda analítica presentada como real, y señalar cuándo una presentación se basa en datos simulados                                                                                                                                               | DATA   | MUST   | RF-071                 |
 
@@ -226,15 +240,15 @@ Núcleo del producto. Pedido directo del cliente.
 
 | Prioridad      | Cantidad |     | Tipo                 | Cantidad |
 | -------------- | -------- | --- | -------------------- | -------- |
-| MUST           | **82**   |     | WEB                  | 63       |
-| SHOULD         | 11       |     | DATA                 | 24       |
-| COULD          | 5        |     | HYBRID               | 17       |
-| WON'T          | 6        |     | ML                   | 6        |
-| Derogado       | 1        |     | AI                   | 4        |
-| **En alcance** | **98**   |     | **Total en alcance** | **98**   |
+| MUST           | **79**   |     | WEB                  | 63       |
+| SHOULD         | 13       |     | DATA                 | 24       |
+| COULD          | 5        |     | HYBRID               | 16       |
+| WON'T          | 9        |     | ML                   | 3        |
+| Derogado       | 1        |     | AI                   | 7        |
+| **En alcance** | **97**   |     | **Total en alcance** | **97**   |
 
-Identificadores en uso: RF-001 a RF-120. RF-004 derogado, sin reutilización.
+Identificadores en uso: RF-001 a RF-122. RF-004 derogado, sin reutilización. RF-061 a RF-063 pasan a WON'T en la v3.3 (replanteo de IA). RF-121 y RF-122 son propuestas de esta ronda de diseño de IA, pendientes de validación con el cliente (ver nota de la v3.2).
 
-**Verificación de dependencias.** Los tres ciclos de la versión anterior están eliminados: RF-099 ya no depende de RF-070 (define la taxonomía y no la importa) · RF-107 ya no depende de RF-036 (es al revés) · RF-075 ya no depende de RF-108 (es al revés). Ningún requerimiento MUST depende de uno SHOULD o COULD.
+**Verificación de dependencias.** Los tres ciclos de la versión anterior están eliminados: RF-099 ya no depende de RF-070 (define la taxonomía y no la importa) · RF-107 ya no depende de RF-036 (es al revés) · RF-075 ya no depende de RF-108 (es al revés). Ningún requerimiento MUST depende de uno SHOULD o COULD (RF-059, del que dependen RF-031 y RF-089, sigue MUST tras el replanteo).
 
-**El alcance sigue por encima de la capacidad.** 82 requerimientos MUST contra una capacidad de construcción estimada en ~504 h (D12/§3). La corrección de esta versión mejoró la especificación, no el tamaño del problema: sigue vigente la necesidad de una conversación de alcance con el cliente, con el orden de recorte de D12/§4 sobre la mesa.
+**El alcance sigue por encima de la capacidad.** 79 requerimientos MUST contra una capacidad de construcción estimada en ~504 h (D12/§3). El replanteo de IA de la v3.3 retiró 3 MUST (RF-061 a RF-063) pero la brecha sigue vigente: hace falta una conversación de alcance con el cliente, con el orden de recorte de D12/§4 sobre la mesa. Retirar RF-061 a RF-063 requiere ese acuerdo explícito.

@@ -2,13 +2,15 @@
 
 |                |                                                                                                                                 |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Versión**    | 2.0                                                                                                                             |
-| **Fecha**      | 2026-08-18                                                                                                                      |
+| **Versión**    | 2.1                                                                                                                             |
+| **Fecha**      | 2026-08-28                                                                                                                      |
 | **Estado**     | Normativo                                                                                                                       |
 | **Depende de** | D1                                                                                                                              |
 | **Regla**      | Todo el corpus usa exclusivamente estos términos, con esta ortografía y este significado. Un término no definido aquí no se usa |
 
 **Cambios de la v1.0:** se define el verbo _asignar_ (colisionaba con _asignación_) · se define _progreso_ en lugar de prohibirlo · el equipamiento pasa a ser del gimnasio · se agregan _afiliación_, _invitación_, _inventario_, _articulación_, _contraindicación_ · se incorporan las siete enumeraciones cerradas de §4, que antes se presuponían sin existir.
+
+**Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** el término "Riesgo de abandono" se retira (RF-061 a RF-063 → WON'T) y pasa a §2 como término retirado del alcance.
 
 ---
 
@@ -121,7 +123,6 @@
 | **Propuesta de adaptación**  | Conjunto fechado de ajustes sugeridos sobre la rutina vigente, derivado de un diagnóstico. Nunca se aplica sin revisión                                                | Sugerencia                  |
 | **Ajuste**                   | Cada modificación individual de una propuesta, de alguno de los tipos de §4.10, con su criterio motivador y los datos que lo sustentan                                 | Cambio                      |
 | **Aprobador**                | Única persona facultada para poner una rutina en vigencia y resolver una propuesta: el entrenador con asignación vigente sobre el alumno. No hay aprobador alternativo | —                           |
-| **Riesgo de abandono**       | Estimación fechada de la probabilidad de que un alumno interrumpa su actividad. Visible para entrenadores y administradores; nunca para el alumno evaluado             | Deserción, churn            |
 
 ### 1.9 Datos y componentes
 
@@ -147,6 +148,8 @@
 | **Chat**, **mensaje**                         | El sistema tiene comentarios asincrónicos                                                                                                 |
 | **Dieta**, **plan alimentario**, **menú**     | El sistema produce una **pauta nutricional**: distribución orientativa de energía y macronutrientes, sin nombrar alimentos. Ver D11/DD-13 |
 | **Cumplimiento** sin calificar                | Se dice _cumplimiento de series_ o _cumplimiento de repeticiones_                                                                         |
+| **Riesgo de abandono**, **deserción**, **churn** | Retirados del alcance en el replanteo de IA (RF-061 a RF-063 → WON'T, [D11/DD-34](../decisions/design-decisions.md)). No se reintroducen sin reabrir esa decisión |
+| **Segmento**, **clúster** (de alumnos)        | El sistema no agrupa alumnos por clustering. Se dice _descripción de perfil_: un texto generado sobre los indicadores ya calculados de un alumno |
 
 ## 3. Unidades y marco temporal
 

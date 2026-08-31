@@ -2,14 +2,16 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.1        |
-| **Fecha**      | 2026-08-24 |
+| **Versión**    | 2.2        |
+| **Fecha**      | 2026-08-28 |
 | **Estado**     | Normativo  |
 | **Depende de** | D1, D2     |
 
 **Cambios de la v1.0:** se agrega el proveedor del sistema como actor no aplicativo · filas de invitación, inventario, aviso, consentimiento y desbloqueo de sesión, que faltaban · se resuelve quién registra la aptitud · se elimina el equipamiento declarado por el alumno · referencia cruzada corregida (apuntaba a RN-58 en lugar de RN-106).
 
 **Cambios de la v2.0:** el alumno gana escritura sobre el **candidato** de rutina —no sobre la rutina propuesta— dentro de las operaciones de D5/§5.2. Ver D11/DD-33.
+
+**Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** se retiran las filas "Estimación de riesgo de abandono" (RF-061 a RF-063 → WON'T) y "Segmentación de perfiles" de la matriz de permisos; la descripción de perfil (RF-064) la produce la capa generativa de forma efímera y se muestra a entrenador y administrador junto a los indicadores.
 
 ---
 
@@ -33,9 +35,9 @@ Se lo declara como actor porque ejecuta una operación indispensable. Modelarlo 
 | **Consulta**   | Su rutina vigente y su rutina propuesta, su historial de sesiones, sus indicadores, sus mediciones, el catálogo, las propuestas de adaptación que le afectan y su estado de resolución, sus avisos                                                                                                                                                     |
 | **Modifica**   | Su perfil, objetivo, condiciones físicas, aptitud, mediciones; sus sesiones dentro del plazo de corrección; comentarios propios. **Puede solicitar** una rutina eligiendo un preset o pidiendo una generada, y **moldear el candidato** antes de enviarlo a revisión, dentro de las operaciones de D5/§5.2; al confirmarlo se crea la rutina propuesta |
 | **Nunca hace** | Poner en vigencia una rutina, resolver una propuesta de adaptación, modificar su rutina vigente **ni su rutina propuesta una vez confirmada**, fijar series, repeticiones, descansos o cargas, declarar equipamiento                                                                                                                                   |
-| **Nunca ve**   | Su propia estimación de riesgo de abandono; información de otros alumnos                                                                                                                                                                                                                                                                               |
+| **Nunca ve**   | La descripción de perfil que se presenta al entrenador y al administrador; información de otros alumnos                                                                                                                                                                                                                                                |
 
-**Decisión:** el alumno no ve su propia estimación de riesgo. Mostrarle una probabilidad de que abandone es contraproducente y no admite justificación defendible. Sí ve sus indicadores objetivos de adherencia y cumplimiento `[F: RF-062]` · Ver D11/DD-17.
+**Nota (v2.2):** la fila "no ve su estimación de riesgo de abandono" y la decisión asociada a DD-17 se retiran al pasar RF-061 a RF-063 a WON'T ([D11/DD-34](../decisions/design-decisions.md)). El alumno sigue viendo sus indicadores objetivos de adherencia y cumplimiento.
 
 ### 1.2 Entrenador
 
@@ -94,8 +96,8 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Comentario sobre sesión o rutina                 | `L/E` P                      | `L/E` A                     | —                       |
 | Pauta nutricional orientativa                    | `L` P                        | `L` A                       | —                       |
 | **Aviso**                                        | `L/E` P                      | `L/E` P                     | `L/E` P                 |
-| Estimación de riesgo de abandono                 | **—**                        | `L` A                       | `L` G (agregado)        |
-| Segmentación de perfiles                         | —                            | `L` A                       | `L` G                   |
+| ~~Estimación de riesgo de abandono~~ (retirada v2.2) | —                        | —                           | —                       |
+| Descripción de perfil (efímera, generativa)      | —                            | `L` A                       | `L` G                   |
 | Panel agregado de cartera                        | —                            | `L` P                       | `L` G                   |
 | Panel analítico del gimnasio                     | —                            | —                           | `L` G                   |
 | Gestión de usuarios y roles                      | —                            | —                           | `E` G                   |

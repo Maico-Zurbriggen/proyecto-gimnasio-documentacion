@@ -2,12 +2,14 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 2.0                                          |
-| **Fecha**      | 2026-08-18                                   |
+| **Versión**    | 2.1                                          |
+| **Fecha**      | 2026-08-28                                   |
 | **Estado**     | Normativo. Congelar antes de escribir código |
 | **Depende de** | D1, D2, D3                                   |
 
 **Cambios de la v1.0:** entidades `Invitacion` e `InventarioGimnasio` · `EquipamientoDisponible` eliminada (el equipamiento es del gimnasio) · `EjercicioArticulacion` agregada, sin la cual la compatibilidad no era calculable · `EjercicioRutina` gana el estado de compatibilidad que cuatro reglas exigían y el modelo no soportaba · `Ejercicio` gana el nivel de dificultad como atributo tipado · dos referencias cruzadas corregidas · PD-07 nuevo.
+
+**Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** `ScoreRiesgo` y `SegmentoPerfil` quedan **derogadas** — el riesgo de abandono se retira del alcance (RF-061 a RF-063 → WON'T) y la descripción de perfil (RF-064) la produce la capa generativa de forma efímera. `EvaluacionComponente` se conserva (RF-121, RF-122).
 
 ---
 
@@ -47,8 +49,9 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
                                       ──< EjercicioArticulacion >── Articulacion
                                       ──< EjercicioEquipamiento
 
-   RecordPersonal · ScoreRiesgo · SegmentoPerfil · Aviso
+   RecordPersonal · Aviso
    RegistroAuditoria · EvaluacionComponente
+   [derogadas v2.2: ScoreRiesgo, SegmentoPerfil]
 ```
 
 ## 2. Entidades
@@ -128,8 +131,8 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 | **PropuestaAdaptacion**  | alumno, diagnóstico de origen, estado (D6/§4), creada en, resuelta en, resuelta por, versión resultante, versión del componente                                                        |
 | **AjustePropuesto**      | propuesta, tipo (§4.10), ejercicio de rutina afectado _o_ alcance global, valor anterior, valor propuesto, criterio, datos que lo sustentan, estado ∈ {PENDIENTE, ACEPTADO, RECHAZADO} |
 | **RecordPersonal**       | alumno, ejercicio, tipo (§4.8), valor, sesión que lo produjo, fecha, vigente                                                                                                           |
-| **ScoreRiesgo**          | alumno, valor, nivel, factores principales, calculado en, versión del componente, contexto considerado, basado en datos simulados                                                      |
-| **SegmentoPerfil**       | alumno, segmento, calculado en, versión del componente                                                                                                                                 |
+| ~~**ScoreRiesgo**~~      | **Derogada (v2.2)** — RF-061 a RF-063 pasan a WON'T ([D11/DD-34](../decisions/design-decisions.md)); no hay estimación de riesgo que persistir                                          |
+| ~~**SegmentoPerfil**~~   | **Derogada (v2.2)** — la descripción de perfil (RF-064) la produce la capa generativa y es efímera; no se persiste ([D11/DD-34](../decisions/design-decisions.md))                       |
 | **EvaluacionComponente** | componente, versión, conjunto de datos, tamaño de la muestra, métricas obtenidas, métricas del criterio de referencia, ejecutada en                                                    |
 
 ### 2.7 Transversales
@@ -172,7 +175,8 @@ Cada sesión copia su prescripción al iniciarse, en sus propios registros de se
 | Volumen, frecuencia, carga máxima estimada, adherencia, cumplimiento | **Derivado**                       | Si se persisten y cambia la definición, hay que recalcular todo el histórico                                                                                                                             |
 | **Récord personal**                                                  | **Persistido**                     | Evento con fecha que debe notificarse en el momento. Recalcularlo pierde el instante                                                                                                                     |
 | **Diagnóstico y propuesta**                                          | **Persistido**                     | Salidas fechadas de un componente con versión; deben poder auditarse                                                                                                                                     |
-| **Estimación de riesgo y segmento**                                  | **Persistido**                     | Ídem `[F: RF-072]`                                                                                                                                                                                       |
+| ~~Estimación de riesgo y segmento~~                                  | **N/A (v2.2)**                     | Riesgo de abandono retirado del alcance; la descripción de perfil (RF-064) es efímera. Ver [D11/DD-34](../decisions/design-decisions.md)                                                                  |
+| **Alternativas de sustitución incorporadas a un candidato de rutina** | **Persistido**                     | Salida de la capa generativa (RF-059); se guarda la lista, no se reejecuta `[F: RF-072]`                                                                                                                  |
 | **Estado de compatibilidad de un ejercicio de rutina**               | **Persistido, derivado en origen** | Es el único derivado que se persiste. Se recalcula ante cada verificación (RN-45) y se guarda para que la marca esté disponible al iniciar una sesión y en la vista de rutina sin recalcular el conjunto |
 | Peso corporal y perímetros                                           | **Persistido**                     | Son el dato crudo                                                                                                                                                                                        |
 

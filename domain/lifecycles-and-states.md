@@ -2,10 +2,12 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.1        |
-| **Fecha**      | 2026-08-24 |
+| **Versión**    | 2.2        |
+| **Fecha**      | 2026-08-28 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D4, D5 |
+
+**Cambios de la v2.2:** §10 — la estimación de riesgo y la segmentación se retiran del alcance ([D11/DD-34](../decisions/design-decisions.md)); la descripción de perfil (RF-064) es efímera y no genera registros.
 
 **Cambios de la v1.0:** ciclo de la invitación · estado `DESCARTADA` de rutina, que faltaba y dejaba indefinido un caso frecuente · desbloqueo excepcional de sesión · aclaración de que una versión nueva no transiciona la rutina · corrección del diagrama de rutina, cuya flecha de rechazo apuntaba al estado equivocado.
 
@@ -219,6 +221,6 @@ No es un ciclo de vida sino una **clasificación recalculada** en cada verificac
 
 **Aptitud.** Su condición es derivada de la fecha: vigente si su vencimiento no fue superado, vencida en caso contrario, ausente si no hay ninguna registrada. Se modela como derivada y no como estado persistido porque un estado persistido exigiría un proceso que lo actualice, y quedaría desactualizado exactamente el día que importa. **Los tres casos se distinguen siempre** y nunca se colapsan en "no tiene aptitud": ausente y vencida requieren acciones distintas.
 
-**Estimación de riesgo, segmento y diagnóstico.** Cada cálculo produce un registro nuevo, fechado y con la versión del componente. No se actualizan ni se borran. El vigente es el de fecha más reciente. **Si nunca se ejecutó ningún cálculo**, la información se presenta como no disponible y ninguna funcionalidad se degrada (RN-100). Ése es el caso normal el primer día del sistema, no una anomalía.
+**Diagnóstico y salidas fechadas de un componente.** Cada cálculo produce un registro nuevo, fechado y con la versión del componente. No se actualizan ni se borran. El vigente es el de fecha más reciente. **Si nunca se ejecutó ningún cálculo**, la información se presenta como no disponible y ninguna funcionalidad se degrada (RNF-12). Ése es el caso normal el primer día del sistema, no una anomalía. *(La estimación de riesgo de abandono y la segmentación se retiraron del alcance — D11/DD-34; la descripción de perfil, RF-064, es efímera y no genera registros.)*
 
 **Récord personal.** Tiene un indicador de vigencia, no estados: un récord deja de ser vigente cuando otro lo supera, o cuando el recálculo de RN-71 lo desplaza. Los superados se conservan para poder dibujar la progresión.
