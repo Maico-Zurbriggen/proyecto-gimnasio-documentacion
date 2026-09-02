@@ -16,10 +16,16 @@ El backend es dueño de Prisma, del esquema y de todas las migraciones. El servi
 - Representar estados y enumeraciones cerradas mediante enums de Prisma/PostgreSQL; equipamiento, grupos musculares y articulaciones son tablas de referencia porque además tienen nombre, región y orden de presentación.
 - Mantener las entidades transaccionales normalizadas. Reservar `jsonb` para snapshots técnicos de IA, explicaciones, métricas y auditoría, no para relaciones centrales.
 - No borrar físicamente usuarios, ejercicios, plantillas, rutinas ni sesiones con historia. Se cambia su estado o se anonimizan los datos personales.
-- Crear tres esquemas PostgreSQL:
+- Crear dos esquemas PostgreSQL en esta entrega:
   - `app`: fuente de verdad transaccional, accesible sólo por backend y migraciones;
-  - `ai_integration`: cola durable y resultados técnicos, con permisos mínimos para backend e IA;
-  - `analytics`: salidas fechadas de procesos analíticos, incorporado cuando se implemente esa etapa.
+  - `ai_integration`: cola durable y resultados técnicos, con permisos mínimos para backend e IA.
+- No crear el esquema `analytics` en esta entrega. Si posteriormente se aprueba la etapa analítica, se incorporará mediante una migración específica junto con sus tablas y permisos.
+
+### Distribución física por esquema
+
+- `app` contiene las 40 tablas transaccionales de las secciones 1 a 6 y `routine_candidate_generations`, que asocia un candidato del dominio con una solicitud técnica sin exponer el candidato al servicio IA: 41 tablas en total.
+- `ai_integration` contiene únicamente `ai_generation_requests`, `ai_generation_attempts`, `ai_generation_results` y `ai_result_validations`.
+- Backend y el rol de migraciones operan sobre ambos esquemas. El servicio IA recibe permisos mínimos sólo sobre las tablas necesarias de `ai_integration` y ningún permiso sobre `app`.
 
 ## Vista general
 
@@ -41,6 +47,8 @@ erDiagram
     AI_GENERATION_REQUESTS ||--o{ ROUTINE_CANDIDATE_GENERATIONS : feeds
     AI_GENERATION_REQUESTS ||--o{ AI_GENERATION_ATTEMPTS : attempts
     AI_GENERATION_ATTEMPTS ||--o| AI_GENERATION_RESULTS : produces
+    USERS ||--o{ NOTICES : receives
+    USERS ||--o{ AUDIT_LOGS : acts
 ```
 
 ## 1. Gimnasio, identidad y acceso
@@ -498,7 +506,48 @@ Restricciones principales:
 - Un comentario referencia exactamente una sesión o una rutina mediante un `CHECK` exclusivo.
 - La prescripción copiada en una sesión no se actualiza después de crearla.
 
-## 6. Interfaz durable Backend–IA
+## 6. Avisos y auditoría transaccional
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+    }
+    NOTICES {
+        uuid id PK
+        uuid recipient_user_id FK
+        string type
+        string reference_type
+        uuid reference_id
+        string text
+        datetime created_at
+        datetime read_at
+        boolean expired
+    }
+    AUDIT_LOGS {
+        uuid id PK
+        uuid actor_user_id FK
+        string operation
+        string entity_type
+        uuid entity_id
+        json previous_value
+        json new_value
+        datetime created_at
+    }
+
+    USERS ||--o{ NOTICES : receives
+    USERS ||--o{ AUDIT_LOGS : acts
+```
+
+Ambas tablas pertenecen a `app`: los avisos forman parte de la experiencia transaccional del usuario y la auditoría registra operaciones sensibles del backend. Ninguna es una salida analítica ni debe ser accesible por el servicio IA.
+
+Restricciones principales:
+
+- Los tipos de aviso usan la enumeración cerrada de D2.
+- La no repetición, caducidad y reasignación de avisos siguen las reglas de RF-095 y D5.
+- La auditoría cubre las operaciones sensibles enumeradas en RF-097.
+
+## 7. Interfaz durable Backend–IA
 
 ```mermaid
 erDiagram
@@ -562,6 +611,8 @@ erDiagram
     AI_GENERATION_RESULTS ||--o{ AI_RESULT_VALIDATIONS : checked_by_backend
 ```
 
+`routine_candidate_generations` pertenece físicamente a `app`; las otras cuatro tablas del diagrama pertenecen a `ai_integration`. El backend administra la asociación y el servicio IA no recibe permisos para leer candidatos ni sus identificadores.
+
 Estados técnicos aceptados:
 
 - solicitud: `PENDIENTE`, `PROCESANDO`, `COMPLETADA`, `NO_DISPONIBLE`, `CANCELADA`;
@@ -596,7 +647,7 @@ Restricciones principales:
 - Sólo un resultado validado favorablemente puede alimentar un candidato visible.
 - Fallos, abandonos y respuestas inválidas se purgan a los 30 días; resultados aceptados conservan lo necesario para reproducibilidad y auditoría.
 
-## 7. Modelo futuro de adaptación y analítica — fuera de esta entrega
+## 8. Modelo futuro de adaptación y analítica — fuera de esta entrega
 
 No se crearán tablas analíticas en esta entrega. El siguiente modelo queda únicamente como dirección futura y no forma parte de las primeras migraciones:
 
@@ -608,10 +659,6 @@ erDiagram
     ADAPTATION_PROPOSALS ||--|{ PROPOSED_ADJUSTMENTS : contains
     ADAPTATION_PROPOSALS o|--o| ROUTINE_VERSIONS : may_create
     STUDENT_PROFILES ||--o{ PERSONAL_RECORDS : achieves
-    STUDENT_PROFILES ||--o{ RISK_SCORES : receives
-    STUDENT_PROFILES ||--o{ PROFILE_SEGMENTS : receives
-    USERS ||--o{ NOTICES : receives
-    USERS ||--o{ AUDIT_LOGS : acts
 
     EVOLUTION_DIAGNOSTICS {
         uuid id PK
@@ -660,23 +707,6 @@ erDiagram
         date achieved_on
         boolean current
     }
-    RISK_SCORES {
-        uuid id PK
-        uuid student_id FK
-        decimal value
-        string level
-        json factors
-        string component_version
-        datetime calculated_at
-        boolean based_on_simulated_data
-    }
-    PROFILE_SEGMENTS {
-        uuid id PK
-        uuid student_id FK
-        string segment
-        string component_version
-        datetime calculated_at
-    }
     COMPONENT_EVALUATIONS {
         uuid id PK
         string component
@@ -687,32 +717,13 @@ erDiagram
         json baseline_metrics
         datetime executed_at
     }
-    NOTICES {
-        uuid id PK
-        uuid recipient_user_id FK
-        string type
-        string reference_type
-        uuid reference_id
-        string text
-        datetime created_at
-        datetime read_at
-        boolean expired
-    }
-    AUDIT_LOGS {
-        uuid id PK
-        uuid actor_user_id FK
-        string operation
-        string entity_type
-        uuid entity_id
-        json previous_value
-        json new_value
-        datetime created_at
-    }
 ```
 
 Las salidas analíticas son append-only: cada cálculo inserta un registro nuevo con versión e instante. El valor vigente es el más reciente; nunca se sobrescribe el pasado.
 
-## 8. Orden de migraciones recomendado
+`risk_scores` no forma parte del modelo porque RF-061 a RF-063 están en estado WON'T. `profile_segments` tampoco se persiste: RF-064 define una descripción generativa efímera. Avisos y auditoría pertenecen al esquema transaccional `app` y están definidos en la sección 6.
+
+## 9. Orden de migraciones recomendado
 
 1. Esquemas, extensiones necesarias, enums y tablas de referencia.
 2. Gimnasio, invitaciones, usuarios, roles, sesiones de autenticación y consentimientos.
@@ -720,12 +731,14 @@ Las salidas analíticas son append-only: cada cálculo inserta un registro nuevo
 4. Inventario, ejercicios y clasificaciones.
 5. Plantillas, candidatos, rutinas, versiones y revisiones.
 6. Sesiones, registros congelados, comentarios y desbloqueos.
-7. Interfaz durable `ai_integration` y permisos del rol IA.
-8. Auditoría transaccional. Diagnósticos, propuestas e indicadores analíticos quedan para una etapa posterior.
+7. Avisos y auditoría transaccional en `app`.
+8. Interfaz durable `ai_integration`, asociación de candidatos en `app` y permisos mínimos del rol IA.
+
+Diagnósticos, propuestas, récords e indicadores analíticos quedan para una etapa posterior y no crean el esquema `analytics` en estas migraciones.
 
 Cada paso se crea como una migración Prisma revisada y comprobada sobre PostgreSQL efímero antes de promoverse a Neon Test.
 
-## 9. Población inicial en Neon Test
+## 10. Población inicial en Neon Test
 
 El SQL Editor puede utilizarse para cargar datos de referencia y prueba después de que CI haya aplicado las migraciones. No debe utilizarse para crear manualmente tablas que Prisma desconozca.
 
@@ -740,11 +753,12 @@ Orden de carga:
 
 Todo script de carga debe ser idempotente (`INSERT ... ON CONFLICT ...`) y versionarse en backend. Neon Producción sólo recibe datos de referencia revisados; nunca se copian usuarios ni datos de Test.
 
-## 10. Decisiones cerradas para la primera entrega
+## 11. Decisiones cerradas para la primera entrega
 
-1. Solicitudes e intentos de IA usan los estados técnicos aceptados en la sección 6.
-2. Un candidato activo vence después de 24 horas sin actividad y cada operación renueva el plazo.
-3. Contexto, preferencias y salida usan contratos JSON versionados, sin datos identificatorios.
-4. La autenticación usa sesiones propias; se conservan `auth_sessions` y `password_reset_tokens`.
-5. No se crean tablas analíticas en esta entrega.
-6. Los presets son opcionales: no se modelan ni migran salvo que el cronograma permita incorporarlos posteriormente.
+1. Se crean únicamente los esquemas `app` y `ai_integration`; `analytics` queda fuera de esta entrega.
+2. Solicitudes e intentos de IA usan los estados técnicos aceptados en la sección 7.
+3. Un candidato activo vence después de 24 horas sin actividad y cada operación renueva el plazo.
+4. Contexto, preferencias y salida usan contratos JSON versionados, sin datos identificatorios.
+5. La autenticación usa sesiones propias; se conservan `auth_sessions` y `password_reset_tokens`.
+6. No se crean tablas analíticas en esta entrega.
+7. Los presets son opcionales: no se modelan ni migran salvo que el cronograma permita incorporarlos posteriormente.
