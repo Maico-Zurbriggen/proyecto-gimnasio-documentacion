@@ -2,13 +2,15 @@
 
 |                    |                                                         |
 | ------------------ | ------------------------------------------------------- |
-| **Versión**        | 2.0                                                     |
-| **Fecha**          | 2026-08-18                                              |
+| **Versión**        | 2.1                                                     |
+| **Fecha**          | 2026-09-01                                              |
 | **Estado**         | Aprobado en Fase 1, base para el resto del corpus       |
 | **Depende de**     | Nada. Es el documento raíz                              |
 | **Es criterio de** | Todos. Una funcionalidad que no se conecte con §3 sobra |
 
 **Marcas usadas en todo el corpus:** `[F]` lo afirma una fuente · `[I]` inferencia · `[S]` supuesto por ausencia de información (registrado en D12).
+
+**Cambios de la v2.1 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** La visión del producto **no cambia**: la votación del equipo confirmó el ciclo central por mayorías amplias y el cliente no movió el núcleo. Lo que cambia es qué parte de esa visión se construye en la Etapa 1 (§6.1) y una garantía de continuidad que dejó de ser cierta al retirarse los presets (§3.2).
 
 ---
 
@@ -56,10 +58,10 @@ Cinco componentes que sólo tienen valor juntos `[F: RF-086, RF-087, RF-088, RF-
 De ahí se derivan tres consecuencias que gobiernan todo el corpus:
 
 1. **La captación de datos del alumno es infraestructura crítica, no una funcionalidad más.** Perfil, objetivo, condiciones físicas, equipamiento, aptitud, mediciones, series registradas y esfuerzo percibido no existen para llenar pantallas: son el **contexto del alumno**, la entrada de todo componente de decisión. Un dato que no se capta es una decisión que se toma a ciegas. Los requerimientos de registro tienen la misma prioridad que los de decisión.
-2. **Hay dos clases de componente y no se confunden.** Los **de decisión** (generación de rutinas, ajuste de la prescripción, estimación de riesgo, recomendación de sustitutos) producen valores y estructuras; su salida se valida automáticamente contra las reglas de compatibilidad y siempre pasa por revisión humana. Los **narrativos** (justificación de un ajuste, resumen de progreso) sólo redactan sobre hechos ya calculados y no pueden introducir ningún valor que no esté en su entrada.
+2. **Hay dos clases de componente y no se confunden.** Los **de decisión** (generación de rutinas, ajuste de la prescripción, recomendación de sustitutos) ✎ *(v2.1: se retira la estimación de riesgo, fuera del producto desde [DD-34](../decisions/design-decisions.md))* producen valores y estructuras; su salida se valida automáticamente contra las reglas de compatibilidad y siempre pasa por revisión humana. Los **narrativos** (justificación de un ajuste, resumen de progreso) sólo redactan sobre hechos ya calculados y no pueden introducir ningún valor que no esté en su entrada.
 3. **La decisión automática y la revisión humana no compiten.** La primera hace que el ajuste exista; la segunda hace que sea seguro. Sin la primera, el entrenador vuelve a revisar veinticinco fichas a mano. Sin la segunda, el sistema prescribe sin responsable.
 
-**Dónde decide una regla y dónde un modelo — dicho sin adornos.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. Catálogo, compatibilidad y rangos se validan mediante reglas determinísticas y auditables; el diagnóstico y los ajustes también permanecen escritos como tablas. Los componentes aprendidos futuros actúan en alternativas, riesgo y segmentación. Esta distribución cumple el alcance generativo sin entregar al modelo la autoridad de seguridad ni la puerta del entrenador. Ver D11/DD-31, ADR 0004 y D12/R-16.
+**Dónde decide una regla y dónde un modelo — dicho sin adornos.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. Catálogo, compatibilidad y rangos se validan mediante reglas determinísticas y auditables; el diagnóstico y los ajustes también permanecen escritos como tablas. Los componentes aprendidos futuros actúan en alternativas, riesgo y segmentación. Esta distribución cumple el alcance generativo sin entregar al modelo la autoridad de seguridad ni la puerta del entrenador. Ver D11/DD-31, ADR 0009 y D12/R-16.
 
 ### 3.1 El ciclo que gobierna el alcance
 
@@ -70,8 +72,9 @@ De ahí se derivan tres consecuencias que gobiernan todo el corpus:
    nueva prescripción ◀── REVISIÓN DEL ENTRENADOR ◀── propuesta fundamentada
                                    ▲
                         toda rutina pasa por acá,
-                     venga de una plantilla o generación;
-                      también de un preset si se implementa
+                  venga de una plantilla del entrenador,
+                de una generación, o de un preset si se
+                          implementa RF-021
 ```
 
 El registro de entrenamientos, los indicadores, los tableros y la vista de cartera **son el insumo de este ciclo, no productos separados**. Existen porque sin ellos no hay diagnóstico, y sin diagnóstico no hay adaptación fundamentada.
@@ -82,10 +85,14 @@ El registro de entrenamientos, los indicadores, los tableros y la vista de carte
 
 Siendo la inteligencia el centro, la continuidad operativa deja de ser una concesión y pasa a ser un requisito de disponibilidad del núcleo. La distinción que lo hace posible:
 
-- **La capacidad de decidir vive dentro del sistema.** La generación de rutinas, el diagnóstico, el cálculo de ajustes y la estimación de riesgo se resuelven con recursos propios y con datos propios.
+- **El diagnóstico y el cálculo de ajustes viven dentro del sistema.** Se resuelven con reglas propias sobre datos propios: RN-79a y RN-89a son tablas explícitas, no llamadas a un servicio. ✎ v2.1: **la generación de rutinas ya no está en esta lista.** Depende por completo del servicio del Polo, y es la corrección que se explica abajo.
 - **Lo que depende de un servicio externo es la conversación**: interpretar una descripción en lenguaje natural y redactar una justificación. Si ese servicio no está disponible, la entrada se hace por formulario estructurado y la justificación se presenta en forma tabulada `[F: RF-058]`.
 
 Es decir: si falla el servicio externo el sistema sigue decidiendo, sólo que deja de hablar. Si además se apagaran los componentes de decisión, el sistema sigue siendo usable como herramienta de prescripción y registro manual — pero deja de ser este producto.
+
+> **Corrección de la v2.1, y es importante.** El párrafo anterior era cierto mientras la capacidad de decidir viviera dentro del sistema. En la Etapa 1 **no vive dentro del sistema**: al no construirse presets ni un generador determinístico, la construcción de una rutina la resuelve por completo el servicio generativo del Polo. Si ese servicio no responde, el sistema **no sigue decidiendo**: la única vía que queda es que un entrenador asigne a mano una plantilla suya (RF-019, RF-058, [D11/DD-35](../decisions/design-decisions.md)).
+>
+> Un alumno nuevo en un gimnasio sin plantillas cargadas y con el servicio caído **no obtiene ninguna rutina**, y con eso la capacidad C1 deja de cumplirse. No hay mitigación técnica dentro del alcance de esta etapa; la mitigación es operativa —cargar plantillas de arranque al aprovisionar cada gimnasio— y hay que ejecutarla, no suponerla. Ver [D12/R-17](../planning/risks-and-assumptions.md) y la decisión PD-03 del baseline.
 
 ## 4. Actores
 
@@ -121,6 +128,24 @@ No porque cueste construirlo, sino porque no es este problema.
 | **Comunicación en vivo**                            | Hay comentarios asincrónicos sobre una sesión o rutina; no hay mensajería `[F: RF-077 WON'T]`                                                                                                                           |
 | **Lo que el sistema no puede medir**                | Calorías quemadas, calidad de ejecución, datos de dispositivos externos `[F: RF-081 WON'T]`                                                                                                                             |
 | **Alojamiento de video propio**                     | Se referencian recursos externos `[F: RF-079 WON'T]`                                                                                                                                                                    |
+
+### 6.1 Qué queda fuera de la Etapa 1 sin salir del producto
+
+La distinción importa: lo de §6 no es este problema y no volverá. Lo de aquí **sí es este producto** y está diferido por capacidad y por la votación del equipo — 8 de 9 integrantes. Ver el [baseline de alcance](../planning/baseline-alcance-2026-09.md).
+
+| Fuera de la Etapa 1                                         | Consecuencia para el usuario en esta etapa                                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Toda la nutrición, incluida la estimación energética        | El sistema no dice nada sobre alimentación `[2/8 votos]`                                                                                        |
+| Presets publicados y compartidos entre entrenadores         | Cada entrenador construye y reutiliza **sus** plantillas; no se comparten dentro del gimnasio `[1/8]`                                          |
+| Solicitud de rutina iniciada por el alumno, y su ajuste     | La rutina la origina el entrenador o la generación automática de la incorporación. El alumno recibe, no pide `[3/8]`                          |
+| Comentarios asincrónicos                                    | No hay canal entrenador↔alumno más allá de los avisos del sistema `[1/8]`                                                                       |
+| Representación muscular sobre esquema del cuerpo            | El mismo dato se presenta como barras por grupo muscular. **Es una degradación visible del diferencial declarado del producto** `[4/8]`        |
+| Registro diferido de sesiones pasadas                       | Una sesión no cargada el mismo día se pierde, y **la adherencia queda sesgada a la baja**. Hay que declararlo al presentar el indicador `[2/8]` |
+| Panel analítico del gimnasio                                | El administrador gestiona; no mide `[2/8]`                                                                                                     |
+| Baja de cuenta, portabilidad y anonimización                | **Una persona no puede irse del sistema llevándose ni borrando sus datos de salud.** Es una decisión de exposición, no de alcance funcional `[0/8]` |
+| Estimación de riesgo de abandono                            | Ya estaba fuera desde la v3.3 de D8; la votación lo confirma `[1/8]`                                                                            |
+
+**Lo que esto le cuesta a la propuesta de valor.** Para el gimnasio, «aviso temprano de deserción» (§5) queda sin sustento en esta etapa: sin estimación de riesgo y sin panel agregado, lo único que queda es la caída de adherencia visible en la cartera del entrenador. Conviene decirlo así en la defensa en lugar de sostener una promesa que el alcance no respalda.
 | **Representación tridimensional del cuerpo**        | La representación bidimensional cubre la misma necesidad `[F: RF-080 WON'T]`                                                                                                                                            |
 
 ## 7. Criterios de éxito

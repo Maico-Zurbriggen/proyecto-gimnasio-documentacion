@@ -2,7 +2,7 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 2.1                                          |
+| **Versión**    | 2.2                                          |
 | **Fecha**      | 2026-09-01                                   |
 | **Estado**     | Normativo. Congelar antes de escribir código |
 | **Depende de** | D1, D2, D3                                   |
@@ -10,6 +10,38 @@
 **Cambios de la v1.0:** entidades `Invitacion` e `InventarioGimnasio` · `EquipamientoDisponible` eliminada (el equipamiento es del gimnasio) · `EjercicioArticulacion` agregada, sin la cual la compatibilidad no era calculable · `EjercicioRutina` gana el estado de compatibilidad que cuatro reglas exigían y el modelo no soportaba · `Ejercicio` gana el nivel de dificultad como atributo tipado · dos referencias cruzadas corregidas · PD-07 nuevo.
 
 **Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** `ScoreRiesgo` y `SegmentoPerfil` quedan **derogadas** — el riesgo de abandono se retira del alcance (RF-061 a RF-063 → WON'T) y la descripción de perfil (RF-064) la produce la capa generativa de forma efímera. `EvaluacionComponente` se conserva (RF-121, RF-122).
+
+**Cambios de la v2.2 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** El núcleo del modelo **no cambia**: el eje `RutinaAsignada → VersionRutina → DiaRutina → EjercicioRutina → SeriePrescripta`, la sesión autocontenida, `EjercicioMusculo`, `EjercicioArticulacion` y las 23 restricciones de integridad quedan intactos. Lo que cambia es lo que la Etapa 1 no necesita persistir:
+
+| Elemento                                                              | Estado en la Etapa 1                                                                                    |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `Comentario`                                                          | ⏸ No se crea. Diferida con RF-039 (1 voto de 8)                                                          |
+| `PlantillaRutina.publicada`                                           | ⏸ No se crea en la Etapa 1. RF-021 es alcance opcional (COULD, 1 voto de 8): la plantilla existe, la publicación sólo se agrega si se implementa |
+| `RutinaAsignada.origen`                                               | ✎ Se reduce a `PLANTILLA_ENTRENADOR` y `GENERADA`. `PRESET_ELEGIDO_POR_ALUMNO` sólo existe si se implementa RF-021 (ver §2.4) |
+| `PerfilAlumno.nivel de actividad`                                     | ⏸ No se crea. Sólo alimentaba la estimación energética de RF-012 (2/8)                                    |
+| `SesionEntrenamiento.es diferida` y `.desbloqueada hasta`             | ⏸ No se crean. Diferidos con RF-034 (2/8) y RF-117                                                       |
+| `RegistroAuditoria`                                                   | ✎ Se acota a las operaciones de RF-038, RF-066, RF-091 y RF-114. RF-097 general queda diferido            |
+| `ScoreRiesgo`, `SegmentoPerfil`                                       | Derogadas en la v2.1; la votación lo confirma (1, 0 y 0 votos)                                            |
+
+**Añadir una columna después es barato; quitarla después de tener datos, no.** Por eso lo diferido no se crea ahora: los repositorios están en andamiaje y ninguna migración se ejecutó todavía.
+
+### Índices exigidos desde la primera migración
+
+No son optimización posterior: son lo que sostiene RNF-01 y RNF-36, y definirlos después obliga a una migración sobre tablas con datos.
+
+| Índice                                                     | Qué sostiene                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `RegistroSerie(sesion, orden)` **único**                   | RI-10 e idempotencia del registro (RF-104, RNF-13)        |
+| `RegistroSerie(ejercicio_ejecutado, sesion)`               | Volumen por grupo muscular y carga máxima estimada        |
+| `SesionEntrenamiento(alumno, fecha_de_ocurrencia)`         | Adherencia, historial y diagnóstico                       |
+| `RutinaAsignada(alumno, estado)` parcial sobre VIGENTE y PROPUESTA | RI-06 y la cartera priorizada                     |
+| `AsignacionEntrenador(alumno)` parcial sobre `hasta IS NULL` | RI-05 y **toda decisión de autorización** (RA-01, RA-03) |
+| `CondicionFisica(perfil)` parcial sobre `hasta IS NULL`    | Verificación de compatibilidad en cada puesta en vigencia |
+| `Ejercicio(gimnasio)` admitiendo `NULL`                    | Catálogo base frente a catálogo propio (PD-04 del modelo) |
+
+### Aislamiento multi-gimnasio: en el modelo, no en el motor
+
+El ámbito por gimnasio (RF-069, RA-02) se resuelve con la columna `gimnasio` en toda entidad raíz más RI-01, **no con `row-level security` de PostgreSQL**. Una segunda fuente de autorización dentro del motor habría que mantenerla sincronizada con la de la aplicación, y el proyecto no tiene capacidad para operar dos. La compensación es RNF-14: una prueba automatizada por cada operación que reciba un identificador de alumno.
 
 ---
 

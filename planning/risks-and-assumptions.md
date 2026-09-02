@@ -2,14 +2,16 @@
 
 |                |                 |
 | -------------- | --------------- |
-| **Versión**    | 2.1             |
-| **Fecha**      | 2026-08-24      |
+| **Versión**    | 3.0             |
+| **Fecha**      | 2026-09-01      |
 | **Estado**     | Normativo       |
 | **Depende de** | D1, D5, D8, D11 |
 
 **Cambios de la v1.0:** §1.1 registra **todas** las constantes numéricas del sistema con su origen, que en la v1.0 aparecían en D5 como si fueran datos del dominio · riesgos nuevos R-15 y R-16 · §5 actualizada: de las seis inconsistencias abiertas quedan dos, y ninguna es bloqueante.
 
 **Cambios de la v2.0:** §1.1 registra la constante del tope de regeneraciones del candidato de rutina (RN-127).
+
+**Cambios de la v3.0 ([baseline de alcance](baseline-alcance-2026-09.md)):** cuatro riesgos nuevos derivados del recorte de alcance · R-03 cerrado · §3 recalculada sobre el alcance de la Etapa 1 · §4 reemplazada por el orden de retirada por bandas · **I-09**, una inconsistencia sobre la propia capacidad que conviene resolver antes de usar §3 para negociar alcance.
 
 ---
 
@@ -66,7 +68,7 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 | Reducción de carga                                  | −10%                                              | RN-89a        | `[S]`                                                                       |
 | Umbral de adherencia para reducir frecuencia        | 60% en 4 semanas                                  | RN-89a        | `[S]`                                                                       |
 | Caducidad de propuesta                              | 30 días                                           | RN-87         | `[S]`                                                                       |
-| Periodicidad de la estimación de riesgo             | semanal                                           | RN-100        | `[S]`                                                                       |
+| ~~Periodicidad de la estimación de riesgo~~ ⏸        | semanal                                           | RN-100        | `[S]`                                                                       |
 | Caducidad de avisos                                 | 90 días                                           | RN-113        | `[S]`                                                                       |
 | Plazo de anonimización                              | 7 días                                            | RN-106        | `[S]`                                                                       |
 | Rango de ingesta proteica                           | 1,6 – 2,2 g/kg                                    | RN-120        | `[S]`                                                                       |
@@ -78,22 +80,26 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 
 | ID       | Riesgo                                                                                 | Prob.        | Impacto      | Mitigación concreta                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | -------- | -------------------------------------------------------------------------------------- | ------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **R-01** | El conjunto MUST no entra en el plazo                                                  | **Muy alta** | **Muy alto** | Conversación de alcance con el cliente antes de escribir código, con el orden de corte de §4 sobre la mesa. Punto de control formal a mitad del plazo                                                                                                                                                                                                                                                                                                       |
+| **R-01** | El conjunto MUST no entra en el plazo                                                  | **Muy alta** | **Muy alto** | **Sigue en Muy alta después del recorte.** El alcance bajó de 97 a 80 requisitos (–18 %), pero lo que se retiró es barato y lo que se confirmó es el ciclo central. La banda N1 sola está entre 0,9 × y 1,4 × la capacidad (§3). Conversación de alcance con el cliente **antes de escribir código**, con §4 sobre la mesa. Punto de control formal al cierre del Sprint 3 |
 | **R-02** | El ciclo de adaptación resulta más costoso de lo previsto                              | Media ⬇      | Muy alto     | Las tablas RN-79a y RN-89a lo vuelven un motor de reglas construible y testeable de forma aislada. El riesgo bajó de alta a media al escribirlas                                                                                                                                                                                                                                                                                                            |
-| **R-03** | La estimación de riesgo se queda sin datos reales                                      | **Muy alta** | Medio-alto   | Datos simulados con la limitación declarada, comparación obligatoria contra criterio de referencia (RF-073). Verificar S-03 en la primera semana                                                                                                                                                                                                                                                                                                            |
+| ~~R-03~~ | ~~La estimación de riesgo se queda sin datos reales~~                                  | —            | —            | **Cerrado.** RF-061 a RF-063 se retiraron del alcance en [DD-34](../decisions/design-decisions.md) y la votación lo confirmó: 1, 0 y 0 votos de 8. Sin componente no hay riesgo                                                                                                                                                             |
 | **R-04** | Un error en las decisiones de modelado de D4 se descubre tarde                         | Media        | **Muy alto** | Congelar D4 y D5 antes de la primera línea de código. Las decisiones críticas son DD-02, DD-03, DD-04 y DD-26                                                                                                                                                                                                                                                                                                                                               |
 | **R-05** | La pantalla de registro de sesión resulta más difícil de lo previsto                   | Alta         | Alto         | Es el flujo de mayor frecuencia y el que produce el contexto del que depende toda la inteligencia. Prototiparla temprano y probarla en un teléfono real                                                                                                                                                                                                                                                                                                     |
 | **R-06** | El recurso gráfico de la representación muscular no llega a tiempo                     | Media        | Medio        | Encargarlo temprano sobre los 17 grupos de D2/§4.2. Alternativa definida: barras por grupo muscular                                                                                                                                                                                                                                                                                                                                                         |
 | **R-07** | La clasificación muscular importada es pobre y distorsiona el volumen                  | Media        | **Alto**     | RF-099: curación manual de los ejercicios más frecuentes. Un volumen mal calculado corrompe el diagnóstico y con él todas las propuestas                                                                                                                                                                                                                                                                                                                    |
-| **R-08** | Los componentes generativos producen salidas inválidas de forma recurrente             | Media        | Alto         | RF-113 y RN-95b: ninguna salida inválida llega al usuario; un reintento y luego indisponibilidad. Medir rechazo, edición, invalidez e indisponibilidad; validar cada cambio con dataset fijo y un entrenador                                                                                                                                                                                    |
+| **R-08** | Los componentes generativos producen salidas inválidas de forma recurrente             | Media        | Alto         | RF-113 y RN-95b: ninguna salida inválida llega al usuario; un reintento y luego indisponibilidad. Medir rechazo, edición, invalidez y cuántas veces hay que recurrir a una plantilla manual; validar cada cambio con dataset fijo y un entrenador                                                                                                                                     |
 | **R-09** | Congestión de la puerta: el entrenador no revisa a tiempo                              | Media        | **Alto**     | Consecuencia directa de DD-25. RF-112, priorización de lo pendiente en la cartera (RF-107) e indicador E1b. Si el tiempo de revisión crece, hay que informarlo, no absorberlo                                                                                                                                                                                                                                                                               |
 | **R-10** | Participación desigual entre nueve personas                                            | Alta         | Alto         | Demostración interna semanal de software funcionando; cada persona dueña de al menos una funcionalidad de complejidad real                                                                                                                                                                                                                                                                                                                                  |
 | **R-11** | Integración tardía entre las partes                                                    | Media        | Alto         | Un recorrido completo desplegado en las primeras semanas; contrato entre capas acordado y congelado temprano                                                                                                                                                                                                                                                                                                                                                |
 | **R-12** | Fallo el día de la demostración                                                        | Baja         | Muy alto     | Congelamiento con antelación; entorno alternativo probado; grabación de respaldo. **El aprovisionamiento (RF-115) tiene que estar probado**: sin él no hay gimnasio y no hay demostración                                                                                                                                                                                                                                                                   |
 | **R-13** | Exámenes de otras materias consumen dos semanas                                        | **Muy alta** | Medio        | Ya descontado en §3. Debe estar descontado también en el plan                                                                                                                                                                                                                                                                                                                                                                                               |
-| **R-14** | El coste o la capacidad del servicio de generación resulta insuficiente                 | Media        | Medio        | Límite por usuario, idempotencia, métricas de latencia y concurrencia, un reintento máximo y continuidad de las operaciones manuales                                                                                                                                                                                                                                                            |
+| **R-14** | El coste o la capacidad del servicio de generación resulta insuficiente                 | Media        | Medio        | Límite por usuario, idempotencia, métricas de latencia y concurrencia, un reintento máximo. ✎ **Ya no hay presets de contingencia obligatorios** (RF-021 pasó a alcance opcional): la contingencia es una plantilla del entrenador, que alguien tiene que haber cargado antes — ver R-17                                                                                             |
 | **R-15** | **El inventario del gimnasio se declara mal o queda desactualizado**                   | **Alta**     | **Alto**     | Consecuencia directa de DD-26: el inventario determina el catálogo prescribible de todo el gimnasio. Un inventario incorrecto no produce un error visible, produce rutinas silenciosamente inservibles. Mitigación: RN-118 advierte al administrador cuando el inventario no cubre los patrones mínimos, y RN-117 reevalúa las rutinas ante cada cambio. **No hay mitigación técnica para un inventario que declara equipamiento que el gimnasio no tiene** |
-| **R-16** | **La expectativa sobre el LLM excede su autoridad real**                               | Media        | Alto         | DD-31 y ADR 0004: el LLM construye el candidato, pero no evita catálogo, compatibilidad, rangos ni aprobación. Demostrar esa frontera y medir cuánto corrige o rechaza el entrenador                                                                                                                                                                                                           |
+| **R-16** | **La expectativa sobre el LLM excede su autoridad real**                               | Media        | Alto         | Se agrava con el recorte: al diferirse los presets, el modelo pasa a ser la única vía automática de creación. DD-31 y ADR 0009: el LLM construye el candidato, pero no evita catálogo, compatibilidad, rangos ni aprobación. Demostrar esa frontera y medir cuánto corrige o rechaza el entrenador                                                                                                                                                                                                           |
+| **R-17** 🆕 | **La prescripción depende por completo del servicio generativo**                       | **Alta**     | **Muy alto** | Consecuencia directa de diferir RF-021 sin construir un generador determinístico. Sin servicio y sin plantillas cargadas, **un alumno nuevo no obtiene ninguna rutina** y la capacidad C1 deja de cumplirse (RNF-42). Mitigación: cargar plantillas de arranque por gimnasio en el aprovisionamiento y medir la disponibilidad real del Polo desde el Sprint 1. **No hay mitigación técnica dentro del alcance recortado.** Ver [DD-35](../decisions/design-decisions.md) |
+| **R-18** 🆕 | **Contradicción arquitectónica descubierta al integrar**                              | Media ⬇      | **Alto**     | Las ADR 0005 y 0009 estuvieron ambas «aceptadas» decidiendo lo contrario sobre dónde vive el servicio de IA. **Resuelto el 2026-09-01**: prevalece la 0009 y la 0005 queda parcialmente reemplazada. Queda el riesgo residual de que alguien implemente contra la versión vieja del corpus |
+| **R-19** 🆕 | **La adherencia se mide sesgada y nadie lo declara**                                  | Media        | Medio        | Sin registro diferido (RF-034, 2 votos de 8), una sesión no cargada el mismo día se pierde para siempre. La adherencia —insumo de RN-89a global y del criterio de urgencia— queda sesgada a la baja. **Mitigación: declararlo en la presentación del indicador y en la defensa.** No corregirlo en silencio |
+| **R-20** 🆕 | **Un ejercicio propio mal cargado no se puede retirar**                               | Media        | Bajo         | Sin RF-018 (0 votos) no hay desactivación. Acotado al ámbito de un gimnasio y corregible por su autor. Deuda aceptada |
 
 ## 3. Aritmética del esfuerzo
 
@@ -106,64 +112,77 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 Presupuesto efectivo de trabajo                        ≈  756 h
 ```
 
-De las 9 personas, **3 no construyen funcionalidades**: dirección de proyecto (Lorenzatti) y calidad (Grasso, Vignolo). Su trabajo es real y necesario, pero no produce requerimientos.
+De las 9 personas, **3 no construyen funcionalidades** según esta versión del cálculo: dirección de proyecto (Lorenzatti) y calidad (Grasso, Vignolo). Su trabajo es real y necesario, pero no produce requerimientos.
 
 ```
 Capacidad de construcción ≈ 6/9 × 756                  ≈  504 h
 Composición: 1 líder técnico + 2 desarrolladores senior + 3 junior
 ```
 
-**Contraste con el alcance.** 80 requerimientos MUST. Con un promedio optimista de 8 h por requerimiento son ~640 h contra ~504 disponibles; con un promedio realista de 10 a 12 h, la cuenta se acerca a las 900 h. Y ese promedio subestima el Módulo 15, la ejecución de sesiones y la representación muscular, que son subsistemas.
+> ⚠️ **Este descuento está en disputa. Ver I-09 en §5.** El Documento de Planificación e Inicio §1.3 afirma lo contrario con todas las letras —«los roles de gestión no son de dedicación exclusiva: **todos los integrantes participan en la construcción del software**»— y asigna a las tres personas a equipos verticales con alcance funcional. Entre 504 h y 756 h hay un 50 % de diferencia. **Es el denominador de toda esta sección y de la conversación de alcance de R-01.**
 
-**Conclusión.** El conjunto MUST está entre 1,3 y 1,8 veces por encima de la capacidad. La corrección de esta versión bajó la cifra de 89 a 80 MUST y volvió el trabajo estimable —antes había requerimientos que ni siquiera se podían estimar porque no tenían criterios—, pero **sigue sin entrar**. No es un problema de estimación: es de alcance, y la decisión es del cliente.
+### Contraste con el alcance de la Etapa 1
 
-## 4. Orden de recorte
+Sobre el alcance del [baseline](baseline-alcance-2026-09.md): 80 requisitos, de los cuales 57 son banda N1.
 
-Escrito de antemano para que la decisión ya esté tomada cuando llegue el momento.
+| Conjunto     | Requisitos | Optimista (8 h) | Realista (10–12 h) | Frente a ~504 h | Frente a ~756 h |
+| ------------ | ---------- | --------------- | ------------------ | --------------- | --------------- |
+| N1           | 57         | ~456 h          | 570 – 684 h        | 0,9 × a 1,4 ×   | 0,6 × a 0,9 ×   |
+| N1 + N2      | 76         | ~608 h          | 760 – 912 h        | 1,2 × a 1,8 ×   | 0,8 × a 1,2 ×   |
+| N1 + N2 + N3 | 80         | ~640 h          | 800 – 960 h        | 1,3 × a 1,9 ×   | 0,8 × a 1,3 ×   |
 
-**Nunca se recorta.** Alta por invitación y aprovisionamiento (RF-115, RF-116) · inventario y catálogo prescribible (RF-114, RF-118) · registro de sesiones y series (RF-027 a RF-035) · revisión y puesta en vigencia (RF-110, RF-022, RF-023) · compatibilidad y rutina inicial (RF-086, RF-087) · ciclo de adaptación (RF-088 a RF-092) · indicadores de base (RF-040 a RF-043) · control de acceso (RF-005). **Ésos son el producto.**
+**Conclusión.** Con 504 h, ni siquiera el núcleo entra con holgura y el alcance completo está entre 1,3 y 1,9 veces por encima. Con 756 h, el núcleo entra y el alcance completo queda al límite. **La diferencia entre «hay que recortar el núcleo» y «hay que trabajar ordenado» depende de un dato que ningún documento midió** — y que el equipo tiene.
+
+El promedio de 8 a 12 h por requisito además subestima tres subsistemas: el Módulo 15 (adaptación), la ejecución de sesiones y la representación de indicadores. No son requisitos: son pantallas y motores completos.
+
+## 4. Orden de retirada
+
+Escrito de antemano para que la decisión ya esté tomada cuando llegue el momento. **Sustituye al orden de corte de la v2.1**, que se escribió antes de que existiera la clasificación por bandas.
+
+**Nunca se recorta la banda N1.** Son los 57 requisitos sin los cuales el producto no cumple lo que el cliente declaró condición de aprobación: alta e invitación · inventario y catálogo prescribible · contexto del alumno con sus condiciones · plantillas, copia al asignar y versionado · compatibilidad y rutina inicial · registro de sesiones y series · indicadores de base · el ciclo de diagnóstico y adaptación completo · la puerta del entrenador · generación y su comportamiento ante fallo.
 
 **Orden de retirada, de primero a último:**
 
-RF-021 (presets) ya es `COULD`: se retira antes de esta lista si el cronograma no permite implementarlo, sin degradar ningún requisito `MUST`.
+**Antes de esta lista.** RF-021 (presets) ya es `COULD` y está fuera del alcance comprometido: si el cronograma no permite implementarlo, no se retira nada — simplemente no se construye, sin degradar ningún requisito `MUST`. Lo mismo vale para todo lo marcado ⏸ DIFERIDO en D8: **ya está fuera de la cuenta de §3.**
 
-| #   | Qué se retira                                       | Qué queda en su lugar                                         |
-| --- | --------------------------------------------------- | ------------------------------------------------------------- |
-| 1   | RF-075, RF-108 · pauta nutricional                  | RF-012, estimación energética informativa                     |
-| 2   | RF-074 · indicador nutricional diario               | Nada                                                          |
-| 3   | RF-047 · parametrización de reglas                  | Constantes documentadas                                       |
-| 4   | RF-067 · estado de membresía                        | Nada                                                          |
-| 5   | RF-064 · segmentación de perfiles                   | Nada                                                          |
-| 6   | RF-056 · resumen narrado                            | El panel del alumno                                           |
-| 7   | RF-068, RF-052 · paneles agregados                  | Nada                                                          |
-| 8   | RF-093 · historial de adaptaciones                  | Las versiones de rutina siguen consultables                   |
-| 9   | RF-039 · comentarios                                | Nada                                                          |
-| 10  | RF-117 · desbloqueo de sesión                       | El plazo de 48 h vuelve a ser absoluto, con el coste de CB-70 |
-| 11  | RF-034 · registro diferido                          | Nada                                                          |
-| 12  | RF-017, RF-018, RF-101 · catálogo propio y curación | Sólo catálogo base                                            |
-| 13  | RF-011 · perfil del entrenador                      | Nada                                                          |
-| 14  | RF-097 · auditoría general                          | La trazabilidad puntual de RF-038, RF-066 y RF-072            |
+| #  | Se retira                                    | Queda en su lugar                                   | Banda |
+| -- | -------------------------------------------- | ----------------------------------------------------- | ----- |
+| 1  | RF-067 · estado de membresía                 | Nada. Es informativo y no condiciona nada            | N3    |
+| 2  | RF-064 · descripción del perfil              | Nada                                                 | N3    |
+| 3  | RF-052 · indicadores agregados de la cartera | La cartera priorizada de RF-036                      | N3    |
+| 4  | RF-017 y RF-100 · catálogo propio            | Sólo el catálogo base                                | N3/N2 |
+| 5  | RF-093 · historial de adaptaciones           | Las versiones de rutina siguen consultables          | N2    |
+| 6  | RF-044 · récords personales                  | La evolución por ejercicio de RF-050                 | N2    |
+| 7  | RF-045 · media móvil de mediciones           | La serie sin suavizado                               | N2    |
+| 8  | RF-072 y RF-073 · trazabilidad y evaluación  | La justificación de RF-090. **Se pierde el criterio de éxito E9** | N2 |
+| 9  | RF-031 · ajustes durante la sesión           | Registro secuencial de lo prescripto                 | N2    |
+| 10 | RF-014 · búsqueda y filtrado                 | Listado completo del catálogo                        | N2    |
+| 11 | RF-053 · interpretación de lenguaje natural  | Formulario de parámetros estructurados. **Requiere liberar el compromiso ante el Product Owner** (I-10) | N2 |
 
-**A partir de acá se degradan requerimientos MUST, y cada paso requiere acuerdo explícito del cliente:**
+**A partir de acá se degrada la banda N1, y cada paso exige acuerdo explícito del cliente:**
 
-| #   | Qué se degrada                                              | A qué                                                                                  |
-| --- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 15  | RF-049 · representación muscular                            | Barras por grupo muscular                                                              |
-| 16  | RF-053 a RF-055 · generación generativa                    | Creación manual por entrenadores desde sus plantillas; no se conserva una generación automática equivalente |
-| 17  | RF-061 a RF-063 · estimación de riesgo                      | Una regla simple documentada, conservando RF-073 para comparar y declarar el resultado |
-| 18  | RF-050 · evolución por ejercicio                            | Sólo carga máxima estimada                                                             |
-| 19  | RF-045 · media móvil de mediciones                          | Serie sin suavizado                                                                    |
+| #  | Se degrada                                | A qué                                                                                          |
+| -- | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 12 | RF-055 · explicación en lenguaje natural  | Presentación tabulada del criterio y los datos. Conserva la condición C5 del acta, pierde la capa narrativa |
+| 13 | RF-054 y RF-087 · generación              | Creación manual por entrenadores desde sus plantillas; **no se conserva una generación automática equivalente**. Es renunciar a la IA como núcleo, que el cliente declaró centro del producto |
+| 14 | RF-049 · representación muscular          | Barras por grupo muscular                                                                       |
+| 15 | RF-050 · evolución por ejercicio          | Sólo carga máxima estimada                                                                      |
+| 16 | RF-088 a RF-094 · ciclo de adaptación     | Nada. **Es entregar un producto que no es el que el cliente pidió, y hay que decirlo con esas palabras** |
 
-Retirar del 15 en adelante significa que el sistema entregado no es el que el cliente pidió, y hay que decirlo con esas palabras.
+Del paso 12 en adelante, lo que se entrega deja de responder a la condición de aprobación declarada por el cliente. No es un recorte de alcance: es un cambio de producto.
 
 ## 5. Inconsistencias no resueltas
 
 | #        | Inconsistencia                                                                  | Estado                                                                            |
 | -------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **I-09** 🆕 | **La capacidad de construcción está calculada sobre un supuesto que otra fuente contradice.** §3 descuenta a tres personas y llega a ~504 h; el Documento de Planificación e Inicio §1.3 dice que las nueve construyen y les asigna alcance funcional en equipos verticales | **Abierta y de alto impacto.** Es el denominador de R-01 y de PD-01. Ninguna de las dos fuentes es evidentemente correcta: hay que **medir la disponibilidad real que declara cada integrante**, no elegir el documento que convenga. Resolver antes de la conversación de alcance |
 | I-01     | El cliente escribió "somos 3 personas" y listó 9                                | **Abierta.** Se tomó la lista. Confirmación pendiente (S-01)                      |
 | I-06     | `READAPTACION` quedó fuera de los tipos de rutina por sus implicancias clínicas | **Abierta, de bajo riesgo.** Decidido en DD-27; requiere confirmación del cliente |
 | I-07     | Creación segura de migraciones sin modificar Neon Test compartida               | **Abierta.** Elegir PostgreSQL efímero local o una base shadow separada antes de la primera migración |
-| I-08     | Operación productiva del servicio IA en el Polo mediante ngrok                  | **Abierta.** Confirmar dominio estable, servicios permanentes, contrato LLM y mecanismo de instalación/rollback |
+| I-08     | Operación productiva del servicio IA en el Polo mediante ngrok                  | **Abierta.** Confirmar dominio estable, servicios permanentes, contrato LLM y mecanismo de instalación/rollback. **Quién opera esos cuatro procesos es trabajo no contabilizado en §3** |
+| **I-10** 🆕 | **RF-053 obtuvo 3 votos de 8 pero está comprometido por escrito ante el Product Owner** (`deliverable PO/alcance-ia-generativa.md` v2.1) | **Abierta.** Una votación interna no revoca un compromiso asumido. O el Product Owner lo libera, o se construye pese al voto. Se conserva en alcance mientras tanto |
+| ~~I-11~~ | ~~Dos ADR con el número 0004, decidiendo cosas incompatibles~~                  | **Cerrada el 2026-09-01.** La del servicio del Polo se renumera a ADR 0009 y la ADR 0005 queda parcialmente reemplazada en su parte de ubicación de despliegue |
+| ~~I-12~~ | ~~DD-34 citada por ocho documentos y nunca redactada~~                          | **Cerrada el 2026-09-01.** Escrita en D11 v2.2 |
 | ~~I-02~~ | Forma de la generación nutricional                                              | **Cerrada** en DD-13: pauta orientativa sin nombrar alimentos                     |
 | ~~I-03~~ | Alerta ante valores atípicos                                                    | **Cerrada** en RN-55a                                                             |
 | ~~I-04~~ | Situación de estímulo insuficiente                                              | **Cerrada**: incorporada como quinta situación (RN-79a) con su regla de ajuste    |

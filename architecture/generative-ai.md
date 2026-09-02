@@ -56,7 +56,7 @@ LLM Server  ── runtime de inferencia (Ollama) sirviendo el modelo elegido �
 - **LLM Server** es el proceso de Ollama corriendo en el servidor del Polo, sirviendo el modelo configurado. No expone ningún endpoint de negocio: sólo inferencia de texto.
 - El backend **nunca** ejecuta el motor Python de IA predictiva ni el runtime del LLM dentro del proceso de una petición HTTP entrante del frontend; sólo hace una llamada saliente al LLM Server y espera su respuesta dentro del presupuesto de RNF-04.
 
-Por qué el Gateway es un módulo interno y no un microservicio desplegado aparte: ver [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md).
+Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispersa por cada punto de llamada: ver [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md). Su **ubicación de despliegue** quedó reemplazada por [ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md): el Gateway vive dentro del servicio Python del Polo, no dentro del monolito del backend.
 
 ## 4. Flujo generativo (mapea FL-04)
 
@@ -252,6 +252,8 @@ No se usa únicamente evaluación subjetiva: las primeras cuatro métricas son a
 - Actualizaciones del runtime y del modelo son un cambio de versión documentado (§16), nunca un reemplazo silencioso.
 
 ## 13. Fallback
+
+> ⚠️ **v4.0 del alcance.** Donde este documento dice «presets publicados del gimnasio», léase **«plantillas del entrenador» (RF-019)**: RF-021 quedó diferido en la Etapa 1 y con él la publicación de presets. El objeto subyacente es el mismo —una plantilla de rutina—; lo que no existe es compartirla dentro del gimnasio. **El fallback deja de ser automático: requiere que exista al menos una plantilla cargada y que un entrenador la asigne.** Ver [DD-35](../decisions/design-decisions.md), RN-95b y D12/R-17.
 
 | Falla | Comportamiento |
 | --- | --- |

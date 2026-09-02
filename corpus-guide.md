@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 2.7 · **Fecha** 2026-09-01 · **Estado** alineado con ADR 0004 y el modelo relacional, con puntos abiertos declarados en D12/§5
+**Versión del corpus** 3.0 · **Fecha** 2026-09-01 · **Estado** alineado con el [baseline de alcance de la Etapa 1](planning/baseline-alcance-2026-09.md), el [modelo relacional](architecture/database-relational-model.md) y ADR 0009. Puntos abiertos en D12/§5, entre ellos **I-09**, que afecta al cálculo de capacidad
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -10,7 +10,15 @@ La v2.2 centraliza el corpus en un repositorio documental único, organiza las r
 
 La v2.3 incorpora una [propuesta de integración generativa](architecture/generative-ai-integration.md) con ambientes, trabajo local, promoción y pruebas. Declara tres diferencias que requieren ADR antes de cambiar la arquitectura o los requisitos vigentes.
 
-La v2.4 acepta [ADR 0004](decisions/adr/0004-servicio-generativo-online-en-el-polo.md): servicio Python y worker en el Polo, ingreso por ngrok, LLM separado, generación asíncrona, Neon Test compartida y presets como contingencia. También adopta la promoción `develop → test → main` y alinea reglas, requisitos y arquitectura.
+La v2.4 aceptó [ADR 0009](decisions/adr/0009-servicio-generativo-online-en-el-polo.md): servicio Python y worker en el Polo, ingreso por ngrok, LLM separado, generación asíncrona y Neon Test compartida. También adoptó la promoción `develop → test → main`.
+
+**La v3.0 incorpora el [baseline de alcance de la Etapa 1](planning/baseline-alcance-2026-09.md)**, que cruza la votación del equipo con el Acta de Redefinición y con el estado real de los tres repositorios de código. Tres cosas que conviene saber antes de leer el resto del corpus:
+
+1. **Existe una dimensión de alcance separada de la prioridad.** Un requisito puede ser MUST y estar diferido: la prioridad dice cuánto importa al producto, el alcance dice si se construye ahora. D8 v4.0 marca las dos.
+2. **Nada del dominio está implementado.** Los tres repositorios contienen andamiaje. Todo el corpus es diseño, no descripción de software existente.
+3. **Se cerraron tres defectos estructurales del propio corpus:** DD-34 estaba citada por ocho documentos y nunca redactada · dos ADR compartían el número 0004 decidiendo cosas incompatibles · nueve documentos no estaban registrados en el manifiesto, con lo que la validación automática fallaba. Los tres están corregidos.
+
+**Y quedan dos preguntas abiertas que condicionan la planificación**, no la documentación: cuánta capacidad de construcción hay realmente (I-09 en D12/§5) y si el Product Owner libera el compromiso sobre la interpretación de lenguaje natural (I-10).
 
 La v2.7 incorpora el [modelo relacional PostgreSQL](architecture/database-relational-model.md), contratos JSON versionados sin datos identificatorios, candidatos con vencimiento por inactividad y estados técnicos de generación. Los presets dejan de ser contingencia obligatoria y pasan a alcance `COULD`; la primera entrega conserva plantillas privadas y creación manual por entrenadores.
 

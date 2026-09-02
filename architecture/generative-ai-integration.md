@@ -1,10 +1,14 @@
 # Integración de IA generativa, ambientes y pruebas
 
-**Estado:** aceptada · **Fecha:** 2026-08-29 · **Decisión:** [ADR 0004](../decisions/adr/0004-servicio-generativo-online-en-el-polo.md)
+**Estado:** aceptada · **Fecha:** 2026-08-29 · **Decisión:** [ADR 0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md)
 
 ## Alcance y autoridad
 
 La primera entrega generativa usa un único LLM para interpretar lenguaje natural, proponer el tipo y contenido de una rutina, explicar el criterio y ofrecer alternativas. La predicción de cargas y progreso futuro pertenece al pipeline analítico posterior.
+
+> **Alcance de la Etapa 1** ([baseline](../planning/baseline-alcance-2026-09.md)). Se construyen `interpretarPedido` (RF-053, banda N2, conservado por compromiso ante el Product Owner pese a obtener 3 votos de 8), `generarRutina` (RF-054, RF-087), `explicarCriterios` (RF-055) y `sugerirAlternativas` (RF-059, que absorbe la exclusión dura de RF-060). Quedan diferidos `resumirProgreso` (RF-056) y, en banda N3, `describirPerfil` (RF-064).
+>
+> **Y una consecuencia que cambia el peso de este componente:** al diferirse los presets (RF-021) y no existir un generador determinístico, `generarRutina` **es la única vía automática de prescripción del sistema**. Su indisponibilidad no degrada una funcionalidad accesoria: deja al producto sin forma de dar un plan a un alumno nuevo, salvo que un entrenador arme una plantilla a mano. Ver [D11/DD-35](../decisions/design-decisions.md) y D12/R-17.
 
 El LLM siempre produce una salida candidata. El backend conserva autorización y reglas de negocio: minimiza el contexto, controla catálogo, compatibilidad, rangos y permisos, y convierte una salida válida en candidato. Un entrenador debe aprobar toda rutina antes de que llegue al alumno. El modelo no activa rutinas ni emite consejo médico.
 

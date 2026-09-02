@@ -7,6 +7,8 @@
 
 Este documento cubre los **objetivos, features, evaluación y ciclo de vida** de los componentes aprendidos. La mecánica del pipeline batch (extracción, validación, features point-in-time, entrenamiento, persistencia) ya está definida en [analytics-engine.md](analytics-engine.md) y no se repite acá.
 
+> ⏸ **Fuera de la Etapa 1.** RF-121 y RF-122 son los dos únicos componentes aprendidos que sobreviven a [DD-34](../decisions/design-decisions.md), y ambos están marcados en D8 como **propuestas del equipo no validadas con el cliente**. El [baseline de alcance](../planning/baseline-alcance-2026-09.md) los difiere en consecuencia: no hay fundamento para consumir capacidad en ellos antes de confirmarlos. **En la Etapa 1 el proyecto entrega IA generativa, no predictiva**, y así conviene presentarlo. Este documento sigue siendo el diseño válido para cuando se confirmen.
+
 ## 1. Qué es predictivo y qué no
 
 Por [D11/DD-31](../decisions/design-decisions.md), el diagnóstico (RN-79a), los ajustes (RN-89a), la compatibilidad (RN-44a-d) y la derivación del tipo de rutina (RN-39a) son **tablas deterministas**, no modelos aprendidos — están escritas, son auditables y no entran en este documento. Lo que sigue son **dos componentes** donde sí hay aprendizaje automático, ambos sobre series temporales, ninguno generativo, ninguno con respaldo directo del cliente (son propuestas de esta ronda de diseño — RF-121 y RF-122, ver el aviso en cada uno):

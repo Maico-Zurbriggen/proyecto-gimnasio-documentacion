@@ -1,7 +1,22 @@
-# ADR 0004: servicio generativo online en el Polo
+# ADR 0009: servicio generativo online en el Polo
 
 - Estado: aceptada
-- Fecha: 2026-08-29
+- Fecha: 2026-08-29 (renumerada el 2026-09-01)
+
+## Nota de renumeración
+
+Esta ADR se emitió con el número 0004, ya ocupado por [ADR 0004: LLM autohospedado sobre infraestructura del Polo Educativo](0004-self-hosted-llm-server.md). Eran dos decisiones distintas con el mismo identificador. Se renumera a **0009** conservando su fecha y su contenido. Relación con las otras dos ADR del mismo dominio:
+
+- **ADR 0004 (LLM autohospedado)** sigue vigente y es complementaria: decide *dónde corre el modelo* —infraestructura del Polo, no un proveedor externo—. Esta ADR decide *qué proceso lo orquesta y dónde vive ese proceso*.
+- **[ADR 0005 (AI Gateway como módulo interno del backend)](0005-ai-gateway-in-process-module.md) queda reemplazada en su parte de ubicación de despliegue.** Aquella descartó explícitamente la opción «(c) AI Gateway como microservicio propio, desplegado aparte, entre el backend y el LLM Server», que es exactamente lo que esta ADR decide. La contradicción existió con ambas en estado «aceptada» desde el 2026-08-29; se resuelve a favor de esta.
+
+### Por qué prevalece esta ADR sobre la 0005
+
+El fundamento de la ADR 0005 es un presupuesto de esfuerzo: no hay capacidad para operar un tercer servicio. El de esta ADR es una restricción física: un intento de generación puede durar hasta 120 segundos y Vercel no sostiene una petición de esa duración, de modo que hace falta un proceso durable fuera de la función serverless. Un presupuesto se renegocia; la restricción no.
+
+**Lo que de la ADR 0005 sigue vigente y se adopta aquí:** el patrón puerto y adaptador. Timeout, reintento, límite por usuario, validación de esquema, redacción de registros y versionado de prompt viven en un único punto —ahora dentro del servicio Python, no del backend— y el conector hacia el modelo es un adaptador reemplazable sin tocar el resto.
+
+**Lo que la ADR 0005 advertía y sigue siendo cierto:** operar API, worker, modelo y agente ngrok en el Polo es trabajo de operación que la capacidad de construcción del proyecto no contabiliza. Ver los puntos operativos pendientes al final de este documento.
 
 ## Contexto
 

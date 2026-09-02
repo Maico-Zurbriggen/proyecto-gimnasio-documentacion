@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.1        |
-| **Fecha**      | 2026-08-24 |
+| **Versión**    | 2.2        |
+| **Fecha**      | 2026-09-01 |
 | **Estado**     | Normativo  |
 | **Depende de** | Todos      |
 
@@ -11,7 +11,11 @@
 
 **Cambios de la v2.0:** DD-33, el candidato de rutina.
 
-**Cambios de la v2.1:** DD-31 se ajusta al alcance generativo confirmado y a ADR 0004: el LLM construye el candidato inicial; las tablas explícitas permanecen como validación y para el ciclo de adaptación.
+**Cambios de la v2.1:** DD-31 se ajusta al alcance generativo confirmado y a la ADR del servicio generativo: el LLM construye el candidato inicial; las tablas explícitas permanecen como validación y para el ciclo de adaptación.
+
+**Cambios de la v2.2 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)):** se escribe **DD-34**, el replanteo de IA del 2026-08-28 que ocho documentos del corpus ya citaban como fundamento y que **nunca había sido redactado** · se incorpora **DD-35**, el piso de disponibilidad de la prescripción tras retirarse los presets · **DD-33 queda derogada para la Etapa 1** y **DD-13 queda sin efecto** en ella; ambas conservan su texto íntegro por si el alcance se reabre.
+
+**Alcance de estas decisiones.** Una decisión marcada «derogada para la Etapa 1» o «sin efecto» **no está anulada**: describe un diseño válido cuyo requisito de origen quedó fuera del alcance de esta etapa. Si el requisito vuelve, la decisión vuelve con él. Distinguirlo importa: borrarlas obligaría a rediscutirlas desde cero.
 
 ---
 
@@ -99,6 +103,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Elegida.** (c). RF-075 y RF-108 quedan redactados en esos términos; RF-076 sigue fuera.
 **Fundamento.** Cumple el pedido —el sistema produce una pauta alimentaria personalizada— sin afirmar nada que no pueda sostener y sin necesitar la base de alimentos que quedó fuera de alcance. (a) es la única opción que reintroduce el riesgo que la especificación había descartado, y también la única sin forma de evaluarse.
 **Consecuencia asumida.** El alumno no recibe qué comer, sino cuánta energía y cuánta proteína distribuir. Si el cliente considera que eso no cumple su pedido, hay que volver sobre la decisión antes de construir, no después.
+**Estado (v2.2).** **Sin efecto en la Etapa 1.** RF-012 obtuvo 2 votos de 8 y RF-074 obtuvo 1; con ellos fuera cae toda la cadena nutricional —RF-075 y RF-108 incluidos— y esta decisión queda sin sujeto. Coincide con el primer paso del orden de recorte de D12. El texto se conserva porque la pregunta que resuelve —qué significa «generar la dieta»— volverá si vuelve la nutrición.
 
 ### DD-14 · Dos clases de componente inteligente
 
@@ -122,6 +127,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 
 **Fundamento.** Presentarle una probabilidad de abandono es contraproducente y no admite justificación defendible. Sí ve sus indicadores objetivos de adherencia y cumplimiento, que son accionables.
 **Consecuencia asumida.** Una vista distinta según el rol sobre el mismo alumno.
+**Estado (v2.2).** **Sin efecto.** Al retirarse RF-061 a RF-063 en [DD-34](#dd-34--la-ia-predictiva-se-reduce-a-dos-componentes-por-alumno) no hay estimación de riesgo que mostrar ni que ocultar. El alumno sigue viendo sus indicadores objetivos de adherencia y cumplimiento.
 
 ### DD-18 · Toda salida inteligente se registra con su versión y su contexto
 
@@ -211,7 +217,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Contexto.** El alcance generativo v2.1 asigna al LLM la interpretación, el tipo y la construcción completa de la rutina. A la vez, compatibilidad, estructura y adaptación necesitan criterios verificables que impidan publicar una salida insegura o imposible.
 **Elegida.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. RN-39a y RN-44a a RN-44d no generan esa rutina: son barreras determinísticas y auditables que toda salida debe superar. El diagnóstico RN-79a y los ajustes RN-89a permanecen determinísticos. Los componentes aprendidos actúan en alternativas, riesgo y segmentación.
 **Fundamento.** Esta división cumple el alcance sin transferir autoridad de seguridad al modelo. El candidato puede variar; catálogo, compatibilidad, rangos y puerta del entrenador no.
-**Consecuencia asumida.** Una salida inválida se descarta y admite un reintento; después la generación queda no disponible. No existe construcción determinística alternativa. Las plantillas y la creación manual por entrenadores siguen disponibles; los presets son opcionales. Ver ADR 0004, D12/R-08 y D13/N-15.
+**Consecuencia asumida.** Una salida inválida se descarta y admite un reintento; después la generación queda no disponible. No existe construcción determinística alternativa. Las plantillas privadas y la creación manual por entrenadores siguen disponibles; **los presets son alcance opcional y no son la contingencia** ([DD-35](#dd-35--la-plantilla-del-entrenador-es-el-piso-de-disponibilidad-de-la-prescripción)). Ver ADR 0009, D12/R-08 y D13/N-15.
 
 ### DD-32 · Existe una vía de corrección tardía, nominal y auditada
 
@@ -228,3 +234,46 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Elegida.** (c), con las operaciones del alumno acotadas por D5/§5.2, revalidación en el acto (RN-126) y un tope de tres regeneraciones (RN-127).
 **Fundamento.** (a) convierte la solicitud del alumno en un trámite y desaprovecha la ocasión más barata de acercar el plan a lo que la persona efectivamente va a hacer; además empuja toda inconformidad a la única salida disponible, que es pedir otra rutina entera. (b) contradice la matriz de D3 y, sobre todo, borra la frontera entre lo que el alumno elige y lo que el entrenador prescribe: series, repeticiones, descansos y cargas son prescripción. (c) conserva las dos cosas: el alumno decide **qué ejercicios** hace, el entrenador decide **cómo se hacen**, y la puerta de RN-35 sigue intacta porque nada rige sin revisión.
 **Consecuencia asumida.** Aparece un objeto que no está en el ciclo de vida de D6 —el candidato— que no se persiste como rutina y muere si no se confirma; se declara explícitamente en D6/§1 para que nadie lo resuelva agregando un estado BORRADOR. Y el entrenador debe recibir en la revisión la diferencia entre lo que el componente produjo y lo que el alumno confirmó (RN-129, RF-120): sin eso revisaría como `GENERADA` una rutina que en realidad armó el alumno.
+**Estado (v2.2).** **Derogada para la Etapa 1.** Al quedar fuera de alcance la solicitud de rutina por el alumno (RF-025, 3 votos de 8), desaparece el solicitante que esta decisión habilitaba a moldear el candidato. Su propio fundamento lo anticipa: si el alumno no puede moldear lo que pidió, que la solicite él o que se la genere el sistema son la misma funcionalidad — y en la Etapa 1 es lo segundo. RF-119, RF-120 y RN-124 a RN-129 quedan diferidos con ella. El texto se conserva íntegro: si el alcance se reabre, esta decisión vuelve tal como está.
+
+### DD-34 · La IA predictiva se reduce a dos componentes por alumno
+
+**Contexto.** Replanteo de alcance de IA del 2026-08-28. `predictive-ai.md` describía cinco componentes aprendidos: alternativas de sustitución (RF-059, RF-060), riesgo de abandono (RF-061 a RF-063), segmentación de perfiles (RF-064), sugerencia de carga (RF-121) y proyección de trayectoria (RF-122). Construir y mantener cinco modelos clásicos —con sus features, entrenamiento, evaluación y despliegue batch— excede la capacidad del proyecto, y tres de ellos resuelven problemas que la capa generativa ya instalada cubre a costo marginal.
+
+**Opciones.** (a) Conservar los cinco componentes aprendidos. (b) **Reducir a los dos que la capa generativa no puede cubrir, reubicar dos en ella y retirar uno del alcance.** (c) Retirar toda la IA predictiva y dejar sólo la generativa.
+
+**Elegida.** (b), con este reparto:
+
+| Componente                                   | Antes | Ahora                                                                                                                                                                                                                                    |
+| -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| RF-059, RF-060 · alternativas de sustitución | ML    | **AI.** El orden lo produce la capa generativa sobre el subconjunto del catálogo ya prefiltrado de forma determinista por patrón, compatibilidad y equipamiento, con revalidación determinista posterior (RF-113). Siguen MUST            |
+| RF-064 · segmentación de perfiles            | ML    | **AI.** Descripción del perfil de comportamiento redactada por la capa generativa a partir de los indicadores ya calculados, **sin clustering y sin persistirse**. Sigue SHOULD                                                           |
+| RF-061 a RF-063 · riesgo de abandono         | ML    | **WON'T.** Se retiran del alcance por costo y esfuerzo frente al valor esperado con los datos disponibles (S-03). **No se degradan a una regla simple: se retiran**                                                                       |
+| RF-121 · sugerencia de carga                 | ML    | Se conserva como componente aprendido. SHOULD                                                                                                                                                                                            |
+| RF-122 · proyección de trayectoria           | ML    | Se conserva como componente aprendido. Sube de COULD a SHOULD                                                                                                                                                                             |
+
+**Fundamento.** (a) mantiene cinco líneas de aprendizaje automático en un proyecto cuya capacidad ya está por debajo del alcance, y dos de ellas producen salidas que un modelo de lenguaje ya instalado genera con calidad suficiente sobre entradas que el sistema calcula de todos modos. (c) elimina la única dimensión de aprendizaje automático genuino y deja sin sujeto a RF-073 y RNF-26. (b) conserva esa dimensión donde tiene sustento —dos componentes por alumno, sobre series temporales que el sistema efectivamente captura— y libera la capacidad que consumían los otros tres.
+
+El riesgo de abandono se retira **y no se sustituye por una regla**, porque una regla simple sobre inasistencia no es una estimación de riesgo: es un umbral de inasistencia, y presentarlo como lo primero sería peor que no tenerlo.
+
+**Consecuencias asumidas.**
+
+- **Se pierde la reproducibilidad exacta del orden de alternativas.** RF-059 pasa al estándar de «validez repetida» del resto de la capa generativa. RF-072 y RNF-27 se cumplen **persistiendo la lista producida**, no reejecutándola.
+- **Se amplía la superficie de dependencia del servidor de modelos.** FL-06 —sustitución durante una sesión en curso, sin lenguaje natural de por medio— pasa a invocar el modelo, con el orden determinista de RN-49a como alternativa cuando no responde (RN-99). Es una dependencia que antes no existía y hay que medirla.
+- **Se derogan `ScoreRiesgo` y `SegmentoPerfil`** en D4. `EvaluacionComponente` se conserva para RF-121 y RF-122.
+- **FL-16 queda derogado** y RF-107 pierde «riesgo de abandono alto» de su orden de urgencia.
+- **DD-17 queda sin efecto**: no hay estimación de riesgo que ocultarle al alumno.
+- **La parte de [ADR-0008](adr/0008-tool-calling-for-ml-components.md) referida al ranking de RF-059 queda reemplazada**; el resto de esa ADR sigue vigente.
+- **Degradar RF-061 a RF-063 desde MUST exige acuerdo explícito del cliente** (D12/§4). Esta decisión lo propone; no lo sustituye. La votación posterior lo respalda: obtuvieron 1, 0 y 0 votos de 8.
+
+### DD-35 · La plantilla del entrenador es el piso de disponibilidad de la prescripción
+
+**Contexto.** El equipo resolvió no construir presets —«No usaremos preset, todo será generado desde cero con una batería de prompts», respuesta a D4 del Acta de Redefinición— y la votación lo confirma: RF-021 obtuvo 1 voto de 8. Pero RF-058, RN-95b y la ADR del servicio generativo apoyaban **toda** la continuidad ante indisponibilidad en «conservar la solicitud de presets publicados del gimnasio como vía disponible». Retirado el preset, esa garantía quedó sin referente y la creación de rutinas pasó a depender por completo de un servicio que corre en infraestructura de terceros.
+
+**Opciones.** (a) Dejarlo como está y aceptar que sin servicio generativo no hay ninguna vía de prescripción. (b) **Designar la plantilla del entrenador (RF-019) como vía manual y piso de disponibilidad.** (c) Reintroducir los presets contra la decisión del equipo y la votación. (d) Construir un generador determinístico de rutinas como alternativa.
+
+**Elegida.** (b). En este corpus un preset **era** una plantilla publicada: RF-021 agregaba la publicación y la reutilización entre entrenadores, no la capacidad de construir la rutina. Esa capacidad vive en RF-019, que obtuvo 8 votos de 8. Lo que se pierde al retirar RF-021 es compartirlas; lo que se conserva es poder crearlas y asignarlas.
+
+**Fundamento.** (a) deja al producto sin ninguna forma de cumplir su propia capacidad C1 cuando falla un servicio externo. (c) contradice una decisión explícita del equipo y una votación inequívoca. (d) es exactamente el fallback determinístico que [ADR 0009](adr/0009-servicio-generativo-online-en-el-polo.md) descartó de forma deliberada, y reconstruirlo duplicaría la lógica de prescripción en dos implementaciones que divergirían.
+
+**Consecuencia asumida, y hay que decirla con todas las letras.** RF-019 deja de ser una comodidad del entrenador y pasa a ser un requisito de disponibilidad: **si un gimnasio no tiene ninguna plantilla cargada y el servicio generativo no responde, un alumno nuevo no obtiene ninguna rutina.** No hay mitigación técnica para ese caso dentro del alcance recortado; la mitigación es operativa —cargar plantillas de arranque al aprovisionar el gimnasio— y hay que ejecutarla, no suponerla. Ver [D12/R-17](../planning/risks-and-assumptions.md) y la decisión PD-03 del [baseline de alcance](../planning/baseline-alcance-2026-09.md).

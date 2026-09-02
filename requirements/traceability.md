@@ -2,8 +2,8 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 2.0                                          |
-| **Fecha**      | 2026-08-18                                   |
+| **Versión**    | 3.0                                          |
+| **Fecha**      | 2026-09-01                                   |
 | **Estado**     | Normativo, con la limitación declarada en §0 |
 | **Depende de** | D8                                           |
 
@@ -15,6 +15,9 @@
 
 1. La sección "Requerimientos nuevos" de la especificación funcional (RF-082 a RF-094), declarada por el cliente como propia.
 2. Las decisiones expresadas durante la elaboración de este corpus (18 de agosto de 2026).
+3. **El Acta de Redefinición de Alcance** (agosto de 2026), que registra la reunión de relevamiento con el cliente y las cuatro decisiones que el equipo votó en respuesta. Es la fuente de mayor autoridad disponible y la que declara la adaptación como condición de aprobación del proyecto.
+
+**Fuente nueva en la v3.0, que no es la voz del cliente sino la del equipo:** la **votación de requerimientos**, con 8 de 9 integrantes. No decide qué necesita el cliente; decide qué construye el equipo en esta etapa. Se registra en §6 y su efecto sobre el alcance está en el [baseline](../planning/baseline-alcance-2026-09.md). Cuando el voto y el cliente discrepan, manda el cliente: RF-082 a RF-094 nunca se votaron y entran igual.
 
 Todo lo anterior sólo se conoce a través de la crítica que el análisis de scope hace de él. **La trazabilidad de esa parte es una reconstrucción, no un rastreo**, y está marcada como tal en §2.
 
@@ -38,9 +41,9 @@ Todo lo anterior sólo se conoce a través de la crítica que el análisis de sc
 | N-12 | Debe poder consultarse el historial de adaptaciones                                                                     | RF-093                                                                                       | Total                                                                                                                                                                                                                                                                                            |
 | N-13 | Un cambio de objetivo, condición o aptitud dispara la reevaluación                                                      | RF-094 · RN-91 · FL-12                                                                       | Total, y ampliada al cambio de inventario                                                                                                                                                                                                                                                        |
 | N-14 | El entrenador es intermediario: revisa toda rutina antes de que llegue al alumno                                        | RF-110 · RF-112 · RN-35 · FL-02 · DD-25                                                      | Total. **Deroga** la autoasignación de RF-025 y la rama de aprobación por el alumno de RF-091                                                                                                                                                                                                    |
-| N-15 | La inteligencia artificial es el centro: debe decidir con el contexto del alumno                                        | D1/§3.0 · Módulos 9 y 10 en MUST · RN-95 · DD-14 · **DD-31** · ADR 0004                       | **Total con barreras declaradas.** El LLM interpreta, selecciona el tipo y construye el candidato inicial; catálogo, compatibilidad y rangos se validan determinísticamente y un entrenador conserva la puerta. Diagnóstico y ajustes siguen reglas auditables                              |
+| N-15 | La inteligencia artificial es el centro: debe decidir con el contexto del alumno                                        | D1/§3.0 · Módulos 9 y 10 en MUST · RN-95 · DD-14 · **DD-31** · ADR 0009                       | **Total con barreras declaradas.** El LLM interpreta, selecciona el tipo y construye el candidato inicial; catálogo, compatibilidad y rangos se validan determinísticamente y un entrenador conserva la puerta. Diagnóstico y ajustes siguen reglas auditables                              |
 | N-16 | La captación de datos del alumno es primordial como contexto de la inteligencia                                         | RF-111 · RN-97b · RF-031 en MUST · D2 "contexto del alumno"                                  | Total                                                                                                                                                                                                                                                                                            |
-| N-17 | El aprendizaje automático predictivo es núcleo                                                                          | RF-061 a RF-063 en MUST · RF-073                                                             | Total en especificación. **Con la limitación de datos declarada en S-03 y R-03**                                                                                                                                                                                                                 |
+| N-17 | El aprendizaje automático predictivo es núcleo                                                                          | RF-121, RF-122 · RF-073                                                                      | **Parcial, y la diferencia hay que declararla.** ✎ v3.0: RF-061 a RF-063 (riesgo de abandono) se retiraron en [DD-34](../decisions/design-decisions.md) por costo frente al valor esperado con los datos disponibles, y la votación lo confirmó con 1, 0 y 0 votos de 8. Lo que queda de aprendizaje automático son dos componentes por alumno **que además están diferidos en la Etapa 1 por no haber sido validados con el cliente**. En esta etapa el proyecto entrega IA generativa, no predictiva |
 | N-18 | El sistema debe servir a varios gimnasios                                                                               | RF-069 · RF-098 · RF-100 · DD-05 · DD-24                                                     | Total                                                                                                                                                                                                                                                                                            |
 | N-19 | Gestionar gimnasios y sucursales queda fuera                                                                            | D1/§6 · ningún requerimiento de gestión de gimnasios · RF-115 fuera de la aplicación (DD-30) | Total, por exclusión                                                                                                                                                                                                                                                                             |
 | N-20 | El estado de membresía informa, no condiciona                                                                           | RF-067 · RN-14 · DD-07                                                                       | Total                                                                                                                                                                                                                                                                                            |
@@ -51,6 +54,7 @@ Todo lo anterior sólo se conoce a través de la crítica que el análisis de sc
 | N-25 | La cátedra no impone tecnologías                                                                                        | Sin efecto sobre los requerimientos. Registrado en S-08                                      | —                                                                                                                                                                                                                                                                                                |
 | N-26 | **El sistema no es abierto: el gimnasio debe estar afiliado y avisar al usuario para que se registre**                  | RF-115 · RF-116 · RF-098 · RN-02a a RN-02e · **DD-29, DD-30** · FL-00, FL-19                 | Total                                                                                                                                                                                                                                                                                            |
 | N-27 | **El foco está en el usuario, pero lo mantiene el gimnasio: la prescripción depende de qué máquinas tiene el gimnasio** | RF-114 · RF-118 · RN-115 a RN-118 · RN-44d, RN-47 · **DD-26** · FL-20                        | Total. Cambió el modelo: el alumno ya no declara equipamiento y la falta de equipamiento pasó de advertir a impedir                                                                                                                                                                              |
+| **N-28** 🆕 | **El usuario debe poder ver cómo se ejecuta cada ejercicio; el cliente mencionó video** (Acta de Redefinición §1.4 y §4.3/N11, prioridad SHOULD) | RF-015 exige «al menos un recurso visual» · RF-079 excluye el alojamiento propio           | **Parcial, y es un hueco que el corpus nunca registró.** RF-015 admite una imagen y da por cumplido el requisito; el cliente habló de video, y §4.3 del acta lo pedía como enlace embebido de terceros. **Nadie decidió si el enlace embebido es exigible o si la imagen alcanza.** Ver PD-10 del [baseline](../planning/baseline-alcance-2026-09.md) |
 
 ## 2. Necesidades reconstruidas del pedido original
 
@@ -108,6 +112,29 @@ Requerimientos que **nadie pidió** y que existen porque sin ellos el sistema es
 | RF-117 · desbloqueo de sesión                     | Sin él, un error detectado tarde contaminaba de forma permanente la carga máxima estimada, el diagnóstico y toda la cadena de adaptación |
 | RF-118 · catálogo prescribible                    | Derivado de N-27: es el conjunto operativo sobre el que trabajan la generación, la validación y la recomendación                         |
 
+## 6. La votación del equipo como fuente
+
+La votación no es la voz del cliente: es la del equipo decidiendo qué construye en esta etapa. Se registra aquí porque a partir de la v4.0 de D8 explica por qué un requisito está o no está en el alcance, y sin ese registro las marcas de alcance de D8 quedan sin origen.
+
+**Forma.** Planilla de requerimientos RF-001 a RF-081, una marca por integrante. Votaron 8 de 9. **Regla de corte: 5 votos o más entra al alcance de la Etapa 1.** RF-082 a RF-094 se agregaron a la planilla después de la reunión con el cliente y **nunca se votaron**: entran por autoridad del cliente. RF-095 a RF-122 no existían cuando se votó.
+
+**Lo que la votación confirmó.** El ciclo central obtuvo mayorías amplias sin excepción: contexto del alumno 8/8, catálogo 8/8, plantillas 8/8, registro de series 8/8, historial 8/8, indicadores de volumen y capacidad máxima 8/8, generación y su justificación 8/8, alternativas de sustitución 8/8. **La votación no cuestionó el producto: cuestionó su periferia.**
+
+**Lo que la votación retiró**, y coincide en lo esencial con el orden de recorte que D12 ya tenía escrito: nutrición (2/8 y 1/8), comentarios (1/8), panel del gimnasio (2/8), parametrización de reglas (3/8), riesgo de abandono (1/8, 0/8, 0/8), presets (1/8).
+
+**Los cuatro resultados que hubo que corregir, y por qué.** La regla de corte se aplicó, pero no de forma mecánica:
+
+| Caso                                              | Votos | Qué se hizo y por qué                                                                                                                                                                                                                                    |
+| ------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RF-022** · copia independiente al asignar       | 0/8   | **Reincorporado.** La observación de la planilla lo agrupa con los presets; no lo es. Es el invariante de [PD-01 del modelo](../domain/domain-model.md) y [DD-02](../decisions/design-decisions.md): sin él, adaptar una rutina reescribe el historial de todos los alumnos que comparten plantilla |
+| **RF-043** · cumplimiento de la prescripción      | 0/8   | **Reincorporado.** RN-79a lo usa para detectar `SOBREEXIGENCIA`; sin él el diagnóstico pierde dos de sus cinco situaciones. Y es lo único que distingue este producto de un registrador                                                                    |
+| **RF-005 y RF-069** · autorización y aislamiento  | 2/8, 4/8 | **Reincorporados.** Son RA-01, RNF-14, RNF-20 y la mitigación de R-11. Sin ellos cualquiera lee los datos de salud de cualquiera                                                                                                                     |
+| **RF-053** · interpretación de lenguaje natural   | 3/8   | **Conservado.** Está comprometido por escrito ante el Product Owner (`deliverable PO/alcance-ia-generativa.md` v2.1). Una votación interna no revoca un compromiso asumido. Ver I-10 en D12/§5                                                           |
+
+**Las fusiones sugeridas por el equipo, resueltas.** Se aceptaron RF-032 ⊕ RF-033 → RF-027 (ampliada a RF-027, porque son tres transiciones del mismo autómata) y RF-004 → RF-065. **Se rechazó RF-054 ⊕ RF-055**, porque borra la frontera entre componente de decisión y componente narrativo y deja sin sujeto a RNF-24. **Se rechazó RF-005 dentro de la gestión de roles**, porque haría desaparecer la verificación por recurso.
+
+La trazabilidad completa voto a voto está en el anexo del [baseline de alcance](../planning/baseline-alcance-2026-09.md).
+
 ## 5. Cobertura inversa
 
 Cada capacidad central de D1 y los requerimientos que la sostienen. Si alguna columna quedara vacía, el producto no cumpliría su propia definición.
@@ -116,7 +143,7 @@ Cada capacidad central de D1 y los requerimientos que la sostienen. Si alguna co
 | ------------------------------------------------------------ | -------------------------------------------------------------- |
 | C1 · Nadie queda sin plan                                    | RF-087, RF-025, RF-112, RF-111, RF-116                         |
 | C2 · Ninguna prescripción contradice el estado de la persona | RF-086, RF-094, RF-009, RF-084, RF-085, RF-060, RF-114, RF-118 |
-| C3 · La evolución se evalúa sola                             | RF-088, RF-040 a RF-046, RF-061                                |
+| C3 · La evolución se evalúa sola                             | RF-088, RF-040 a RF-046 ✎ *(v3.0: se retira RF-061)*           |
 | C4 · El cambio lo decide el sistema, con fundamento          | RF-089, RF-090, RF-054, RF-059, RF-057, RF-072, RF-073         |
 | C5 · El entrenador es la puerta                              | RF-110, RF-091, RF-036, RF-038, RF-109, RF-107                 |
 | Sustrato de datos del que todo depende                       | RF-027 a RF-035, RF-031, RF-102, RF-103, RF-104                |

@@ -24,9 +24,36 @@ Toda la capacidad de decisión del sistema la resuelve un modelo de lenguaje (IA
 
 ---
 
+## 2. Qué garantiza el sistema alrededor del modelo
+
+El modelo no decide solo. Cuatro garantías lo rodean, y ninguna depende de que el modelo se comporte bien:
+
+- **La revisión del entrenador.** Ninguna rutina llega vigente a un alumno sin que un entrenador con asignación vigente la haya aprobado. Sin excepciones, cualquiera sea el origen de la rutina.
+- **La compatibilidad se verifica en código, no en el modelo.** Que un ejercicio esté contraindicado por una condición física, exceda el nivel del alumno o requiera equipamiento que el gimnasio no tiene, lo determina una regla escrita y auditable, antes de construir la propuesta y otra vez antes de presentarla.
+- **Los textos no inventan números.** Un texto generado no puede contener un valor numérico que no esté en los datos que recibió. Es exigible al 100 % y se verifica de forma automática.
+- **Una salida inválida no se muestra.** Se reintenta una vez; si vuelve a fallar, la capacidad se declara no disponible y no se presenta nada.
+
+---
+
 ## 3. Fuera de alcance asegurado
 
 **IA predictiva:** sugerir la carga de la próxima serie y proyectar la trayectoria de fuerza y mediciones. Es otra técnica (modelos de series temporales) y se trataría aparte.
+
+**Estimación de riesgo de abandono:** retirada del producto. Requiere meses de actividad sobre cientos de usuarios para tener sustento, y el proyecto no va a tener esos datos.
+
+---
+
+## 3.1 Qué cambió con el recorte de alcance del 2026-09-01, y qué hace falta confirmar
+
+El equipo votó el alcance de esta etapa y el resultado toca dos cosas de este documento. Ver el [baseline de alcance](../planning/baseline-alcance-2026-09.md).
+
+**Lo que hay que confirmar con el Product Owner:**
+
+- **La interpretación de lenguaje natural (§1, primer punto) obtuvo 3 votos de 8.** Está comprometida en este documento y por eso se conserva en el alcance, pero el equipo no la quiere en esta etapa. La alternativa es cargar los mismos parámetros por formulario. **Es una decisión del Product Owner: o libera el compromiso, o se construye pese al voto.**
+
+**Lo que hay que saber aunque no requiera decisión:**
+
+- **Ya no hay rutinas predefinidas de contingencia.** El equipo resolvió generar todas las rutinas desde cero. Si el servicio del modelo no está disponible, la única vía que queda es que un entrenador arme y asigne una rutina a mano. **Un alumno nuevo en un gimnasio que todavía no tiene ninguna rutina cargada, con el servicio caído, no recibe plan.** La forma de evitarlo es operativa: cargar dos o tres rutinas base al dar de alta cada gimnasio.
 
 ---
 

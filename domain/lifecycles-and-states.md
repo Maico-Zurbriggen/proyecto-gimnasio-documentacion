@@ -2,12 +2,19 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.2        |
+| **Versión**    | 2.3        |
 | **Fecha**      | 2026-09-01 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D4, D5 |
 
 **Cambios de la v2.2:** §10 — la estimación de riesgo y la segmentación se retiran del alcance ([D11/DD-34](../decisions/design-decisions.md)); la descripción de perfil (RF-064) es efímera y no genera registros.
+
+**Cambios de la v2.3 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** Ningún autómata cambia. Lo que cambia es qué transiciones existen en la Etapa 1:
+
+- **El candidato de rutina no existe en esta etapa.** Se declaraba en §1 como objeto explícitamente fuera del ciclo de vida, para que nadie lo resolviera agregando un estado `BORRADOR`. Al diferirse RF-119 y RF-025, **la advertencia sigue valiendo con más fuerza**: la salida de una generación se convierte directamente en rutina `PROPUESTA`, y sigue sin haber un estado intermedio.
+- **La sesión conserva sus cuatro transiciones** —iniciar, reanudar, cerrar por inactividad, finalizar—, ahora reunidas bajo un único requisito (RF-027 absorbe RF-032 y RF-033). El autómata de §4 es la especificación de ese requisito y no se toca.
+- **La sesión pierde el desbloqueo por el entrenador** (RF-117, diferido con RF-034): el plazo de corrección vuelve a ser absoluto, con el coste que CB-70 describía.
+- **`RutinaAsignada.origen` pierde `PRESET_ELEGIDO_POR_ALUMNO`**: quedan `PLANTILLA_ENTRENADOR` y `GENERADA`.
 
 **Cambios de la v1.0:** ciclo de la invitación · estado `DESCARTADA` de rutina, que faltaba y dejaba indefinido un caso frecuente · desbloqueo excepcional de sesión · aclaración de que una versión nueva no transiciona la rutina · corrección del diagrama de rutina, cuya flecha de rechazo apuntaba al estado equivocado.
 

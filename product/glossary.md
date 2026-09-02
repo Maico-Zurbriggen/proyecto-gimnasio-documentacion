@@ -3,7 +3,7 @@
 |                |                                                                                                                                 |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Versión**    | 2.1                                                                                                                             |
-| **Fecha**      | 2026-08-28                                                                                                                      |
+| **Fecha**      | 2026-09-01                                                                                                                      |
 | **Estado**     | Normativo                                                                                                                       |
 | **Depende de** | D1                                                                                                                              |
 | **Regla**      | Todo el corpus usa exclusivamente estos términos, con esta ortografía y este significado. Un término no definido aquí no se usa |
@@ -134,6 +134,21 @@
 | **Componente narrativo**       | Componente que sólo redacta texto sobre hechos ya calculados. No introduce valores ausentes de su entrada ni afecta ninguna prescripción                                                                                                                                                              |
 | **Dato simulado**              | Registro generado con fines de desarrollo, evaluación o demostración, marcado de forma inequívoca y excluido de toda analítica presentada como real                                                                                                                                                   |
 | **Criterio de referencia**     | Regla simple contra la cual se compara el resultado de un componente para determinar si aporta algo                                                                                                                                                                                                   |
+
+### 1.10 Términos diferidos en la Etapa 1
+
+Estos términos siguen siendo parte del lenguaje del producto, pero **no tienen referente en la Etapa 1** ([baseline de alcance](../planning/baseline-alcance-2026-09.md)). No usarlos en código, contratos ni interfaz de esta etapa.
+
+| Término                    | Por qué no tiene referente ahora                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **preset**                 | RF-021 diferido. Existe la **plantilla**, que es su objeto subyacente; lo que no existe es publicarla        |
+| **candidato de rutina**    | RF-119 diferido. Una generación produce directamente una **rutina propuesta**                                |
+| **estimación de riesgo**   | RF-061 a RF-063 retirados del producto ([DD-34](../decisions/design-decisions.md))                            |
+| **pauta nutricional**      | RF-075 y RF-108 diferidos con toda la nutrición                                                              |
+| **sesión diferida**        | RF-034 diferido                                                                                              |
+| **desbloqueo de sesión**   | RF-117 diferido                                                                                              |
+
+De §4.12, los tipos de aviso que quedan sin emisor en esta etapa son los ligados a lo diferido; la enumeración **no se recorta**, porque recortarla obligaría a reabrirla cuando el alcance vuelva.
 
 ## 2. Términos prohibidos
 

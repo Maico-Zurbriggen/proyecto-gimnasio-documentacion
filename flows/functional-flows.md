@@ -2,14 +2,27 @@
 
 |                |                    |
 | -------------- | ------------------ |
-| **Versión**    | 2.2                |
-| **Fecha**      | 2026-08-28         |
+| **Versión**    | 2.3                |
+| **Fecha**      | 2026-09-01         |
 | **Estado**     | Normativo          |
 | **Depende de** | D2, D3, D4, D5, D6 |
 
 **Cambios de la v1.0:** flujos nuevos FL-00 (aprovisionamiento), FL-19 (invitación), FL-20 (inventario), FL-21 (paneles agregados) · FL-01 rehecho: el alta es por invitación y el alumno ya no declara equipamiento · FL-08 corregido: la contradicción entre RN-51, RN-59 y el registro diferido bajo rutina archivada · FL-09 y FL-10 remiten a los criterios de D5/§9.1 y §9.2, que en la v1.0 no existían.
 
 **Cambios de la v2.0:** FL-04 gana el **candidato de rutina** —el solicitante moldea la rutina generada antes de enviarla a revisión, a mano, pidiendo alternativas o volviendo al lenguaje natural (pasos 6 a 8, A3 a A7)— y FL-03 lo hereda. Ver D5/RN-124 a RN-129, D5/§5.2 y D11/DD-33.
+
+**Cambios de la v2.3 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** Ningún flujo del ciclo central cambia. Lo que cambia es qué flujos existen en la Etapa 1:
+
+| Flujo                                          | Estado en la Etapa 1                                                                                                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **FL-03** · solicitud de rutina por el alumno  | ⏸ Diferido con RF-025 (3 votos de 8). La rutina la origina el entrenador o la incorporación del alumno                                                            |
+| **FL-04** · generación asistida                | ✎ Se conserva **sin el paso de ajuste del candidato**: la salida válida se convierte directamente en rutina `PROPUESTA`. RN-124 a RN-129 quedan diferidas          |
+| **FL-08** · registro diferido y desbloqueo     | ⏸ Diferido con RF-034 y RF-117                                                                                                                                    |
+| **FL-21** · paneles agregados                  | ⏸ Diferido en su parte de panel del gimnasio (RF-068). El panel de cartera del entrenador (RF-052) queda en banda N3                                              |
+| **FL-05** · ejecución de una sesión            | Sin cambios funcionales. Ahora es la especificación de un único requisito, RF-027, que absorbió RF-032 y RF-033                                                    |
+| **FL-01, FL-02, FL-09, FL-10, FL-12** ⭐        | **Sin cambios.** Son el ciclo que el cliente declaró condición de aprobación                                                                                       |
+
+**Y un cambio de comportamiento en FL-04 que no es de alcance sino de consecuencia:** su excepción por indisponibilidad generativa ya no puede remitir a los presets del gimnasio. La vía que queda es que el entrenador asigne una plantilla propia (RF-019, RF-058, [DD-35](../decisions/design-decisions.md)). Si el gimnasio no tiene ninguna, **el flujo no tiene salida** y el alumno queda sin rutina.
 
 **Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** FL-16 (estimación de riesgo de abandono) queda **derogado** al pasar RF-061 a RF-063 a WON'T · FL-13 pierde "riesgo de abandono alto" del orden de urgencia · el orden de las alternativas de sustitución en FL-04/A4 y FL-06 lo produce ahora la capa generativa, con el orden determinista de RN-49a como fallback.
 
@@ -147,7 +160,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ---
 
-## FL-03 · Solicitud de rutina por el alumno
+## ~~FL-03 · Solicitud de rutina por el alumno~~ — ⏸ **diferido en la Etapa 1** (RF-025, 3/8)
 
 |                     |                                                       |
 | ------------------- | ----------------------------------------------------- |
@@ -190,9 +203,9 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 |                                                           |                                                                                                                                                                                                                         |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1 · Generación no disponible                             | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. Las plantillas y la creación manual por entrenadores continúan disponibles (RN-99)                                                              |
+| A1 · Generación no disponible ✎                           | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. **La vía que queda es que un entrenador cree y asigne una plantilla propia** (RF-019, RN-99, [DD-35](../decisions/design-decisions.md)); el preset sólo existe si se implementa RF-021                                                       |
 | A2 · La interpretación del lenguaje natural es incorrecta | El solicitante corrige los parámetros en el paso 2. Por eso el paso 2 existe                                                                                                                                            |
-| A3 · Ajusta el candidato **a mano**                       | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
+| ~~A3 · Ajusta el candidato **a mano**~~ ⏸ diferido        | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
 | A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno (RN-49a), ordenadas por la capa generativa sobre ese subconjunto ya prefiltrado (RF-059) y revalidadas por RN-44a-d (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a. El solicitante elige de esa lista; no escribe valores |
 | A5 · Vuelve a **describirla en lenguaje natural**         | Regenera desde el paso 2, con los parámetros corregidos y las preferencias ya declaradas como entrada (RN-128). Consume el tope de RN-127                                                                               |
 | A6 · Abandona el candidato sin confirmar                  | No queda rutina, no se avisa a nadie y la propuesta anterior, si existía, sigue intacta: RN-36a se aplica al confirmar, no al generar. Ver CB-73                                                                        |
@@ -278,7 +291,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ---
 
-## FL-08 · Registro diferido, corrección y desbloqueo
+## ~~FL-08 · Registro diferido, corrección y desbloqueo~~ — ⏸ **diferido en la Etapa 1** (RF-034, 2/8). *Consecuencia: una sesión no cargada el mismo día se pierde y la adherencia queda sesgada a la baja — D12/R-19*
 
 |           |                                                                           |
 | --------- | ------------------------------------------------------------------------- |
@@ -433,7 +446,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ---
 
-## FL-21 · Paneles agregados
+## FL-21 · Paneles agregados — ⏸ **el panel del gimnasio queda diferido** (RF-068, 2/8); el de cartera (RF-052) es banda N3
 
 |             |                                                                                         |
 | ----------- | --------------------------------------------------------------------------------------- |

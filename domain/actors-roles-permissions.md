@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.2        |
-| **Fecha**      | 2026-08-28 |
+| **Versión**    | 2.3        |
+| **Fecha**      | 2026-09-01 |
 | **Estado**     | Normativo  |
 | **Depende de** | D1, D2     |
 
@@ -12,6 +12,13 @@
 **Cambios de la v2.0:** el alumno gana escritura sobre el **candidato** de rutina —no sobre la rutina propuesta— dentro de las operaciones de D5/§5.2. Ver D11/DD-33.
 
 **Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** se retiran las filas "Estimación de riesgo de abandono" (RF-061 a RF-063 → WON'T) y "Segmentación de perfiles" de la matriz de permisos; la descripción de perfil (RF-064) la produce la capa generativa de forma efímera y se muestra a entrenador y administrador junto a los indicadores.
+
+**Cambios de la v2.3 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** Las reglas de acceso RA-01 a RA-10 **no cambian**: son el núcleo de seguridad del sistema y ninguna depende de algo diferido. Quedan sin sujeto en la Etapa 1 las filas de la matriz correspondientes a comentarios (RF-039), pauta nutricional (RF-075, RF-108), panel analítico del gimnasio (RF-068) y solicitud de rutina por el alumno (RF-025).
+
+**Dos consecuencias del recorte sobre permisos que conviene no perder de vista:**
+
+- **RA-07b sigue intacta y ahora es más simple de verificar.** «Ningún origen exime de la revisión» tenía tres orígenes; ahora tiene dos —plantilla del entrenador y rutina generada—, porque el preset elegido por el alumno se difirió. La regla no se relaja: se reduce su superficie.
+- **RF-005 y RF-069 entraron al alcance como dependencia, no por votación** (2 y 4 votos de 8). Es el resultado más delicado de la votación: la autorización por recurso y el aislamiento por gimnasio son lo que impide que cualquiera lea los datos de salud de cualquiera, y quedaron por debajo del corte. Están dentro del alcance y en banda N1 porque sin ellos el sistema no es entregable, no porque el equipo los haya priorizado.
 
 ---
 
@@ -80,9 +87,9 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Estado de membresía                              | `L` P                        | `L` A                       | `L/E` G                 |
 | Catálogo base                                    | `L`                          | `L`                         | `L`                     |
 | Catálogo del gimnasio                            | `L`                          | `L` + `E` propios           | `L` + curar G           |
-| Plantilla                                        | —; `L` presets si existe RF-021 | `L/E` propias; `L` presets si existe RF-021 | `L` G                   |
+| Plantilla                                        | —; `L` presets si existe RF-021 | `L/E` propias; `L` presets si existe RF-021 | `L` G      |
 | Rutina propuesta y rutina vigente                | `L` P                        | `L/E` A                     | —                       |
-| **Candidato** de rutina, antes de confirmarse    | `L/E` P, acotado por D5/§5.2 | `L/E` A, sin acotar         | —                       |
+| ~~**Candidato** de rutina~~ ⏸ diferido (RF-119)  | —                            | —                           | —                       |
 | Versión histórica de rutina                      | `L` P                        | `L` A                       | —                       |
 | **Solicitar** una rutina                         | `E` P                        | `E` A                       | —                       |
 | **Poner en vigencia** una rutina                 | **—**                        | `E` A                       | —                       |
@@ -123,7 +130,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 
 **RA-07 — El entrenador es la única puerta.** El facultado para poner una rutina en vigencia y para resolver una propuesta es **exclusivamente** el entrenador con asignación vigente. No hay aprobador alternativo: sin entrenador vigente, la rutina permanece propuesta y la propuesta permanece pendiente. `[F: RF-091 + decisión del cliente]` Ver D11/DD-25.
 
-**RA-07b — Ningún origen exime de la revisión.** Plantilla del entrenador y rutina generada —y preset elegido por el alumno si se implementa RF-021— entran por la misma puerta.
+**RA-07b — Ningún origen exime de la revisión.** Plantilla del entrenador y rutina generada —y preset elegido por el alumno si se implementa RF-021— entran por la misma puerta. ✎ v2.3: eran tres orígenes garantizados; el preset pasó a alcance opcional. **La regla no se relaja: se reduce su superficie.**
 
 **RA-08 — Datos propios siempre accesibles.** Ningún estado —membresía vencida, aptitud vencida, cuenta suspendida— priva a un usuario de leer y exportar sus propios datos.
 
