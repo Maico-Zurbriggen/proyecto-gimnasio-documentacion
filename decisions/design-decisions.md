@@ -211,7 +211,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Contexto.** El alcance generativo v2.1 asigna al LLM la interpretación, el tipo y la construcción completa de la rutina. A la vez, compatibilidad, estructura y adaptación necesitan criterios verificables que impidan publicar una salida insegura o imposible.
 **Elegida.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. RN-39a y RN-44a a RN-44d no generan esa rutina: son barreras determinísticas y auditables que toda salida debe superar. El diagnóstico RN-79a y los ajustes RN-89a permanecen determinísticos. Los componentes aprendidos actúan en alternativas, riesgo y segmentación.
 **Fundamento.** Esta división cumple el alcance sin transferir autoridad de seguridad al modelo. El candidato puede variar; catálogo, compatibilidad, rangos y puerta del entrenador no.
-**Consecuencia asumida.** Una salida inválida se descarta y admite un reintento; después la generación queda no disponible. No existe construcción determinística alternativa. Los presets del gimnasio conservan una vía manual revisada. Ver ADR 0004, D12/R-08 y D13/N-15.
+**Consecuencia asumida.** Una salida inválida se descarta y admite un reintento; después la generación queda no disponible. No existe construcción determinística alternativa. Las plantillas y la creación manual por entrenadores siguen disponibles; los presets son opcionales. Ver ADR 0004, D12/R-08 y D13/N-15.
 
 ### DD-32 · Existe una vía de corrección tardía, nominal y auditada
 

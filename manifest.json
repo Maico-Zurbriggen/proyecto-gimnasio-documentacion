@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "corpus_version": "2.5",
-  "updated_at": "2026-08-29",
+  "corpus_version": "2.7",
+  "updated_at": "2026-09-01",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
@@ -25,17 +25,27 @@
     {"id":"ARCH-SYSTEM","path":"architecture/system-overview.md","scope":"system","authoritative_for":["repository topology","system boundaries","integration ownership"],"load_when":["starting technical work","changing an integration"]},
     {"id":"ARCH-FRONTEND","path":"architecture/frontend.md","scope":"frontend","authoritative_for":["frontend boundary","frontend responsibilities"],"load_when":["frontend architecture","frontend integration"]},
     {"id":"ARCH-BACKEND","path":"architecture/backend.md","scope":"backend","authoritative_for":["backend boundary","backend responsibilities"],"load_when":["backend architecture","API design","persistence"]},
+    {"id":"ARCH-DATABASE","path":"architecture/database-relational-model.md","scope":"backend,analytics","authoritative_for":["PostgreSQL tables","database relations","database constraints","AI integration storage"],"load_when":["database changes","writing migrations","seeding data","implementing persistence"]},
     {"id":"ARCH-ANALYTICS","path":"architecture/analytics-engine.md","scope":"analytics","authoritative_for":["online AI service boundary","batch pipeline","analytics boundary"],"load_when":["analytics work","generative AI service work","model lifecycle"]},
     {"id":"ARCH-DATA-INTERFACE","path":"architecture/data-interface.md","scope":"backend,analytics","authoritative_for":["backend-AI persistence contract","backend-analytics data contract"],"load_when":["changing AI persistence","changing datasets","changing snapshots","persisting scores"]},
     {"id":"ARCH-GENERATIVE-AI","path":"architecture/generative-ai-integration.md","scope":"system","authoritative_for":["generative AI integration","AI local development","AI test strategy"],"load_when":["generative AI work","configuring AI environments","testing AI integration"]},
+    {"id":"ARCH-AI-MODEL-SELECTION","path":"architecture/ai-model-selection.md","scope":"analytics","authoritative_for":["generative model comparison","LLM runtime comparison"],"load_when":["selecting an LLM","selecting an LLM runtime","verifying Polo hardware"]},
+    {"id":"ARCH-GENERATIVE-AI-SCOPE","path":"architecture/generative-ai.md","scope":"analytics","authoritative_for":["generative AI functional scope","deterministic safeguards around LLM output"],"load_when":["implementing generative behavior","reviewing LLM responsibilities"]},
+    {"id":"ARCH-PREDICTIVE-AI","path":"architecture/predictive-ai.md","scope":"analytics","authoritative_for":["predictive component proposals","predictive model lifecycle"],"load_when":["evaluating predictive features","implementing predictive models"]},
     {"id":"D11","path":"decisions/design-decisions.md","scope":"system","authoritative_for":["product design decisions"],"load_when":["questioning existing behavior","proposing a design change"]},
     {"id":"ADR-0001","path":"decisions/adr/0001-monorepo-and-batch-engine.md","scope":"historical","authoritative_for":["superseded monorepo decision"],"load_when":["reviewing repository history"]},
     {"id":"ADR-0002","path":"decisions/adr/0002-three-repositories.md","scope":"system","authoritative_for":["three-code-repository decision"],"load_when":["changing repository boundaries"]},
     {"id":"ADR-0003","path":"decisions/adr/0003-central-documentation-repository.md","scope":"system","authoritative_for":["documentation ownership","documentation topology"],"load_when":["adding documentation","moving documentation"]},
     {"id":"ADR-0004","path":"decisions/adr/0004-servicio-generativo-online-en-el-polo.md","scope":"system","authoritative_for":["online generative service decision","Polo and ngrok deployment boundary","generation failure policy"],"load_when":["implementing generative AI","deploying AI service","changing AI availability behavior"]},
+    {"id":"ADR-0004-SELF-HOSTED-LLM","path":"decisions/adr/0004-self-hosted-llm-server.md","scope":"analytics","authoritative_for":["self-hosted LLM decision"],"load_when":["deploying the LLM","evaluating external LLM providers"]},
+    {"id":"ADR-0005-AI-GATEWAY","path":"decisions/adr/0005-ai-gateway-in-process-module.md","scope":"backend,analytics","authoritative_for":["AI gateway placement decision"],"load_when":["implementing the AI gateway","changing backend-AI boundaries"]},
+    {"id":"ADR-0006-LLM-RUNTIME","path":"decisions/adr/0006-llm-model-and-runtime-selection.md","scope":"analytics","authoritative_for":["LLM model decision","LLM runtime decision"],"load_when":["deploying the LLM","changing model or runtime"]},
+    {"id":"ADR-0007-NO-RAG","path":"decisions/adr/0007-no-rag.md","scope":"analytics","authoritative_for":["RAG exclusion decision","deterministic exercise prefiltering"],"load_when":["designing LLM context","evaluating retrieval"]},
+    {"id":"ADR-0008-ML-TOOLS","path":"decisions/adr/0008-tool-calling-for-ml-components.md","scope":"analytics","authoritative_for":["ML component tool-calling decision"],"load_when":["integrating classic ML with the LLM","designing AI tools"]},
     {"id":"D12","path":"planning/risks-and-assumptions.md","scope":"project","authoritative_for":["assumptions","risks","capacity","scope cuts"],"load_when":["planning","committing dates","recording an unresolved point"]},
     {"id":"OPS-LOCAL-DB","path":"operations/local-database.md","scope":"backend","authoritative_for":["shared Neon Test workflow","Prisma migration workflow"],"load_when":["setting up backend locally","changing database schema"]},
     {"id":"DELIVERY-GITHUB","path":"delivery/github-workflow.md","scope":"delivery","authoritative_for":["branches","pull requests","releases"],"load_when":["creating a branch","opening a pull request","preparing a release"]},
-    {"id":"DELIVERY-PERMISSIONS","path":"delivery/repository-permissions.md","scope":"delivery","authoritative_for":["repository permissions","branch protection"],"load_when":["administering repositories","reviewing access"]}
+    {"id":"DELIVERY-PERMISSIONS","path":"delivery/repository-permissions.md","scope":"delivery","authoritative_for":["repository permissions","branch protection"],"load_when":["administering repositories","reviewing access"]},
+    {"id":"DELIVERABLE-PO-GENERATIVE-AI","path":"deliverable PO/alcance-ia-generativa.md","scope":"product","authoritative_for":["Product Owner generative AI deliverable"],"load_when":["reviewing committed generative AI scope","presenting generative AI scope to the Product Owner"]}
   ]
 }

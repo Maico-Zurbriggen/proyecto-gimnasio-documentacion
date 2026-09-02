@@ -70,8 +70,8 @@ De ahí se derivan tres consecuencias que gobiernan todo el corpus:
    nueva prescripción ◀── REVISIÓN DEL ENTRENADOR ◀── propuesta fundamentada
                                    ▲
                         toda rutina pasa por acá,
-                     venga de una plantilla, de un preset
-                    elegido por el alumno o de una generación
+                     venga de una plantilla o generación;
+                      también de un preset si se implementa
 ```
 
 El registro de entrenamientos, los indicadores, los tableros y la vista de cartera **son el insumo de este ciclo, no productos separados**. Existen porque sin ellos no hay diagnóstico, y sin diagnóstico no hay adaptación fundamentada.

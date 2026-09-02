@@ -65,7 +65,7 @@ Reconstruidas a partir de la crítica del análisis de scope. **No son citas del
 | N-R05 | Nutrición                              | Ver N-23                                                                                                                   |
 | N-R06 | Administración del gimnasio            | RF-065 a RF-069 y RF-114, orientado a analítica y a inventario, no a gestión administrativa                                |
 | N-R07 | Componentes de inteligencia artificial | Módulos 9, 10 y 15                                                                                                         |
-| N-R08 | Presets de rutina                      | RF-021, fusionado con las plantillas: un preset es una plantilla publicada                                                 |
+| N-R08 | Presets de rutina                      | RF-021 `COULD`: un preset es una plantilla publicada y se implementa sólo si el cronograma lo permite                     |
 
 ## 3. Pedidos del cliente no cubiertos, y por qué
 

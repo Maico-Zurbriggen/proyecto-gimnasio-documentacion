@@ -3,7 +3,7 @@
 |                |            |
 | -------------- | ---------- |
 | **Versión**    | 2.2        |
-| **Fecha**      | 2026-08-28 |
+| **Fecha**      | 2026-09-01 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D4, D5 |
 
@@ -12,6 +12,8 @@
 **Cambios de la v1.0:** ciclo de la invitación · estado `DESCARTADA` de rutina, que faltaba y dejaba indefinido un caso frecuente · desbloqueo excepcional de sesión · aclaración de que una versión nueva no transiciona la rutina · corrección del diagrama de rutina, cuya flecha de rechazo apuntaba al estado equivocado.
 
 **Cambios de la v2.0:** se declara que el **candidato de rutina** (D5/RN-124) no es un estado de este ciclo, y por qué no se agrega uno.
+
+**Cambios de la v2.1:** se incorporan los estados técnicos de solicitudes, intentos y candidatos generativos, separados del ciclo de vida de la rutina.
 
 Las transiciones prohibidas importan tanto como las permitidas: cada una evita un defecto que de otro modo aparece en producción.
 
@@ -64,7 +66,7 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 
 | Estado     | Significado                                                                           | Quién provoca la entrada                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| PROPUESTA  | Rutina completa asociada al alumno, sin efecto. Visible para el alumno, no ejecutable | Entrenador, alumno (al **confirmar** el candidato de un preset o de una rutina generada), sistema (RF-087) |
+| PROPUESTA  | Rutina completa asociada al alumno, sin efecto. Visible para el alumno, no ejecutable | Entrenador, alumno al **confirmar** una rutina generada —o un preset opcional—, sistema (RF-087)            |
 | BLOQUEADA  | Propuesta sin aprobador porque el alumno no tiene entrenador vigente                  | Sistema, al finalizar la asignación (RN-23)                                                                |
 | VIGENTE    | Rutina bajo la cual el alumno puede iniciar sesiones                                  | Entrenador, mediante revisión favorable                                                                    |
 | RECHAZADA  | Revisión desfavorable, con motivo. El alumno puede solicitar otra                     | Entrenador                                                                                                 |
@@ -224,3 +226,40 @@ No es un ciclo de vida sino una **clasificación recalculada** en cada verificac
 **Diagnóstico y salidas fechadas de un componente.** Cada cálculo produce un registro nuevo, fechado y con la versión del componente. No se actualizan ni se borran. El vigente es el de fecha más reciente. **Si nunca se ejecutó ningún cálculo**, la información se presenta como no disponible y ninguna funcionalidad se degrada (RNF-12). Ése es el caso normal el primer día del sistema, no una anomalía. *(La estimación de riesgo de abandono y la segmentación se retiraron del alcance — D11/DD-34; la descripción de perfil, RF-064, es efímera y no genera registros.)*
 
 **Récord personal.** Tiene un indicador de vigencia, no estados: un récord deja de ser vigente cuando otro lo supera, o cuando el recálculo de RN-71 lo desplaza. Los superados se conservan para poder dibujar la progresión.
+
+## 11. Solicitud, intento y candidato generativo
+
+### Solicitud generativa
+
+```text
+PENDIENTE → PROCESANDO ─┬→ COMPLETADA
+     ▲                  ├→ NO_DISPONIBLE
+     └─ lease vencido ──┘
+
+PENDIENTE o PROCESANDO → CANCELADA
+```
+
+| Estado         | Significado |
+| -------------- | ----------- |
+| PENDIENTE      | Disponible para que un worker la reclame |
+| PROCESANDO     | Reclamada mediante un lease temporal |
+| COMPLETADA     | Tiene un resultado estructural que backend puede validar |
+| NO_DISPONIBLE  | Agotó dos intentos sin resultado válido |
+| CANCELADA      | El solicitante abandonó antes de obtener un resultado utilizable |
+
+Un lease vencido devuelve la solicitud a `PENDIENTE` sin perder el intento registrado. `COMPLETADA`, `NO_DISPONIBLE` y `CANCELADA` son terminales.
+
+### Intento generativo
+
+```text
+PENDIENTE → PROCESANDO ─┬→ COMPLETADO
+                        ├→ FALLIDO
+                        ├→ AGOTADO_POR_TIEMPO
+                        └→ SALIDA_INVALIDA
+```
+
+Cada solicitud admite como máximo dos intentos. Los cuatro estados de salida son terminales para el intento; tras el primer fallo la solicitud vuelve a `PENDIENTE`, y tras el segundo pasa a `NO_DISPONIBLE`.
+
+### Candidato técnico
+
+`ACTIVO` pasa a `CONFIRMADO` cuando el backend crea la rutina `PROPUESTA`, o a `ABANDONADO` por decisión del solicitante o después de 24 horas sin actividad. Cada ajuste o regeneración renueva ese plazo. Estos valores son estados técnicos del objeto temporal y no agregan estados al ciclo de `RutinaAsignada`.

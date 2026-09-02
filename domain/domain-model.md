@@ -3,7 +3,7 @@
 |                |                                              |
 | -------------- | -------------------------------------------- |
 | **Versión**    | 2.1                                          |
-| **Fecha**      | 2026-08-28                                   |
+| **Fecha**      | 2026-09-01                                   |
 | **Estado**     | Normativo. Congelar antes de escribir código |
 | **Depende de** | D1, D2, D3                                   |
 
@@ -97,11 +97,11 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                      | Atributos relevantes                                                                                                                                                                          |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PlantillaRutina**          | gimnasio, autor, nombre, tipo de rutina (§4.5), publicada, activa                                                                                                                             |
+| **PlantillaRutina**          | gimnasio, autor, nombre, tipo de rutina (§4.5), activa; `publicada` sólo se agrega si se implementa el alcance opcional de presets                                                                                                                          |
 | **DiaPlantilla**             | plantilla, orden, nombre                                                                                                                                                                      |
 | **EjercicioPlantilla**       | día de plantilla, ejercicio, orden, nota                                                                                                                                                      |
 | **SeriePrescriptaPlantilla** | ejercicio de plantilla, orden, repeticiones mínimas, repeticiones máximas, carga sugerida, descanso, es de calentamiento                                                                      |
-| **RutinaAsignada**           | alumno, plantilla de origen, tipo de rutina, frecuencia semanal objetivo, estado (D6/§1), origen ∈ {PLANTILLA_ENTRENADOR, PRESET_ELEGIDO_POR_ALUMNO, GENERADA}, solicitada por, solicitada en |
+| **RutinaAsignada**           | alumno, plantilla de origen, tipo de rutina, frecuencia semanal objetivo, estado (D6/§1), origen ∈ {PLANTILLA_ENTRENADOR, GENERADA}; `PRESET_ELEGIDO_POR_ALUMNO` sólo existe si se implementa RF-021, solicitada por, solicitada en                           |
 | **RevisionRutina**           | rutina, entrenador revisor, resultado ∈ {APROBADA, APROBADA_CON_CAMBIOS, RECHAZADA}, observación, instante                                                                                    |
 | **VersionRutina**            | rutina, número, vigente, creada en, creada por, propuesta que la originó                                                                                                                      |
 | **DiaRutina**                | versión de rutina, orden, nombre, patrón dominante                                                                                                                                            |

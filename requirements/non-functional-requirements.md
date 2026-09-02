@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.0        |
-| **Fecha**      | 2026-08-18 |
+| **Versión**    | 2.1        |
+| **Fecha**      | 2026-09-01 |
 | **Estado**     | Normativo  |
 | **Depende de** | D1, D5, D8 |
 
@@ -37,7 +37,7 @@ Sólo se incluyen requerimientos con criterio de verificación concreto. Un requ
 | ID     | Requerimiento                                                                             | Criterio de verificación                                                                                                     |
 | ------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | RNF-10 | La sesión en curso conserva un estado local y reintenta el envío ante pérdida de conexión | Prueba con red interrumpida durante el registro: ningún dato ingresado se pierde                                             |
-| RNF-11 | Ningún fallo generativo degrada el resto del sistema ni expone un error técnico             | Prueba con API IA, ngrok o LLM inaccesible: generación se declara no disponible y los presets del gimnasio siguen solicitables |
+| RNF-11 | Ningún fallo generativo degrada el resto del sistema ni expone un error técnico             | Prueba con API IA, ngrok o LLM inaccesible: generación se declara no disponible y las plantillas y operaciones manuales siguen funcionando |
 | RNF-12 | La no ejecución de los procesos diferidos no degrada ninguna otra funcionalidad           | Prueba con la base sin diagnósticos ni estimaciones: todas las vistas funcionan y declaran la información como no disponible |
 | RNF-13 | El envío repetido de una misma operación de registro no produce duplicados                | Envío del mismo registro de serie tres veces: un único registro resultante                                                   |
 
@@ -49,7 +49,7 @@ Sólo se incluyen requerimientos con criterio de verificación concreto. Un requ
 | RNF-15 | Las contraseñas se almacenan mediante una función de derivación de clave con sal única por usuario y coste configurable, calibrada para que una verificación tarde al menos 200 ms en el entorno de producción | Medición del tiempo de verificación e inspección del almacenamiento: ninguna contraseña recuperable, ninguna sal compartida                               |
 | RNF-16 | Las credenciales de sesión no son accesibles desde el código de la página                                                                                                                                      | Inspección                                                                                                                                                |
 | RNF-17 | Los intentos de autenticación están limitados por origen y por período                                                                                                                                         | Prueba: el sexto intento en un minuto desde un mismo origen es rechazado                                                                                  |
-| RNF-18 | Las invocaciones a servicios externos de generación están limitadas por usuario y por período                                                                                                                  | Prueba: superado el límite, no se envía otra invocación, se informa indisponibilidad temporal y permanecen disponibles los presets                         |
+| RNF-18 | Las invocaciones a servicios externos de generación están limitadas por usuario y por período                                                                                                                  | Prueba: superado el límite, no se envía otra invocación, se informa indisponibilidad temporal y permanecen disponibles las operaciones no generativas      |
 | RNF-19 | Ningún registro de diagnóstico contiene credenciales, contraseñas ni datos de salud                                                                                                                            | Inspección de los registros producidos durante el recorrido completo                                                                                      |
 | RNF-20 | El acceso del entrenador cesa en el instante en que finaliza la asignación                                                                                                                                     | Prueba: operación iniciada antes y confirmada después del fin de la asignación, rechazada                                                                 |
 

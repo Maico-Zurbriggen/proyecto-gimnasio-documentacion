@@ -33,7 +33,7 @@ Se lo declara como actor porque ejecuta una operación indispensable. Modelarlo 
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Objetivo**   | Entrenar con un plan que se mantenga adecuado a su estado, y saber si progresa                                                                                                                                                                                                                                                                         |
 | **Consulta**   | Su rutina vigente y su rutina propuesta, su historial de sesiones, sus indicadores, sus mediciones, el catálogo, las propuestas de adaptación que le afectan y su estado de resolución, sus avisos                                                                                                                                                     |
-| **Modifica**   | Su perfil, objetivo, condiciones físicas, aptitud, mediciones; sus sesiones dentro del plazo de corrección; comentarios propios. **Puede solicitar** una rutina eligiendo un preset o pidiendo una generada, y **moldear el candidato** antes de enviarlo a revisión, dentro de las operaciones de D5/§5.2; al confirmarlo se crea la rutina propuesta |
+| **Modifica**   | Su perfil, objetivo, condiciones físicas, aptitud, mediciones; sus sesiones dentro del plazo de corrección; comentarios propios. **Puede solicitar** una rutina generada y **moldear el candidato** antes de enviarlo a revisión, dentro de las operaciones de D5/§5.2; al confirmarlo se crea la rutina propuesta. Puede elegir un preset sólo si se implementa RF-021 |
 | **Nunca hace** | Poner en vigencia una rutina, resolver una propuesta de adaptación, modificar su rutina vigente **ni su rutina propuesta una vez confirmada**, fijar series, repeticiones, descansos o cargas, declarar equipamiento                                                                                                                                   |
 | **Nunca ve**   | La descripción de perfil que se presenta al entrenador y al administrador; información de otros alumnos                                                                                                                                                                                                                                                |
 
@@ -80,7 +80,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Estado de membresía                              | `L` P                        | `L` A                       | `L/E` G                 |
 | Catálogo base                                    | `L`                          | `L`                         | `L`                     |
 | Catálogo del gimnasio                            | `L`                          | `L` + `E` propios           | `L` + curar G           |
-| Plantilla                                        | `L` presets                  | `L` presets + `L/E` propias | `L` G                   |
+| Plantilla                                        | —; `L` presets si existe RF-021 | `L/E` propias; `L` presets si existe RF-021 | `L` G                   |
 | Rutina propuesta y rutina vigente                | `L` P                        | `L/E` A                     | —                       |
 | **Candidato** de rutina, antes de confirmarse    | `L/E` P, acotado por D5/§5.2 | `L/E` A, sin acotar         | —                       |
 | Versión histórica de rutina                      | `L` P                        | `L` A                       | —                       |
@@ -123,7 +123,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 
 **RA-07 — El entrenador es la única puerta.** El facultado para poner una rutina en vigencia y para resolver una propuesta es **exclusivamente** el entrenador con asignación vigente. No hay aprobador alternativo: sin entrenador vigente, la rutina permanece propuesta y la propuesta permanece pendiente. `[F: RF-091 + decisión del cliente]` Ver D11/DD-25.
 
-**RA-07b — Ningún origen exime de la revisión.** Plantilla del entrenador, preset elegido por el alumno o rutina generada: todas entran por la misma puerta.
+**RA-07b — Ningún origen exime de la revisión.** Plantilla del entrenador y rutina generada —y preset elegido por el alumno si se implementa RF-021— entran por la misma puerta.
 
 **RA-08 — Datos propios siempre accesibles.** Ningún estado —membresía vencida, aptitud vencida, cuenta suspendida— priva a un usuario de leer y exportar sus propios datos.
 

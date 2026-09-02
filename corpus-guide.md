@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 2.4 · **Fecha** 2026-08-29 · **Estado** alineado con ADR 0004, con cuatro puntos abiertos declarados en D12/§5
+**Versión del corpus** 2.7 · **Fecha** 2026-09-01 · **Estado** alineado con ADR 0004 y el modelo relacional, con puntos abiertos declarados en D12/§5
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -11,6 +11,8 @@ La v2.2 centraliza el corpus en un repositorio documental único, organiza las r
 La v2.3 incorpora una [propuesta de integración generativa](architecture/generative-ai-integration.md) con ambientes, trabajo local, promoción y pruebas. Declara tres diferencias que requieren ADR antes de cambiar la arquitectura o los requisitos vigentes.
 
 La v2.4 acepta [ADR 0004](decisions/adr/0004-servicio-generativo-online-en-el-polo.md): servicio Python y worker en el Polo, ingreso por ngrok, LLM separado, generación asíncrona, Neon Test compartida y presets como contingencia. También adopta la promoción `develop → test → main` y alinea reglas, requisitos y arquitectura.
+
+La v2.7 incorpora el [modelo relacional PostgreSQL](architecture/database-relational-model.md), contratos JSON versionados sin datos identificatorios, candidatos con vencimiento por inactividad y estados técnicos de generación. Los presets dejan de ser contingencia obligatoria y pasan a alcance `COULD`; la primera entrega conserva plantillas privadas y creación manual por entrenadores.
 
 ---
 

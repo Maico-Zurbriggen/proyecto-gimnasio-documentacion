@@ -34,7 +34,7 @@ React -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 6. El backend valida esquema, catálogo, compatibilidad y rangos; sólo entonces crea un candidato.
 7. Ninguna rutina entra en vigencia sin revisión favorable de un entrenador.
 
-Cada intento puede durar como máximo 120 segundos. Una salida inválida o un fallo técnico admite un único reintento. Tras el segundo fallo la generación queda `NO_DISPONIBLE`; no se construye una rutina determinística. El resto del sistema continúa y el alumno puede solicitar un preset publicado de su gimnasio, que también requiere aprobación del entrenador.
+Cada intento puede durar como máximo 120 segundos. Una salida inválida o un fallo técnico admite un único reintento. Tras el segundo fallo la generación queda `NO_DISPONIBLE`; no se construye una rutina determinística. El resto del sistema y la creación manual por entrenadores continúan. Los presets quedan como alcance opcional y no son una dependencia de esta contingencia.
 
 ### Contratos y autoridad
 

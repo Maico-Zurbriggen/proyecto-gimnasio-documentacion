@@ -31,7 +31,7 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 
 - Cada intento generativo vence inicialmente a los 120 segundos y admite un único reintento.
 - Una salida inválida nunca se presenta. Tras el segundo fallo la capacidad queda no disponible; no existe fallback determinístico de generación.
-- El resto del sistema continúa y se ofrecen presets publicados del gimnasio.
+- El resto del sistema continúa y las plantillas y operaciones manuales permanecen disponibles.
 - Credenciales y conexiones test/producción son distintas; ninguna URL de base se recibe desde una petición.
 - El Polo recibe sólo contexto necesario y un identificador técnico, nunca credenciales ni identificadores personales innecesarios.
 

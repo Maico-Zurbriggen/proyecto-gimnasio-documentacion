@@ -33,7 +33,7 @@ React/Vercel -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 7. Backend valida la salida y, si es válida, presenta el candidato.
 8. Al confirmarse, la rutina queda PROPUESTA y pasa al entrenador.
 
-Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El alumno conserva acceso a los presets publicados de su gimnasio; solicitar uno crea un candidato que también necesita aprobación del entrenador.
+Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El resto del sistema, las plantillas privadas y la creación manual por entrenadores permanecen operativos. Los presets sólo existirán si alcanza el tiempo para implementar RF-021.
 
 ## Datos y aislamiento
 
@@ -78,7 +78,7 @@ feature/* -> PR -> develop -> PR -> test -> PR -> main
 | Persistencia | permisos del rol IA, reclamo durable y aislamiento de ambientes | cada PR/promoción |
 | Integración | ngrok, timeout, reintento, caída del LLM y recuperación del worker | en `test` |
 | Evaluación | catálogo, compatibilidad, rangos, números respaldados y lenguaje médico | cambios de IA |
-| E2E | solicitud, polling, candidato, revisión, aprobación y presets de contingencia | antes de `main` |
+| E2E | solicitud, polling, candidato, revisión, aprobación e indisponibilidad generativa | antes de `main` |
 
 El dataset fijo cubre contexto incompleto, condiciones físicas, equipamiento ausente, prompt injection, respuestas mal formadas, timeout y caída del servicio. No se compara texto exacto: se verifican invariantes y una rúbrica humana. Las métricas incluyen latencia, reintentos, salida inválida, indisponibilidad, rechazo del entrenador y magnitud de edición.
 

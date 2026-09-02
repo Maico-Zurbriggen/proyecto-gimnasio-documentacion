@@ -156,11 +156,11 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 | **Postcondiciones** | Una rutina en estado PROPUESTA                        |
 | **Reglas**          | RN-35, RN-36, RN-36a, RN-124 a RN-129, D5/§5.2, D5/§6 |
 
-**Curso normal.** El alumno elige un preset del gimnasio o solicita una rutina generada. El sistema copia o genera la estructura sobre el catálogo prescribible, verifica compatibilidad y la presenta como **candidato** (RN-124). El alumno lo ajusta si quiere, dentro de D5/§5.2, y confirma: recién entonces la rutina queda PROPUESTA y se avisa a su entrenador.
+**Curso normal.** El alumno solicita una rutina generada. El sistema genera la estructura sobre el catálogo prescribible, verifica compatibilidad y la presenta como **candidato** (RN-124). El alumno lo ajusta si quiere, dentro de D5/§5.2, y confirma: recién entonces la rutina queda PROPUESTA y se avisa a su entrenador. Si se implementa RF-021, elegir un preset inicia el mismo flujo desde una copia.
 
 **Alternativos.** A1: ya tiene una rutina propuesta → se le informa **al confirmar** y, si continúa, la anterior pasa a DESCARTADA (RN-36a). A2: no tiene entrenador vigente → queda BLOQUEADA (RN-23). A3: abandona el candidato sin confirmar → no queda rutina ni aviso, y su propuesta anterior sigue intacta (RN-124, CB-73).
 
-**Excepción.** E1: el preset elegido contiene ejercicios incompatibles → se le informa cuáles y por qué, y se le ofrecen presets compatibles. No se propone algo que se sabe que será rechazado.
+**Excepción opcional.** E1: si se implementa RF-021 y el preset elegido contiene ejercicios incompatibles, se informa cuáles y por qué. No se propone algo que se sabe que será rechazado.
 
 ---
 
@@ -190,7 +190,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 |                                                           |                                                                                                                                                                                                                         |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1 · Generación no disponible                             | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. El solicitante puede elegir un preset publicado de su gimnasio; su copia sigue el mismo candidato y la revisión de RN-35 (RN-99)                 |
+| A1 · Generación no disponible                             | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. Las plantillas y la creación manual por entrenadores continúan disponibles (RN-99)                                                              |
 | A2 · La interpretación del lenguaje natural es incorrecta | El solicitante corrige los parámetros en el paso 2. Por eso el paso 2 existe                                                                                                                                            |
 | A3 · Ajusta el candidato **a mano**                       | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
 | A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno (RN-49a), ordenadas por la capa generativa sobre ese subconjunto ya prefiltrado (RF-059) y revalidadas por RN-44a-d (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a. El solicitante elige de esa lista; no escribe valores |

@@ -27,7 +27,7 @@ proyecto-gimnasio-back (Express)
 - Estado remoto mediante TanStack Query.
 - Polling de una generación asíncrona sólo contra backend, detenido en un estado terminal.
 - Conservación local del identificador de una generación activa y del borrador de sesión cuando corresponda.
-- Estados de carga, reintento, indisponibilidad y presets de contingencia.
+- Estados de carga, reintento e indisponibilidad; presets sólo si se implementa su alcance opcional.
 - Validaciones de experiencia de usuario que la API vuelve a comprobar.
 
 ## Invariantes
@@ -35,5 +35,5 @@ proyecto-gimnasio-back (Express)
 1. El frontend nunca accede directamente a PostgreSQL, Prisma, IA, ngrok ni proveedores externos.
 2. Una plantilla se copia al solicitar una rutina; cambios posteriores no reescriben versiones existentes.
 3. El entrenador es la puerta de aprobación para poner una rutina en vigencia.
-4. La indisponibilidad de IA deshabilita generación, no el resto del producto; los presets publicados permanecen solicitables.
+4. La indisponibilidad de IA deshabilita generación, no el resto del producto; las operaciones manuales permanecen disponibles.
 5. Ninguna lógica de autorización o compatibilidad se confía sólo al cliente.
