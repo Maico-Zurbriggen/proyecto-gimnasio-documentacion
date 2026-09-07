@@ -2,14 +2,14 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 2.2                                          |
-| **Fecha**      | 2026-09-01                                   |
+| **Versión**    | 2.3                                          |
+| **Fecha**      | 2026-09-02                                   |
 | **Estado**     | Normativo. Congelar antes de escribir código |
 | **Depende de** | D1, D2, D3                                   |
 
 **Cambios de la v1.0:** entidades `Invitacion` e `InventarioGimnasio` · `EquipamientoDisponible` eliminada (el equipamiento es del gimnasio) · `EjercicioArticulacion` agregada, sin la cual la compatibilidad no era calculable · `EjercicioRutina` gana el estado de compatibilidad que cuatro reglas exigían y el modelo no soportaba · `Ejercicio` gana el nivel de dificultad como atributo tipado · dos referencias cruzadas corregidas · PD-07 nuevo.
 
-**Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** `ScoreRiesgo` y `SegmentoPerfil` quedan **derogadas** — el riesgo de abandono se retira del alcance (RF-061 a RF-063 → WON'T) y la descripción de perfil (RF-064) la produce la capa generativa de forma efímera. `EvaluacionComponente` se conserva (RF-121, RF-122).
+**Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** `ScoreRiesgo` y `SegmentoPerfil` quedan **derogadas** — el riesgo de abandono se retira del alcance (RF-061 a RF-063 → WON'T) y la descripción de perfil (RF-064) la produce la capa generativa de forma efímera.
 
 **Cambios de la v2.2 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** El núcleo del modelo **no cambia**: el eje `RutinaAsignada → VersionRutina → DiaRutina → EjercicioRutina → SeriePrescripta`, la sesión autocontenida, `EjercicioMusculo`, `EjercicioArticulacion` y las 23 restricciones de integridad quedan intactos. Lo que cambia es lo que la Etapa 1 no necesita persistir:
 
@@ -24,6 +24,8 @@
 | `ScoreRiesgo`, `SegmentoPerfil`                                       | Derogadas en la v2.1; la votación lo confirma (1, 0 y 0 votos)                                            |
 
 **Añadir una columna después es barato; quitarla después de tener datos, no.** Por eso lo diferido no se crea ahora: los repositorios están en andamiaje y ninguna migración se ejecutó todavía.
+
+**Cambios de la v2.3 (baseline v4.0 confirmada).** Se aplican las retiradas también al detalle del modelo: desaparecen `Comentario`, `nivel de actividad`, sesión diferida y desbloqueo. `EvaluacionComponente` no se persiste: RF-121 y RF-122 están diferidos y RF-073 se resuelve con regresión generativa versionada en el repositorio de IA. Diagnóstico, propuesta, ajustes y récords pertenecen a `app` y forman parte del modelo de la Etapa 1.
 
 ### Índices exigidos desde la primera migración
 
@@ -74,7 +76,6 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
  │        │   DiagnosticoEvolucion ──< DiagnosticoEjercicio
  │        ▼
  │   SesionEntrenamiento ──< RegistroSerie   [prescripto + ejecutado en la misma fila]
- │        └─< Comentario
  │
  └─< Ejercicio (del gimnasio)          CATÁLOGO BASE (global, gimnasio = null)
             └────────────── Ejercicio ──< EjercicioMusculo   >── GrupoMuscular
@@ -82,7 +83,7 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
                                       ──< EjercicioEquipamiento
 
    RecordPersonal · Aviso
-   RegistroAuditoria · EvaluacionComponente
+   RegistroAuditoria
    [derogadas v2.2: ScoreRiesgo, SegmentoPerfil]
 ```
 
@@ -103,7 +104,7 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                  | Atributos relevantes                                                                                                                         | Cardinalidad                                                                                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PerfilAlumno**         | usuario, fecha de nacimiento, sexo, altura, nivel de experiencia (§4.4), días semanales disponibles, estado de membresía, nivel de actividad | 1:1 con Usuario con rol ALUMNO. `nivel de actividad` alimenta la estimación energética de RF-012                                              |
+| **PerfilAlumno**         | usuario, fecha de nacimiento, sexo, altura, nivel de experiencia (§4.4), días semanales disponibles, estado de membresía                     | 1:1 con Usuario con rol ALUMNO                                                                                                                |
 | **Objetivo**             | perfil, tipo (§4.5), desde, hasta                                                                                                            | 1:N. **Como máximo uno** con `hasta = null`; ninguno antes de la primera declaración                                                          |
 | **CondicionFisica**      | perfil, zona corporal (§4.2 ∪ §4.3), severidad (§4.6), descripción libre, desde, hasta                                                       | 1:N. Varias pueden estar vigentes a la vez. **La zona corporal y la severidad son tipadas**: son las que hacen calculable la contraindicación |
 | **Aptitud**              | perfil, fecha de emisión, fecha de vencimiento, observación, cargada por                                                                     | 1:N. La vigente es la de vencimiento más lejano no superado. `cargada por` admite al alumno o a un administrador                              |
@@ -146,9 +147,8 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                 | Atributos relevantes                                                                                                                                                                                                                                                                               |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SesionEntrenamiento** | alumno, rutina, versión de rutina, día de rutina, estado (D6/§3), iniciada en, finalizada en, duración, **fecha de ocurrencia**, es diferida, es simulada, desbloqueada hasta                                                                                                                      |
+| **SesionEntrenamiento** | alumno, rutina, versión de rutina, día de rutina, estado (D6/§3), iniciada en, finalizada en, duración, **fecha de ocurrencia**, es simulada                                                                                                                               |
 | **RegistroSerie**       | sesión, orden, ejercicio prescripto, ejercicio ejecutado, repeticiones mínimas prescriptas, repeticiones máximas prescriptas, carga prescripta, es de calentamiento, carga ejecutada, repeticiones ejecutadas, esfuerzo percibido, completada, es adicional, motivo de omisión, atípico confirmado |
-| **Comentario**          | autor, sesión _o_ rutina, texto, instante                                                                                                                                                                                                                                                          |
 
 **`fecha de ocurrencia` separada de `iniciada en`.** Todos los indicadores usan la fecha de ocurrencia; la auditoría usa el instante de registro.
 
@@ -165,7 +165,6 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 | **RecordPersonal**       | alumno, ejercicio, tipo (§4.8), valor, sesión que lo produjo, fecha, vigente                                                                                                           |
 | ~~**ScoreRiesgo**~~      | **Derogada (v2.2)** — RF-061 a RF-063 pasan a WON'T ([D11/DD-34](../decisions/design-decisions.md)); no hay estimación de riesgo que persistir                                          |
 | ~~**SegmentoPerfil**~~   | **Derogada (v2.2)** — la descripción de perfil (RF-064) la produce la capa generativa y es efímera; no se persiste ([D11/DD-34](../decisions/design-decisions.md))                       |
-| **EvaluacionComponente** | componente, versión, conjunto de datos, tamaño de la muestra, métricas obtenidas, métricas del criterio de referencia, ejecutada en                                                    |
 
 ### 2.7 Transversales
 
@@ -223,7 +222,7 @@ El modelo soporta el historial completo; RN-18 impone la unicidad. Sin el histor
 
 ### PD-06 — Borrado
 
-**Ninguna entidad referenciada por información histórica se borra físicamente.** Ejercicios, usuarios, plantillas y rutinas se desactivan. La única eliminación real es la anonimización de datos personales en la baja de cuenta (RN-106), que reemplaza los identificadores personales y conserva los registros de entrenamiento desvinculados. Ver D10/CB-38.
+**Ninguna entidad referenciada por información histórica se borra físicamente.** Ejercicios, usuarios, plantillas y rutinas conservan las referencias necesarias. La baja de cuenta y su anonimización están diferidas con RF-006 y RF-105; si vuelven al alcance se incorporarán mediante una migración y reglas específicas.
 
 ### PD-07 — El equipamiento es del gimnasio, no del alumno
 

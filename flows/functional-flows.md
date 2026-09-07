@@ -98,7 +98,7 @@ Los cursos alternativos y de excepción no son un apéndice: son la mayor parte 
 2. Declara sus condiciones físicas, cada una con su **zona corporal** y su **severidad**, o declara expresamente no tener ninguna.
 3. Opcionalmente registra su peso actual y su aptitud.
 4. El sistema comprueba contexto suficiente y genera una rutina completa sobre el **catálogo prescribible del gimnasio** (FL-04).
-5. La rutina queda PROPUESTA y se avisa a su entrenador. La generación del alta **no produce candidato ajustable**: el alumno todavía no solicitó nada que moldear (RN-124). Si quiere intervenir sobre su rutina, la solicita por FL-03.
+5. La rutina queda PROPUESTA y se avisa a su entrenador. La generación del alta no produce candidato ajustable ni admite intervención del alumno; cualquier modificación corresponde al entrenador mediante el flujo de revisión.
 
 **El alumno no declara equipamiento:** el disponible es el inventario de su gimnasio (D4/PD-07).
 

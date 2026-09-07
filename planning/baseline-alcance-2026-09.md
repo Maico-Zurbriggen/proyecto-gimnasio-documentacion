@@ -4,7 +4,7 @@
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | **Versión**              | 4.0                                                                                                                                  |
 | **Fecha**                | 2026-09-01                                                                                                                           |
-| **Estado**               | Propuesta de baseline. Requiere validación del equipo y conversación de alcance con el cliente (§P/PD-01)                            |
+| **Estado**               | Aprobada por el equipo como baseline de implementación de la Etapa 1 (2026-09-02)                                                    |
 | **Reemplaza**            | La clasificación de alcance de [D8](../requirements/functional-requirements.md) v3.3 y el plan de sprints del Acta de Redefinición §5 |
 | **Autoritativo para**    | Alcance de la etapa, trazabilidad de la votación, orden de construcción y deuda documental                                            |
 | **No autoritativo para** | El enunciado de los requisitos (sigue siendo D8), las reglas (D5), el modelo (D4) ni los estados (D6)                                 |

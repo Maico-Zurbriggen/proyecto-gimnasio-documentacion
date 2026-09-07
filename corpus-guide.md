@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 3.0 · **Fecha** 2026-09-01 · **Estado** alineado con el [baseline de alcance de la Etapa 1](planning/baseline-alcance-2026-09.md), el [modelo relacional](architecture/database-relational-model.md) y ADR 0009. Puntos abiertos en D12/§5, entre ellos **I-09**, que afecta al cálculo de capacidad
+**Versión del corpus** 3.1 · **Fecha** 2026-09-02 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md) y ADR 0009. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -17,6 +17,8 @@ La v2.4 aceptó [ADR 0009](decisions/adr/0009-servicio-generativo-online-en-el-p
 1. **Existe una dimensión de alcance separada de la prioridad.** Un requisito puede ser MUST y estar diferido: la prioridad dice cuánto importa al producto, el alcance dice si se construye ahora. D8 v4.0 marca las dos.
 2. **Nada del dominio está implementado.** Los tres repositorios contienen andamiaje. Todo el corpus es diseño, no descripción de software existente.
 3. **Se cerraron tres defectos estructurales del propio corpus:** DD-34 estaba citada por ocho documentos y nunca redactada · dos ADR compartían el número 0004 decidiendo cosas incompatibles · nueve documentos no estaban registrados en el manifiesto, con lo que la validación automática fallaba. Los tres están corregidos.
+
+**La v3.1 confirma la baseline v4.0 y congela la frontera de persistencia de la Etapa 1.** No se crean candidato ajustable, comentarios, sesiones diferidas, desbloqueos, baja anonimizada ni tablas predictivas. Diagnósticos, propuestas, ajustes y récords se incorporan a `app`; generación conserva sólo sus solicitudes, intentos, resultados y validaciones en `ai_integration`. Lo diferido se agregará, si vuelve al alcance, mediante migraciones futuras.
 
 **Y quedan dos preguntas abiertas que condicionan la planificación**, no la documentación: cuánta capacidad de construcción hay realmente (I-09 en D12/§5) y si el Product Owner libera el compromiso sobre la interpretación de lenguaje natural (I-10).
 
@@ -35,7 +37,7 @@ La v2.7 incorpora el [modelo relacional PostgreSQL](architecture/database-relati
 | [D5](domain/business-rules.md)                          | 152 reglas verificables, **cada constante con su origen marcado**                                     | Implementás cualquier cálculo o validación                                     |
 | [D6](domain/lifecycles-and-states.md)                   | 10 ciclos de vida, con las transiciones **imposibles** y su motivo                                    | Implementás una entidad con estado                                             |
 | [D7](flows/functional-flows.md)                         | 21 flujos con cursos normales, alternativos y de excepción                                            | Implementás una funcionalidad completa                                         |
-| [D8](requirements/functional-requirements.md)           | RF-001 a RF-120 con tipo, prioridad y dependencias                                                    | Planificás o estimás                                                           |
+| [D8](requirements/functional-requirements.md)           | RF-001 a RF-122 con tipo, prioridad, alcance y dependencias                                            | Planificás o estimás                                                           |
 | [D9](requirements/non-functional-requirements.md)       | 40 requerimientos, todos con criterio de verificación                                                 | Definís la estrategia de pruebas                                               |
 | [D10](domain/edge-cases.md)                             | 73 casos borde en 10 categorías                                                                       | Antes de dar por terminada cualquier funcionalidad                             |
 | [D11](decisions/design-decisions.md)                    | 33 decisiones con opciones, fundamento y consecuencias                                                | Querés saber por qué algo es así, o pensás cambiarlo                           |
@@ -60,11 +62,11 @@ Son determinísticas, auditables y discutibles con un entrenador real. En genera
 ## Lo que hay que resolver antes de escribir código
 
 1. **Confirmar el tamaño del equipo** (D12/S-01). El cliente escribió "somos 3 personas" y listó 9. Se tomó la lista.
-2. **Conversación de alcance.** 82 requerimientos MUST contra ~504 h de capacidad de construcción (D12/§3) — entre 1,3 y 1,8 veces lo que entra. El orden de recorte está en D12/§4.
+2. **Mantener la baseline aprobada.** Toda ampliación se trata como cambio de alcance y, si requiere persistencia, como una migración futura; no se reservan tablas o columnas ahora.
 3. **Validar las cuatro tablas con un entrenador en ejercicio.** 33 de las 37 constantes del sistema son convenciones de este proyecto, no datos del dominio (D12/§1.1). Si están mal, el sistema funciona y prescribe mal, que es peor que fallar.
 4. **Congelar D4 y D5.** Un error en DD-02, DD-03, DD-04 o DD-26 se paga con un rediseño imposible a mitad del plazo.
 5. **Verificar la fuente del catálogo** (D12/S-09): tiene que traer, o permitir derivar, el equipamiento requerido y las articulaciones exigidas por cada ejercicio. Sin eso, la compatibilidad se cura a mano.
-6. **Verificar que existe una fuente de datos con historial por usuario y por serie** (D12/S-03). De eso depende que el aprendizaje automático predictivo, que es núcleo, tenga sustento.
+6. **Verificar la carga de datos simulados y su marcado inequívoco** para demostrar diagnóstico y adaptación sin confundirlos con actividad real.
 7. **Cerrar los puntos de producto abiertos** de D12/§5.
 8. **Resolver la creación de migraciones** sin ejecutar `migrate dev` sobre Neon Test compartida (D12/I-07).
 9. **Confirmar la operación en el Polo**: contrato LLM, dominio ngrok estable, procesos permanentes y rollback (D12/I-08).
