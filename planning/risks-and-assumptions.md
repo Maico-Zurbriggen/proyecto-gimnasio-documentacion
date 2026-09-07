@@ -53,7 +53,6 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 | Rango de carga registrada                           | 0,00 – 1.000,00 kg                                | RN-55         | `[S]`                                                                       |
 | Umbral de registro atípico                          | 150% del mejor histórico                          | RN-55a        | `[S]`                                                                       |
 | Plazo de corrección de sesión                       | 48 horas                                          | RN-58         | `[F]` análisis inicial                                                      |
-| Plazo de desbloqueo excepcional                     | 24 horas, una vez                                 | RN-58a        | `[S]`                                                                       |
 | Antigüedad máxima de sesión diferida                | 90 días                                           | RN-59         | `[S]`                                                                       |
 | Ponderación primaria / secundaria                   | 1,0 / 0,5                                         | RN-62         | `[F]` análisis inicial                                                      |
 | Tope de repeticiones para estimar carga máxima      | 12                                                | RN-65         | `[S]`                                                                       |

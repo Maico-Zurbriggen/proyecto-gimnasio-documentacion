@@ -24,7 +24,7 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 - Backend autoriza, minimiza el contexto y crea solicitudes idempotentes antes de invocar IA.
 - El cliente del servicio IA se genera o valida desde el OpenAPI versionado por ese repositorio.
 - El backend nunca espera al LLM: la API IA acepta con `202` y frontend consulta estado al backend.
-- IA puede escribir sólo estados y resultados en estructuras de integración; backend es el único que crea entidades de dominio.
+- IA puede escribir sólo estados y resultados en estructuras de integración; backend es el único que crea directamente la rutina `PROPUESTA` después de validar una salida.
 - Entrenamiento y scoring predictivo siguen fuera del camino de las peticiones.
 
 ## Fallos y seguridad

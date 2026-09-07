@@ -1,6 +1,6 @@
 # Modelo relacional de PostgreSQL
 
-**Estado:** propuesto para revisión · **Fecha:** 2026-09-01
+**Estado:** aprobado para la migración inicial · **Fecha:** 2026-09-02
 
 ## Alcance y autoridad
 
@@ -23,7 +23,7 @@ El backend es dueño de Prisma, del esquema y de todas las migraciones. El servi
 
 ### Distribución física por esquema
 
-- `app` contiene las 40 tablas transaccionales de las secciones 1 a 6 y `routine_candidate_generations`, que asocia un candidato del dominio con una solicitud técnica sin exponer el candidato al servicio IA: 41 tablas en total.
+- `app` contiene las 37 tablas transaccionales de las secciones 1 a 6 y las cinco tablas de adaptación y evidencia de la sección 8: 42 tablas en total.
 - `ai_integration` contiene únicamente `ai_generation_requests`, `ai_generation_attempts`, `ai_generation_results` y `ai_result_validations`.
 - Backend y el rol de migraciones operan sobre ambos esquemas. El servicio IA recibe permisos mínimos sólo sobre las tablas necesarias de `ai_integration` y ningún permiso sobre `app`.
 
@@ -42,9 +42,7 @@ erDiagram
     STUDENT_PROFILES ||--o{ ROUTINES : receives
     ROUTINES ||--o{ ROUTINE_VERSIONS : versions
     ROUTINE_VERSIONS ||--o{ TRAINING_SESSIONS : freezes
-    STUDENT_PROFILES ||--o{ ROUTINE_CANDIDATES : requests
-    ROUTINE_CANDIDATES ||--o{ ROUTINE_CANDIDATE_GENERATIONS : regenerates
-    AI_GENERATION_REQUESTS ||--o{ ROUTINE_CANDIDATE_GENERATIONS : feeds
+    AI_GENERATION_RESULTS o|--o| ROUTINES : originates
     AI_GENERATION_REQUESTS ||--o{ AI_GENERATION_ATTEMPTS : attempts
     AI_GENERATION_ATTEMPTS ||--o| AI_GENERATION_RESULTS : produces
     USERS ||--o{ NOTICES : receives
@@ -149,7 +147,6 @@ erDiagram
         string experience_level
         int available_days_per_week
         string membership_state
-        string activity_level
     }
     TRAINER_PROFILES {
         uuid user_id PK,FK
@@ -293,7 +290,7 @@ Restricciones principales:
 - `PESO_CORPORAL` se carga como equipamiento de referencia y se considera siempre presente.
 - Un ejercicio no se borra: pasa a `DESACTIVADO` y permanece referenciable por el historial.
 
-## 4. Plantillas, candidatos y rutinas
+## 4. Plantillas y rutinas
 
 ```mermaid
 erDiagram
@@ -328,22 +325,11 @@ erDiagram
         int rest_seconds
         boolean warmup
     }
-    ROUTINE_CANDIDATES {
-        uuid id PK
-        uuid student_id FK
-        uuid requested_by_user_id FK
-        string technical_status
-        json current_structure
-        int regeneration_count
-        datetime last_activity_at
-        datetime expires_at
-        datetime confirmed_at
-    }
     ROUTINES {
         uuid id PK
         uuid student_id FK
         uuid source_template_id FK
-        uuid source_candidate_id FK
+        uuid source_generation_result_id FK
         string routine_type
         int target_weekly_frequency
         string state
@@ -399,7 +385,6 @@ erDiagram
     ROUTINE_TEMPLATES ||--|{ TEMPLATE_DAYS : contains
     TEMPLATE_DAYS ||--|{ TEMPLATE_EXERCISES : contains
     TEMPLATE_EXERCISES ||--|{ TEMPLATE_SETS : prescribes
-    ROUTINE_CANDIDATES o|--o| ROUTINES : confirms_into
     ROUTINE_TEMPLATES o|--o{ ROUTINES : originates
     ROUTINES ||--o{ ROUTINE_REVIEWS : receives
     ROUTINES ||--|{ ROUTINE_VERSIONS : versions
@@ -409,16 +394,13 @@ erDiagram
     ROUTINE_VERSIONS ||--o{ ROUTINE_REVIEWS : reviewed_as
 ```
 
-`routine_candidates` es almacenamiento técnico temporal, no una rutina ni un nuevo estado de `routines`. En la primera entrega sólo representa candidatos generados por IA: los presets son alcance opcional y no agregan tablas ni columnas hasta que se decida implementarlos. Conserva el snapshot ajustable para recuperar el flujo y reconstruir diferencias. Al confirmar, el backend crea en una transacción `routines`, `routine_versions`, días, ejercicios y series.
-
-Un candidato usa los estados técnicos `ACTIVO`, `CONFIRMADO` y `ABANDONADO`. Mientras está activo expira después de 24 horas sin actividad; cada ajuste o regeneración actualiza `last_activity_at` y `expires_at`. Al confirmarlo se conservan identificador, solicitante, solicitudes y resultados generativos relacionados, cantidad de regeneraciones e instantes. La estructura final vive únicamente en las tablas relacionales de la rutina.
+Una salida generativa que supera la validación del backend crea directamente, en una transacción, una rutina `PROPUESTA`, su primera versión, días, ejercicios y series. No existe una entidad candidata ni un estado intermedio ajustable en la Etapa 1. `routines.source_generation_result_id` conserva la procedencia técnica del resultado aceptado; para una rutina originada en plantilla se utiliza `source_template_id`.
 
 Restricciones principales:
 
 - Orden único dentro de cada plantilla, día, versión y ejercicio.
 - Una plantilla debe pertenecer al mismo gimnasio que su autor.
-- `routine_candidates.regeneration_count BETWEEN 0 AND 3`.
-- `routine_candidates.expires_at = last_activity_at + interval '24 hours'` mientras el candidato esté `ACTIVO`.
+- Una rutina informa exactamente una fuente coherente con su origen: `source_template_id` para `PLANTILLA_ENTRENADOR` o `source_generation_result_id` para `GENERADA`.
 - Índices únicos parciales separados para una rutina `PROPUESTA` y una `VIGENTE` por alumno.
 - `UNIQUE (routine_id, version_number)` e índice único parcial en `routine_versions (routine_id) WHERE current`.
 - Una revisión favorable sólo puede crear o activar una versión si el revisor tiene una asignación vigente con el alumno.
@@ -447,9 +429,7 @@ erDiagram
         datetime started_at
         datetime completed_at
         date occurred_on
-        boolean deferred
         boolean simulated
-        datetime unlocked_until
     }
     SESSION_SET_RECORDS {
         uuid id PK
@@ -469,30 +449,11 @@ erDiagram
         string omission_reason
         boolean atypical_confirmed
     }
-    SESSION_UNLOCKS {
-        uuid id PK
-        uuid session_id FK
-        uuid trainer_id FK
-        string reason
-        datetime unlocked_at
-        datetime expires_at
-    }
-    COMMENTS {
-        uuid id PK
-        uuid author_user_id FK
-        uuid session_id FK
-        uuid routine_id FK
-        string text
-        datetime created_at
-    }
 
     ROUTINES ||--o{ TRAINING_SESSIONS : used_in
     ROUTINE_VERSIONS ||--o{ TRAINING_SESSIONS : freezes
     ROUTINE_DAYS ||--o{ TRAINING_SESSIONS : executes
     TRAINING_SESSIONS ||--|{ SESSION_SET_RECORDS : records
-    TRAINING_SESSIONS ||--o| SESSION_UNLOCKS : may_unlock_once
-    TRAINING_SESSIONS o|--o{ COMMENTS : receives
-    ROUTINES o|--o{ COMMENTS : receives
 ```
 
 Al iniciar una sesión se crean los `session_set_records` copiando la prescripción vigente. Los campos prescriptos y ejecutados permanecen juntos para que el historial no dependa de cambios posteriores.
@@ -501,9 +462,7 @@ Restricciones principales:
 
 - Índice único parcial en `training_sessions (student_id) WHERE state = 'EN_CURSO'`.
 - `UNIQUE (session_id, position)` en registros de serie.
-- `UNIQUE (session_id)` en `session_unlocks`: una sesión sólo se desbloquea una vez.
 - `perceived_effort BETWEEN 1 AND 10` cuando se informa.
-- Un comentario referencia exactamente una sesión o una rutina mediante un `CHECK` exclusivo.
 - La prescripción copiada en una sesión no se actualiza después de crearla.
 
 ## 6. Avisos y auditoría transaccional
@@ -545,19 +504,15 @@ Restricciones principales:
 
 - Los tipos de aviso usan la enumeración cerrada de D2.
 - La no repetición, caducidad y reasignación de avisos siguen las reglas de RF-095 y D5.
-- La auditoría cubre las operaciones sensibles enumeradas en RF-097.
+- La auditoría de la Etapa 1 se limita a las operaciones exigidas por RF-038, RF-066, RF-091 y RF-114. RF-097 general queda diferido.
 
 ## 7. Interfaz durable Backend–IA
 
 ```mermaid
 erDiagram
-    ROUTINE_CANDIDATES {
+    ROUTINES {
         uuid id PK
-    }
-    ROUTINE_CANDIDATE_GENERATIONS {
-        uuid candidate_id PK,FK
-        uuid generation_request_id PK,FK
-        int generation_number
+        uuid source_generation_result_id FK
     }
     AI_GENERATION_REQUESTS {
         uuid id PK
@@ -604,14 +559,13 @@ erDiagram
         datetime validated_at
     }
 
-    ROUTINE_CANDIDATES ||--o{ ROUTINE_CANDIDATE_GENERATIONS : requests
-    AI_GENERATION_REQUESTS ||--o| ROUTINE_CANDIDATE_GENERATIONS : belongs_to
     AI_GENERATION_REQUESTS ||--o{ AI_GENERATION_ATTEMPTS : retries
     AI_GENERATION_ATTEMPTS ||--o| AI_GENERATION_RESULTS : produces
     AI_GENERATION_RESULTS ||--o{ AI_RESULT_VALIDATIONS : checked_by_backend
+    AI_GENERATION_RESULTS o|--o| ROUTINES : originates
 ```
 
-`routine_candidate_generations` pertenece físicamente a `app`; las otras cuatro tablas del diagrama pertenecen a `ai_integration`. El backend administra la asociación y el servicio IA no recibe permisos para leer candidatos ni sus identificadores.
+Las cuatro tablas `ai_generation_*` y `ai_result_validations` pertenecen a `ai_integration`; `routines` pertenece a `app`. El backend crea la relación de procedencia sólo después de validar favorablemente un resultado. El servicio IA no recibe permisos sobre rutinas ni aprobaciones.
 
 Estados técnicos aceptados:
 
@@ -632,7 +586,7 @@ Cada intento registra además `contract_version`, hashes de entrada y salida, ve
 
 Reglas de acceso:
 
-- Backend crea solicitudes y candidatos, consulta estados, valida resultados y convierte un candidato confirmado en rutina.
+- Backend crea solicitudes, consulta estados, valida resultados y convierte una salida válida directamente en rutina `PROPUESTA`.
 - IA puede leer y reclamar solicitudes pendientes, actualizar su lease, insertar intentos y resultados y cerrar el estado técnico.
 - IA no recibe permisos sobre `app.users`, perfiles, rutinas, sesiones ni aprobaciones.
 - `minimized_context` no contiene nombre, correo, teléfono, documento, credenciales ni URLs de base.
@@ -644,12 +598,12 @@ Restricciones principales:
 - `UNIQUE (request_id, attempt_number)` y `attempt_number BETWEEN 1 AND 2`.
 - `UNIQUE (attempt_id)` en resultados.
 - Reclamo mediante `SELECT ... FOR UPDATE SKIP LOCKED` y lease recuperable; un reinicio del worker no pierde el trabajo.
-- Sólo un resultado validado favorablemente puede alimentar un candidato visible.
+- Sólo un resultado validado favorablemente puede originar una rutina `PROPUESTA`.
 - Fallos, abandonos y respuestas inválidas se purgan a los 30 días; resultados aceptados conservan lo necesario para reproducibilidad y auditoría.
 
-## 8. Modelo futuro de adaptación y analítica — fuera de esta entrega
+## 8. Adaptación y evidencia — Etapa 1
 
-No se crearán tablas analíticas en esta entrega. El siguiente modelo queda únicamente como dirección futura y no forma parte de las primeras migraciones:
+El diagnóstico y la adaptación son núcleo N1 de la Etapa 1. Sus salidas se persisten en `app` porque forman parte del flujo transaccional que revisa el entrenador; no requieren crear un esquema `analytics`. Los récords personales pertenecen a la banda N2, pero su tabla se incluye en la migración inicial para congelar el modelo confirmado de la etapa.
 
 ```mermaid
 erDiagram
@@ -707,21 +661,11 @@ erDiagram
         date achieved_on
         boolean current
     }
-    COMPONENT_EVALUATIONS {
-        uuid id PK
-        string component
-        string version
-        string dataset_version
-        int sample_size
-        json metrics
-        json baseline_metrics
-        datetime executed_at
-    }
 ```
 
-Las salidas analíticas son append-only: cada cálculo inserta un registro nuevo con versión e instante. El valor vigente es el más reciente; nunca se sobrescribe el pasado.
+Los diagnósticos son append-only: cada cálculo inserta un registro nuevo con versión e instante. Las propuestas conservan su resolución y nunca reescriben el diagnóstico que las originó. Los récords superados se conservan y sólo cambia cuál es el vigente.
 
-`risk_scores` no forma parte del modelo porque RF-061 a RF-063 están en estado WON'T. `profile_segments` tampoco se persiste: RF-064 define una descripción generativa efímera. Avisos y auditoría pertenecen al esquema transaccional `app` y están definidos en la sección 6.
+`risk_scores` no forma parte del modelo porque RF-061 a RF-063 están en estado WON'T. `profile_segments` tampoco se persiste: RF-064 define una descripción generativa efímera. `component_evaluations` no se crea: RF-121 y RF-122 están diferidos y RF-073 se implementa como un conjunto de regresión generativa versionado en el repositorio de IA y ejecutado en CI. Avisos y auditoría pertenecen a `app` y están definidos en la sección 6.
 
 ## 9. Orden de migraciones recomendado
 
@@ -729,18 +673,19 @@ Las salidas analíticas son append-only: cada cálculo inserta un registro nuevo
 2. Gimnasio, invitaciones, usuarios, roles, sesiones de autenticación y consentimientos.
 3. Perfiles, objetivos, condiciones, aptitudes, mediciones y asignaciones.
 4. Inventario, ejercicios y clasificaciones.
-5. Plantillas, candidatos, rutinas, versiones y revisiones.
-6. Sesiones, registros congelados, comentarios y desbloqueos.
+5. Plantillas, rutinas, versiones y revisiones.
+6. Sesiones y registros congelados.
 7. Avisos y auditoría transaccional en `app`.
-8. Interfaz durable `ai_integration`, asociación de candidatos en `app` y permisos mínimos del rol IA.
+8. Diagnósticos, propuestas de adaptación, ajustes y récords personales en `app`.
+9. Interfaz durable `ai_integration`, procedencia de rutinas generadas y permisos mínimos del rol IA.
 
-Diagnósticos, propuestas, récords e indicadores analíticos quedan para una etapa posterior y no crean el esquema `analytics` en estas migraciones.
+Las estructuras diferidas no se reservan: si vuelven al alcance se incorporarán mediante migraciones futuras.
 
 Cada paso se crea como una migración Prisma revisada y comprobada sobre PostgreSQL efímero antes de promoverse a Neon Test.
 
 ## 10. Población inicial en Neon Test
 
-El SQL Editor puede utilizarse para cargar datos de referencia y prueba después de que CI haya aplicado las migraciones. No debe utilizarse para crear manualmente tablas que Prisma desconozca.
+El SQL Editor se utilizará para cargar datos generales después de que CI haya aplicado las migraciones. La estructura pertenece exclusivamente a Prisma: el SQL de carga no crea ni altera tablas, enums, índices o restricciones.
 
 Orden de carga:
 
@@ -751,14 +696,14 @@ Orden de carga:
 5. Usuarios ficticios, asignaciones y perfiles.
 6. Plantillas privadas de entrenadores. No se cargan presets en esta entrega.
 
-Todo script de carga debe ser idempotente (`INSERT ... ON CONFLICT ...`) y versionarse en backend. Neon Producción sólo recibe datos de referencia revisados; nunca se copian usuarios ni datos de Test.
+El backend versiona un script idempotente `seed-reference.sql` (`INSERT ... ON CONFLICT ...`) para equipamiento, grupos musculares, articulaciones, catálogo base y sus relaciones. Se ejecuta manualmente desde SQL Editor tanto en Test como en Producción después de cada migración que lo requiera. Los datos ficticios de gimnasio, usuarios y sesiones, si fueran necesarios, viven en otro script exclusivo de Test y nunca se ejecutan en Producción.
 
 ## 11. Decisiones cerradas para la primera entrega
 
 1. Se crean únicamente los esquemas `app` y `ai_integration`; `analytics` queda fuera de esta entrega.
 2. Solicitudes e intentos de IA usan los estados técnicos aceptados en la sección 7.
-3. Un candidato activo vence después de 24 horas sin actividad y cada operación renueva el plazo.
+3. Una salida IA validada crea directamente una rutina `PROPUESTA`; no existen candidato ajustable ni regeneraciones en esta etapa.
 4. Contexto, preferencias y salida usan contratos JSON versionados, sin datos identificatorios.
 5. La autenticación usa sesiones propias; se conservan `auth_sessions` y `password_reset_tokens`.
-6. No se crean tablas analíticas en esta entrega.
-7. Los presets son opcionales: no se modelan ni migran salvo que el cronograma permita incorporarlos posteriormente.
+6. Diagnósticos, propuestas, ajustes y récords se persisten en `app`; no se crea un esquema `analytics`.
+7. Comentarios, sesiones diferidas, desbloqueos, presets y demás estructuras diferidas no se modelan. Si vuelven al alcance se agregarán mediante migraciones futuras.

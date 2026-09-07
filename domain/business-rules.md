@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.2        |
-| **Fecha**      | 2026-09-01 |
+| **Versión**    | 2.3        |
+| **Fecha**      | 2026-09-02 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D3, D4 |
 
@@ -17,13 +17,15 @@
 
 | Regla                                     | Estado en la Etapa 1                                                                                                                                       |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| RN-124 a RN-129 y §5.2 · candidato        | ⏸ El ajuste por el solicitante se difiere con RF-119 y RF-025 ([DD-33](../decisions/design-decisions.md) derogada para esta etapa). El **objeto** candidato subsiste como estado técnico: ver D6/§11 |
+| RN-124 a RN-129 y §5.2 · candidato        | ⏸ El ajuste por el solicitante y el objeto candidato no existen en la Etapa 1. Los identificadores no se reutilizan |
 | RN-32 · publicación de una plantilla como preset | ⏸ Sin sujeto salvo que se implemente RF-021, que es alcance opcional                                                                                   |
 | RN-100 · estimación de riesgo diferida    | ⏸ Sin sujeto desde [DD-34](../decisions/design-decisions.md)                                                                                                |
 | RN-119 a RN-123 · §13 nutricional         | ⏸ Diferidas con RF-012 y RF-075                                                                                                                             |
 | **RN-95b y RN-99 · comportamiento ante fallo generativo** | **✎ Corregidas.** Ya no pueden remitir a los presets                                                                                        |
 
 **Lo que no se toca, y conviene decirlo.** RN-39a (derivación del tipo de rutina), RN-44a a RN-44d (compatibilidad), RN-79a (criterios de diagnóstico) y RN-89a (reglas de ajuste) quedan **intactas**. Son el núcleo determinístico del producto y el recorte no las alcanza. Sus umbrales y magnitudes siguen siendo convenciones del proyecto marcadas `[S]`, discutibles con el cliente y registradas en D12/§1.1.
+
+**Cambios de la v2.3 (baseline v4.0 confirmada).** Se retiran del comportamiento implementable el candidato, la sesión diferida, el desbloqueo excepcional y la baja con anonimización. La auditoría queda acotada y RF-073 se materializa como regresión generativa en repositorio y CI, no como tabla de producción.
 
 ## Marcado de origen
 
@@ -146,27 +148,6 @@ Toda rutina y toda salida de un componente de decisión se valida contra esta ta
 
 **Cobertura mínima de patrones** `[S]`: toda rutina debe incluir, en el conjunto de sus días, al menos un ejercicio de `EMPUJE_HORIZONTAL`, uno de `TRACCION_HORIZONTAL` o `TRACCION_VERTICAL`, uno de `DOMINANTE_RODILLA` y uno de `DOMINANTE_CADERA`. Si el catálogo prescribible del gimnasio no lo permite, se aplica RN-118.
 
-### 5.2 Ajuste del candidato de rutina · RN-125 — ⏸ **diferido en la Etapa 1**
-
-> Esta sección y las reglas RN-124 a RN-129 quedan diferidas junto con RF-119 y RF-025 ([DD-33](../decisions/design-decisions.md), derogada para esta etapa). En la Etapa 1 la generación la origina el entrenador o la incorporación del alumno, y su salida se convierte directamente en rutina PROPUESTA sujeta a revisión. El texto se conserva íntegro: si vuelve la solicitud por el alumno, vuelve con estas reglas ya escritas.
-
-
-Antes de confirmar, el solicitante moldea el candidato. Lo que puede tocar el **alumno** está acotado a lo que el sistema revalida sin reabrir la prescripción: `[S]`
-
-| Admitido                                                                                     | No admitido                                                  |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Sustituir un ejercicio por una **alternativa admisible** del mismo patrón dominante (RN-49a) | Series, repeticiones, descanso y carga sugerida              |
-| Agregar un ejercicio del catálogo prescribible que resulte COMPATIBLE                        | Tipo de rutina                                               |
-| Quitar un ejercicio                                                                          | Frecuencia semanal objetivo                                  |
-| Reordenar los ejercicios dentro de un día                                                    | Reordenar los días: su orden compone la estructura de RN-39a |
-| Escribir la `nota` de un ejercicio                                                           | El estado de compatibilidad y su motivo                      |
-
-Lo no admitido no es inaccesible: o es **parámetro**, y se cambia volviendo al paso 2 de FL-04 y regenerando, o es **prescripción**, y entonces la decide el entrenador. Un pedido numérico concreto del alumno viaja como `Comentario` sobre la propuesta y se resuelve en FL-02.
-
-**Piso de la operación.** Quitar ejercicios no puede dejar el día por debajo del mínimo de RN-39a ni la rutina sin la cobertura mínima de patrones. El rechazo enuncia el mínimo (RN-126).
-
-**Cuando el solicitante es el entrenador** esta restricción no se aplica: ya tiene escritura sobre las rutinas de sus alumnos asignados (D3) y su ajuste es el de FL-02/paso 2.
-
 ## 6. Compatibilidad
 
 | #          | Regla                                                                                                                                                                                                                                                                                          | Origen                                |
@@ -188,7 +169,7 @@ Lo no admitido no es inaccesible: o es **parámetro**, y se cambia volviendo al 
 | #          | Regla                                                                                                                                                                                                                                                                          | Origen                  |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
 | **RN-50**  | Un alumno tiene como máximo una sesión EN_CURSO                                                                                                                                                                                                                                | `[F]` RF-027            |
-| **RN-51**  | Una sesión **iniciada en tiempo real** sólo puede abrirse sobre un día de la rutina VIGENTE del alumno. La sesión diferida se rige por RN-59                                                                                                                                   | `[F]` RF-027            |
+| **RN-51**  | Una sesión sólo puede abrirse sobre un día de la rutina VIGENTE del alumno                                                                                                                                                                                        | `[F]` RF-027            |
 | **RN-52**  | Al iniciarse, la sesión copia la prescripción vigente de ese día en sus propios registros de serie. Esa copia es inmutable                                                                                                                                                     | `[F]` RF-028            |
 | **RN-53**  | Una sesión EN_CURSO sin actividad durante **8 horas** se cierra automáticamente como ABANDONADA                                                                                                                                                                                | `[F]` A §4.2            |
 | **RN-54**  | Una serie sólo cuenta para el volumen si está completada y no es de calentamiento                                                                                                                                                                                              | `[F]` RF-040            |
@@ -197,8 +178,8 @@ Lo no admitido no es inaccesible: o es **parámetro**, y se cambia volviendo al 
 | **RN-56**  | Una serie sustituida se imputa al ejercicio ejecutado a efectos de volumen y cuenta como cumplida a efectos de cumplimiento de series, marcada como sustituida                                                                                                                 | `[I]` de DD-19          |
 | **RN-57**  | Una serie omitida no cuenta para volumen ni como cumplida, y admite un motivo opcional                                                                                                                                                                                         | `[I]`                   |
 | **RN-58**  | Una sesión completada puede corregirse dentro de las **48 horas** posteriores a su finalización. Después queda BLOQUEADA                                                                                                                                                       | `[F]` A §4.2            |
-| **RN-58a** | **Desbloqueo excepcional.** A pedido del alumno, el entrenador con asignación vigente puede reabrir una sesión BLOQUEADA por **24 horas**, una sola vez por sesión, dejando registro de auditoría del motivo. Es la única vía de corregir un error detectado tarde             | `[S]` mecanismo y plazo |
-| **RN-59**  | Una sesión diferida se registra con la fecha en que ocurrió, que no puede ser futura ni anterior a los **90 días**. Se imputa a la rutina y a la versión que estaban vigentes en esa fecha, **aunque hoy estén archivadas**                                                    | `[S]` plazo             |
+| **RN-58a** | ⏸ Diferida con RF-117. No existe desbloqueo excepcional en la Etapa 1                                                                                                                                                                                          | `[F]` RF-117            |
+| **RN-59**  | ⏸ Diferida con RF-034. La Etapa 1 no admite registrar una sesión pasada                                                                                                                                                                                        | `[F]` RF-034            |
 | **RN-60**  | Un mismo envío de una serie, identificado por sesión y orden, produce un único registro aunque se reciba más de una vez                                                                                                                                                        | `[I]` de RI-10          |
 | **RN-61**  | El registro de una serie no puede modificar la prescripción congelada de esa serie                                                                                                                                                                                             | `[I]` de PD-02          |
 
@@ -322,8 +303,8 @@ Es el núcleo del producto: convierte un diagnóstico en una propuesta concreta.
 | **RN-99**   | La indisponibilidad de API IA, ngrok o LLM no produce un error técnico visible ni degrada otras funciones. La generación queda temporalmente deshabilitada; las plantillas privadas y la creación manual por entrenadores continúan operativas. ✎ v2.2: **los presets dejan de ser la contingencia** (RF-021, alcance opcional). Si el gimnasio no tiene ninguna plantilla cargada, no queda vía de prescripción — [DD-35](../decisions/design-decisions.md), D12/R-17                                                                                                                                                                                                     | `[F]` RF-058       |
 | **RN-101**  | La estimación se presenta siempre junto a su fecha de cálculo y sus factores principales, y nunca al alumno evaluado                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `[F]` RF-062       |
 | **RN-102**  | Las recomendaciones de sustitución aplican los mismos filtros que §6 y se limitan al catálogo prescribible                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `[I]`              |
-| **RN-103**  | Todo componente de recomendación o estimación se evalúa contra un criterio de referencia simple, y ambas métricas se conservan                                                                                                                                                                                                                                                                                                                                                                                                                                       | `[F]` RF-073       |
-| **RN-103a** | **Dónde decide un componente aprendido y dónde una regla.** El componente generativo interpreta lenguaje natural, selecciona el tipo y construye el candidato inicial. RN-39a y §6 son barreras determinísticas de validación. El diagnóstico (§9.1) y los ajustes (§9.2) permanecen determinísticos; los componentes aprendidos actúan en alternativas, riesgo y segmentación. Cada capacidad se presenta según su naturaleza real                                                                                          | `[F]` ADR-0009     |
+| **RN-103**  | Los cambios de prompt, modelo o parámetros se evalúan contra el conjunto de regresión generativa versionado. Los resultados se conservan como artefactos de CI; no originan una tabla de producción                                                                                                                                                                                                                                                                                                                                                                   | `[F]` RF-073       |
+| **RN-103a** | **Dónde decide el componente generativo y dónde una regla.** El LLM interpreta lenguaje natural, construye la salida inicial y ordena alternativas sobre un subconjunto prefiltrado. RN-39a y §6 son barreras determinísticas; el diagnóstico (§9.1) y los ajustes (§9.2) también permanecen determinísticos                                                                                                                                                                                                                                                            | `[F]` ADR-0009     |
 
 ## 11. Avisos
 
@@ -340,9 +321,9 @@ Es el núcleo del producto: convierte un diagnóstico en una propuesta concreta.
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | **RN-104** | El tratamiento de condiciones físicas, aptitud y mediciones corporales requiere consentimiento explícito, separado del alta, y se conserva el texto aceptado                                                                                                                      | `[F]` A §14.2                 |
 | **RN-105** | El sistema no solicita documento de identidad, domicilio ni ningún dato personal que no condicione la prescripción o el cálculo de indicadores                                                                                                                                    | `[F]` A §14.2                 |
-| **RN-106** | La baja de cuenta anonimiza los datos personales dentro de **7 días**. Las sesiones y series se conservan desvinculadas de la identidad, para no invalidar la analítica agregada                                                                                                  | `[F]` A §14.2; `[S]` el plazo |
+| **RN-106** | ⏸ Diferida con RF-006 y RF-105. La Etapa 1 no implementa baja ni anonimización de cuenta                                                                                                                                                                                   | `[F]` RF-006, RF-105          |
 | **RN-107** | Todo registro simulado está marcado de forma inequívoca y se excluye de toda analítica presentada como real                                                                                                                                                                       | `[F]` RF-071                  |
-| **RN-108** | Se registra en auditoría: emisión y revocación de invitaciones, cambios de rol, altas y bajas de asignación, cambios del inventario, puesta en vigencia y modificación de rutinas, resolución de propuestas, desbloqueo de sesiones, cambios de membresía y curación del catálogo | `[F]` RF-097                  |
+| **RN-108** | En la Etapa 1 se registra la trazabilidad puntual de modificaciones de rutina (RF-038), altas y bajas de asignación (RF-066), resoluciones de propuestas (RF-091) y cambios del inventario (RF-114). La auditoría general de RF-097 queda diferida                                                                 | `[F]` baseline v4.0           |
 | **RN-109** | Los registros de auditoría no contienen credenciales ni contraseñas                                                                                                                                                                                                               | `[F]` A §14.2                 |
 | **RN-110** | Los instantes se almacenan en tiempo universal coordinado y se presentan en la zona horaria del gimnasio. La semana va de lunes a domingo                                                                                                                                         | `[F]` A §5.5                  |
 

@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.3        |
-| **Fecha**      | 2026-09-01 |
+| **Versión**    | 2.4        |
+| **Fecha**      | 2026-09-02 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D4, D5 |
 
@@ -15,6 +15,8 @@
 - **La sesión conserva sus cuatro transiciones** —iniciar, reanudar, cerrar por inactividad, finalizar—, ahora reunidas bajo un único requisito (RF-027 absorbe RF-032 y RF-033). El autómata de §4 es la especificación de ese requisito y no se toca.
 - **La sesión pierde el desbloqueo por el entrenador** (RF-117, diferido con RF-034): el plazo de corrección vuelve a ser absoluto, con el coste que CB-70 describía.
 - **`RutinaAsignada.origen` pierde `PRESET_ELEGIDO_POR_ALUMNO`**: quedan `PLANTILLA_ENTRENADOR` y `GENERADA`.
+
+**Cambios de la v2.4 (baseline v4.0 confirmada).** Se retiran del detalle el candidato técnico, el desbloqueo de sesiones y la baja de usuario. Las solicitudes e intentos generativos conservan sus estados técnicos; una salida validada origina directamente una rutina `PROPUESTA`.
 
 **Cambios de la v1.0:** ciclo de la invitación · estado `DESCARTADA` de rutina, que faltaba y dejaba indefinido un caso frecuente · desbloqueo excepcional de sesión · aclaración de que una versión nueva no transiciona la rutina · corrección del diagrama de rutina, cuya flecha de rechazo apuntaba al estado equivocado.
 
@@ -117,10 +119,10 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 ```
    inicio                 finalización              48 h
  ──────────▶ EN_CURSO ──────────────▶ COMPLETADA ────────▶ BLOQUEADA
-                 │                         ▲                   │
-                 │ 8 h sin actividad       │ desbloqueo del    │
-                 ▼                         │ entrenador, 24 h  │
-            ABANDONADA (terminal)          └───────────────────┘
+                 │
+                 │ 8 h sin actividad
+                 ▼
+            ABANDONADA (terminal)
 ```
 
 | Estado     | Significado                                                     | Cuenta para indicadores              |
@@ -130,16 +132,13 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 | ABANDONADA | Cerrada por inactividad. Conserva lo registrado                 | No, salvo como señal de interrupción |
 | BLOQUEADA  | Completada y fuera del plazo de corrección                      | Sí                                   |
 
-**Desbloqueo excepcional.** A pedido del alumno, el entrenador con asignación vigente puede devolver una sesión BLOQUEADA al estado COMPLETADA por 24 horas, **una sola vez por sesión**, con registro de auditoría del motivo (RN-58a). Es la única vía de corregir un error detectado tarde; sin ella un error de tipeo contaminaba de forma permanente la carga máxima estimada, el diagnóstico y toda la cadena de adaptación.
-
 **Transiciones imposibles**
 
 | Transición                                                          | Por qué                                                                                                        |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| ABANDONADA → EN_CURSO                                               | Reanudar una sesión de hace días falsearía la fecha de ocurrencia. Se registra una sesión diferida             |
+| ABANDONADA → EN_CURSO                                               | Es un estado terminal; la Etapa 1 no admite registrar sesiones diferidas                                      |
 | COMPLETADA → EN_CURSO                                               | El estado en curso implica una prescripción abierta; corregir no es reabrir                                    |
-| BLOQUEADA → COMPLETADA sin intervención registrada de un entrenador | El plazo de corrección es lo que hace estables los indicadores; la excepción existe pero es nominal y auditada |
-| Desbloquear dos veces la misma sesión                               | RN-58a. Sin el límite, el plazo de corrección no existiría                                                     |
+| BLOQUEADA → COMPLETADA                                              | RF-117 está diferido; el plazo de corrección de 48 horas es absoluto                                           |
 | Dos sesiones EN_CURSO del mismo alumno                              | RN-50                                                                                                          |
 | Iniciar una sesión en tiempo real sobre una rutina no VIGENTE       | RN-51                                                                                                          |
 | Modificar la prescripción congelada, en cualquier estado            | RN-61                                                                                                          |
@@ -212,19 +211,14 @@ No es un ciclo de vida sino una **clasificación recalculada** en cada verificac
 
 ```
    ACTIVO ⇄ SUSPENDIDO
-      │           │
-      └─────┬─────┘
-            ▼
-      DADO_DE_BAJA (terminal, con anonimización)
 ```
 
-| Estado       | Puede autenticarse | Sus datos                                                                                 |
-| ------------ | ------------------ | ----------------------------------------------------------------------------------------- |
-| ACTIVO       | Sí                 | Íntegros                                                                                  |
-| SUSPENDIDO   | No                 | Íntegros. Las asignaciones no se alteran: la suspensión es reversible                     |
-| DADO_DE_BAJA | No                 | Anonimizados dentro de 7 días. Sesiones y series conservadas sin vínculo con la identidad |
+| Estado     | Puede autenticarse | Sus datos                                                             |
+| ---------- | ------------------ | --------------------------------------------------------------------- |
+| ACTIVO     | Sí                 | Íntegros                                                              |
+| SUSPENDIDO | No                 | Íntegros. Las asignaciones no se alteran: la suspensión es reversible |
 
-**Transiciones imposibles:** DADO_DE_BAJA → cualquier otro estado · suspender destruyendo asignaciones · dar de baja sin conservar los registros de entrenamiento desvinculados (RN-106) · suspender o dar de baja al último administrador activo del gimnasio (RN-03a, RI-23).
+**Transiciones imposibles:** suspender destruyendo asignaciones · suspender al último administrador activo del gimnasio (RN-03a, RI-23). La baja y anonimización de cuenta están diferidas con RF-006 y RF-105; sus estados se agregarán si vuelven al alcance.
 
 ## 10. Entidades sin ciclo de vida
 
@@ -234,7 +228,7 @@ No es un ciclo de vida sino una **clasificación recalculada** en cada verificac
 
 **Récord personal.** Tiene un indicador de vigencia, no estados: un récord deja de ser vigente cuando otro lo supera, o cuando el recálculo de RN-71 lo desplaza. Los superados se conservan para poder dibujar la progresión.
 
-## 11. Solicitud, intento y candidato generativo
+## 11. Solicitud e intento generativos
 
 ### Solicitud generativa
 
@@ -265,8 +259,4 @@ PENDIENTE → PROCESANDO ─┬→ COMPLETADO
                         └→ SALIDA_INVALIDA
 ```
 
-Cada solicitud admite como máximo dos intentos. Los cuatro estados de salida son terminales para el intento; tras el primer fallo la solicitud vuelve a `PENDIENTE`, y tras el segundo pasa a `NO_DISPONIBLE`.
-
-### Candidato técnico
-
-`ACTIVO` pasa a `CONFIRMADO` cuando el backend crea la rutina `PROPUESTA`, o a `ABANDONADO` por decisión del solicitante o después de 24 horas sin actividad. Cada ajuste o regeneración renueva ese plazo. Estos valores son estados técnicos del objeto temporal y no agregan estados al ciclo de `RutinaAsignada`.
+Cada solicitud admite como máximo dos intentos. Los cuatro estados de salida son terminales para el intento; tras el primer fallo la solicitud vuelve a `PENDIENTE`, y tras el segundo pasa a `NO_DISPONIBLE`. Una salida completada que supera la validación del backend origina directamente una rutina `PROPUESTA`; no existe un candidato persistido intermedio.

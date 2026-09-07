@@ -10,7 +10,7 @@ La primera entrega generativa usa un único LLM para interpretar lenguaje natura
 >
 > **Y una consecuencia que cambia el peso de este componente:** al diferirse los presets (RF-021) y no existir un generador determinístico, `generarRutina` **es la única vía automática de prescripción del sistema**. Su indisponibilidad no degrada una funcionalidad accesoria: deja al producto sin forma de dar un plan a un alumno nuevo, salvo que un entrenador arme una plantilla a mano. Ver [D11/DD-35](../decisions/design-decisions.md) y D12/R-17.
 
-El LLM siempre produce una salida candidata. El backend conserva autorización y reglas de negocio: minimiza el contexto, controla catálogo, compatibilidad, rangos y permisos, y convierte una salida válida en candidato. Un entrenador debe aprobar toda rutina antes de que llegue al alumno. El modelo no activa rutinas ni emite consejo médico.
+El LLM produce una salida estructurada que nunca es vigente por sí misma. El backend conserva autorización y reglas de negocio: minimiza el contexto, controla catálogo, compatibilidad, rangos y permisos, y convierte una salida válida directamente en rutina `PROPUESTA`. Un entrenador debe aprobarla antes de que llegue al alumno. El modelo no activa rutinas ni emite consejo médico.
 
 ## Topología
 
