@@ -11,20 +11,7 @@ Compartir repositorio no permite que un componente use la frontera del otro ni q
 
 ## Servicio generativo
 
-```text
-Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
-                              |
-                              v
-                         Neon PostgreSQL
-```
-
-- Expone HTTP versionado para backend; nunca para frontend.
-- Acepta una solicitud idempotente con `202` y la delega a un worker durable.
-- Orquesta el LLM mediante un conector privado y valida el esquema de su respuesta.
-- Usa únicamente contexto minimizado y estructuras de integración autorizadas.
-- Escribe estados y resultados técnicos; no crea, aprueba ni activa rutinas.
-- Una única instancia atiende inicialmente test y producción con credenciales y conexiones aisladas.
-- No existe modo fake ejecutable; los tests sí pueden usar dobles internos.
+Límite ejecutable del mismo repositorio: API Python + worker en el Polo detrás de ngrok. Diseño, flujo y ambientes canónicos en [generative-ai-integration.md](generative-ai-integration.md); contratos por prompt en [prompts-catalogo.md](prompts-catalogo.md). Regla de frontera (vale para ambos límites): compartir repositorio no permite usar la frontera del otro — el trabajo batch nunca entra en una petición, y el servicio online nunca escribe entidades de dominio.
 
 ## Analítica batch
 

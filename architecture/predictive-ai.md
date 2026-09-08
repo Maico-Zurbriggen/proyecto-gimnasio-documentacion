@@ -102,9 +102,11 @@ Sobre ambos: split train/validation/test respetando el orden temporal (nunca ale
 
 ## 6. Datos y calidad
 
+Invariantes del repositorio IA (point-in-time, falta ≠ cero, simulados identificados, rol sin acceso a identidad): [analytics-engine.md](analytics-engine.md). Lo específico de estos objetivos:
+
 - **Cantidad y representatividad**: dependen de S-03 (`NO VERIFICADO`). Si no hay historial real suficiente al momento de entrenar, se usa exclusivamente el criterio de referencia para cada objetivo y se declara explícitamente que el componente aprendido no está activo (RNF-12, DD-15: la ausencia del proceso no degrada el resto del sistema).
-- **Datos simulados** (RF-071): identificados sin ambigüedad y excluidos de toda analítica presentada como real (DD-20, RNF-28). Un modelo entrenado sólo con datos simulados no debe presentarse como si generalizara a comportamiento real; se documenta esa limitación junto al resultado.
-- **Datos faltantes**: ausencia de dato no equivale a cero (invariante ya declarada en [analytics-engine.md](analytics-engine.md)) — un alumno sin esfuerzo percibido registrado no cuenta como esfuerzo percibido 0, cuenta como no evaluado en ese criterio (RN-81, precedente ya establecido).
+- **Datos simulados** (RF-071): un modelo entrenado sólo con datos simulados no debe presentarse como si generalizara a comportamiento real; se documenta esa limitación junto al resultado (DD-20, RNF-28).
+- **Datos faltantes**: un alumno sin esfuerzo percibido registrado no cuenta como esfuerzo percibido 0, cuenta como no evaluado en ese criterio (RN-81, precedente ya establecido).
 - **Privacidad**: las features usadas son indicadores agregados y de comportamiento (adherencia, volumen, frecuencia, e1RM), no descripciones libres de condiciones físicas. El motor batch no debe recibir campos de texto libre con datos de salud como feature de un modelo — sólo los campos tipados que D4/D5 ya definen como calculables.
 
 ### 6.1 Datasets externos evaluados para entrenar

@@ -9,6 +9,8 @@
 
 Este documento resume qué resuelve la IA del sistema, cómo funciona a grandes rasgos y qué nos comprometemos a entregar. **El alcance comprometido es un piso: puede ensancharse hacia el final del proyecto.**
 
+> **Vigencia (2026-09-08, baseline v4.1):** el compromiso funcional (§1–§3) sigue vigente. Quedaron desactualizados dos detalles de implementación de §4: el servicio corre como proceso Python propio en el Polo con worker durable ([ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md)), no dentro del backend; y plantillas/presets son alcance opcional `COULD` (RF-019 a RF-021), por lo que ante indisponibilidad no hay vía manual de contingencia ([DD-35](../decisions/design-decisions.md)). Ver §3.1.
+
 ---
 
 ## 1. Qué resuelve la IA

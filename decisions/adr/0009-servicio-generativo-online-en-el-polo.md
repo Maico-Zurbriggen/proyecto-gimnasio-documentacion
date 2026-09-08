@@ -46,7 +46,7 @@ React -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 3. El backend llama al servicio Python, que acepta con `202` sin esperar al LLM.
 4. Un worker reclama la solicitud persistida, llama al LLM y escribe el resultado en estructuras de integración designadas.
 5. El frontend consulta el estado exclusivamente al backend.
-6. El backend valida esquema, catálogo, compatibilidad y rangos; sólo entonces crea un candidato.
+6. El backend valida esquema, catálogo, compatibilidad y rangos; sólo entonces persiste la rutina PROPUESTA (Etapa 1, baseline v4.1: sin candidato ajustable intermedio).
 7. Ninguna rutina entra en vigencia sin revisión favorable de un entrenador.
 
 Cada intento puede durar como máximo 120 segundos. Una salida inválida o un fallo técnico admite un único reintento. Tras el segundo fallo la generación queda `NO_DISPONIBLE`; no se construye una rutina determinística. El resto del sistema y la creación manual por entrenadores continúan. Los presets quedan como alcance opcional y no son una dependencia de esta contingencia.

@@ -7,8 +7,7 @@
 La primera entrega generativa usa un único LLM para interpretar lenguaje natural, proponer el tipo y contenido de una rutina, explicar el criterio y ofrecer alternativas. La predicción de cargas y progreso futuro pertenece al pipeline analítico posterior.
 
 > **Alcance de la Etapa 1** ([baseline](../planning/baseline-alcance-2026-09.md)). Se construyen `interpretarPedido` (RF-053, banda N2, conservado por compromiso ante el Product Owner pese a obtener 3 votos de 8), `generarRutina` (RF-054, RF-087), `explicarCriterios` (RF-055) y `sugerirAlternativas` (RF-059, que absorbe la exclusión dura de RF-060). Quedan diferidos `resumirProgreso` (RF-056) y, en banda N3, `describirPerfil` (RF-064).
->
-> **Y una consecuencia que cambia el peso de este componente:** al diferirse los presets (RF-021) y no existir un generador determinístico, `generarRutina` **es la única vía automática de prescripción del sistema**. Su indisponibilidad no degrada una funcionalidad accesoria: deja al producto sin forma de dar un plan a un alumno nuevo, salvo que un entrenador arme una plantilla a mano. Ver [D11/DD-35](../decisions/design-decisions.md) y D12/R-17.
+> **Y una consecuencia que cambia el peso de este componente:** al diferirse plantillas y presets (RF-019 a RF-021 como `COULD`) y no existir un generador determinístico, `generarRutina` **es la única vía automática de prescripción del sistema**. Su indisponibilidad deja temporalmente deshabilitada la generación de planes hasta que el servicio se restablezca. Ver [D11/DD-35](../decisions/design-decisions.md).
 
 El LLM produce una salida estructurada que nunca es vigente por sí misma. El backend conserva autorización y reglas de negocio: minimiza el contexto, controla catálogo, compatibilidad, rangos y permisos, y convierte una salida válida directamente en rutina `PROPUESTA`. Un entrenador debe aprobarla antes de que llegue al alumno. El modelo no activa rutinas ni emite consejo médico.
 
@@ -34,10 +33,9 @@ React/Vercel -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 4. Cada intento tiene un límite configurable inicial de 120 segundos.
 5. Una respuesta inválida o un fallo técnico admite un único reintento.
 6. IA registra resultado, modelo, configuración, contrato e instante.
-7. Backend valida la salida y, si es válida, presenta el candidato.
-8. Al confirmarse, la rutina queda PROPUESTA y pasa al entrenador.
+7. Backend valida la salida y, si es válida, la persiste directamente como rutina PROPUESTA, que pasa al entrenador para revisión (sin candidato ajustable intermedio en la Etapa 1).
 
-Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El resto del sistema, las plantillas privadas y la creación manual por entrenadores permanecen operativos. Los presets sólo existirán si alcanza el tiempo para implementar RF-021.
+Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El resto del sistema permanece operativo. Presets y plantillas quedan unificados como alcance opcional (`COULD`, RF-019 a RF-021).
 
 ## Datos y aislamiento
 

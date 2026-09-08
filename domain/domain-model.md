@@ -16,8 +16,8 @@
 | Elemento                                                              | Estado en la Etapa 1                                                                                    |
 | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `Comentario`                                                          | ⏸ No se crea. Diferida con RF-039 (1 voto de 8)                                                          |
-| `PlantillaRutina.publicada`                                           | ⏸ No se crea en la Etapa 1. RF-021 es alcance opcional (COULD, 1 voto de 8): la plantilla existe, la publicación sólo se agrega si se implementa |
-| `RutinaAsignada.origen`                                               | ✎ Se reduce a `PLANTILLA_ENTRENADOR` y `GENERADA`. `PRESET_ELEGIDO_POR_ALUMNO` sólo existe si se implementa RF-021 (ver §2.4) |
+| Familia `PlantillaRutina` (`DiaPlantilla`, `EjercicioPlantilla`, `SeriePrescriptaPlantilla`) | ⏸ No se crea en la Etapa 1. Plantillas y presets (RF-019 a RF-021) son alcance opcional (`COULD ⏸ DIFERIDO`): la prescripción opera directamente con `RutinaAsignada` generada por IA |
+| `RutinaAsignada.origen`                                               | ✎ En la Etapa 1 es `GENERADA`. `PLANTILLA_ENTRENADOR` y `PRESET_ELEGIDO_POR_ALUMNO` sólo existen si se implementa el alcance opcional COULD (ver §2.4) |
 | `PerfilAlumno.nivel de actividad`                                     | ⏸ No se crea. Sólo alimentaba la estimación energética de RF-012 (2/8)                                    |
 | `SesionEntrenamiento.es diferida` y `.desbloqueada hasta`             | ⏸ No se crean. Diferidos con RF-034 (2/8) y RF-117                                                       |
 | `RegistroAuditoria`                                                   | ✎ Se acota a las operaciones de RF-038, RF-066, RF-091 y RF-114. RF-097 general queda diferido            |
@@ -63,11 +63,7 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
  │     ├─< Consentimiento
  │     └─< AsignacionEntrenador (alumno ─ entrenador, vigencia)
  │
- ├─< PlantillaRutina ──< DiaPlantilla ──< EjercicioPlantilla ──< SeriePrescriptaPlantilla
- │        │
- │        │  (copia profunda al solicitar)
- │        ▼
- │   RutinaAsignada ──< RevisionRutina
+ ├─< RutinaAsignada ──< RevisionRutina
  │        ├──< VersionRutina ──< DiaRutina ──< EjercicioRutina ──< SeriePrescripta
  │        │         ▲
  │        │         │ (una propuesta aceptada genera una versión)
@@ -130,11 +126,8 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                      | Atributos relevantes                                                                                                                                                                          |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PlantillaRutina**          | gimnasio, autor, nombre, tipo de rutina (§4.5), activa; `publicada` sólo se agrega si se implementa el alcance opcional de presets                                                                                                                          |
-| **DiaPlantilla**             | plantilla, orden, nombre                                                                                                                                                                      |
-| **EjercicioPlantilla**       | día de plantilla, ejercicio, orden, nota                                                                                                                                                      |
-| **SeriePrescriptaPlantilla** | ejercicio de plantilla, orden, repeticiones mínimas, repeticiones máximas, carga sugerida, descanso, es de calentamiento                                                                      |
-| **RutinaAsignada**           | alumno, plantilla de origen, tipo de rutina, frecuencia semanal objetivo, estado (D6/§1), origen ∈ {PLANTILLA_ENTRENADOR, GENERADA}; `PRESET_ELEGIDO_POR_ALUMNO` sólo existe si se implementa RF-021, solicitada por, solicitada en                           |
+| **PlantillaRutina** ⏸ *(COULD)* | gimnasio, autor, nombre, tipo de rutina (§4.5), activa, publicada. Diferida en la Etapa 1 junto con RF-019 a RF-021                                                                                                          |
+| **RutinaAsignada**           | alumno, plantilla de origen (nula en Etapa 1), tipo de rutina, frecuencia semanal objetivo, estado (D6/§1) |
 | **RevisionRutina**           | rutina, entrenador revisor, resultado ∈ {APROBADA, APROBADA_CON_CAMBIOS, RECHAZADA}, observación, instante                                                                                    |
 | **VersionRutina**            | rutina, número, vigente, creada en, creada por, propuesta que la originó                                                                                                                      |
 | **DiaRutina**                | versión de rutina, orden, nombre, patrón dominante                                                                                                                                            |
@@ -185,8 +178,8 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 | Versionado con diferencias y propagación | Exige resolución de conflictos. Coste desproporcionado                                                 |
 | **Copia + versiones completas** ✅       | —                                                                                                      |
 
-**Elegida:** copia profunda al solicitar la rutina (RF-022) más versiones completas de la rutina (RF-092).
-**Qué se sacrifica.** Los cambios de plantilla no se propagan, y hay duplicación de datos. A esta escala la duplicación es irrelevante; la no propagación es deseable.
+**Elegida:** estructura independiente para la rutina de cada alumno (RF-022) más versiones completas de la rutina (RF-092).
+**Qué se sacrifica.** No hay referencias compartidas y hay duplicación de datos. A esta escala la duplicación es irrelevante; la no propagación es deseable.
 **Por qué versiones completas y no diferencias.** Una versión de rutina es una copia profunda de una estructura pequeña: no hay diferencias que calcular ni conflictos que resolver, y RF-093 se responde comparando dos versiones.
 
 ### PD-02 — La sesión es autocontenida

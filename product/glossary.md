@@ -73,9 +73,7 @@
 
 | Término                         | Definición                                                                                                                                                                                       | Sinónimos descartados   |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| **Plantilla**                   | Estructura de rutina reutilizable creada por un entrenador, no asociada a ningún alumno                                                                                                          | Modelo, template        |
-| **Preset**                      | Funcionalidad opcional: plantilla publicada para uso de otros usuarios del mismo gimnasio. Es un estado de la plantilla y sólo existe si se implementa RF-021                                    | Plantilla pública       |
-| **Rutina**                      | Copia independiente de una estructura de rutina, asociada a un alumno concreto                                                                                                                   | Plan, programa          |
+| **Rutina**                      | Estructura ordenada de prescripción asociada a un alumno concreto, independiente e inmune a alteraciones externas                                                                                | Plan, programa          |
 | **Rutina propuesta**            | Rutina completa asociada a un alumno que aún no rige porque no fue revisada. El alumno la ve; no puede entrenar bajo ella                                                                        | Borrador, pendiente     |
 | **Revisión**                    | Acto por el cual un entrenador examina una rutina propuesta y la aprueba, la modifica y aprueba, o la rechaza. Ninguna rutina rige sin una revisión favorable                                    | Validación, visto bueno |
 | **Versión de rutina**           | Estado completo de la estructura de una rutina en un momento dado. Cada adaptación aplicada genera una versión nueva; las anteriores se conservan sin alteración                                 | Revisión, snapshot      |
@@ -141,7 +139,7 @@ Estos términos siguen siendo parte del lenguaje del producto, pero **no tienen 
 
 | Término                    | Por qué no tiene referente ahora                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **preset**                 | RF-021 diferido. Existe la **plantilla**, que es su objeto subyacente; lo que no existe es publicarla        |
+| **preset / plantilla**     | RF-019 a RF-021 diferidos (`COULD`). Modelos de rutina prearmados y reutilizables; en la Etapa 1 la prescripción opera mediante generación por IA y personalización directa sobre el alumno |
 | **candidato de rutina**    | RF-119 diferido. Una generación produce directamente una **rutina propuesta**                                |
 | **estimación de riesgo**   | RF-061 a RF-063 retirados del producto ([DD-34](../decisions/design-decisions.md))                            |
 | **pauta nutricional**      | RF-075 y RF-108 diferidos con toda la nutrición                                                              |

@@ -13,8 +13,6 @@
 
 - **El candidato de rutina no existe en esta etapa.** Se declaraba en §1 como objeto explícitamente fuera del ciclo de vida, para que nadie lo resolviera agregando un estado `BORRADOR`. Al diferirse RF-119 y RF-025, **la advertencia sigue valiendo con más fuerza**: la salida de una generación se convierte directamente en rutina `PROPUESTA`, y sigue sin haber un estado intermedio.
 - **La sesión conserva sus cuatro transiciones** —iniciar, reanudar, cerrar por inactividad, finalizar—, ahora reunidas bajo un único requisito (RF-027 absorbe RF-032 y RF-033). El autómata de §4 es la especificación de ese requisito y no se toca.
-- **La sesión pierde el desbloqueo por el entrenador** (RF-117, diferido con RF-034): el plazo de corrección vuelve a ser absoluto, con el coste que CB-70 describía.
-- **`RutinaAsignada.origen` pierde `PRESET_ELEGIDO_POR_ALUMNO`**: quedan `PLANTILLA_ENTRENADOR` y `GENERADA`.
 
 **Cambios de la v2.4 (baseline v4.0 confirmada).** Se retiran del detalle el candidato técnico, el desbloqueo de sesiones y la baja de usuario. Las solicitudes e intentos generativos conservan sus estados técnicos; una salida validada origina directamente una rutina `PROPUESTA`.
 
@@ -90,7 +88,7 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | PROPUESTA → VIGENTE sin revisión favorable de un entrenador con asignación vigente | RN-35. Es la regla que el cliente definió como indelegable                                                                          |
 | RECHAZADA o DESCARTADA → cualquier estado                                          | Terminales. Para volver a intentarlo se solicita una rutina nueva, y así el historial muestra cada intento por separado             |
-| ARCHIVADA → VIGENTE                                                                | Reactivarla reabriría el cálculo de adherencia de un período cerrado. Se solicita una nueva a partir de la misma plantilla          |
+| ARCHIVADA → VIGENTE                                                                | Reactivarla reabriría el cálculo de adherencia de un período cerrado. Se solicita una nueva rutina generada                         |
 | VIGENTE → RECHAZADA o → PROPUESTA                                                  | Lo que ya rige no se rechaza ni vuelve a estar pendiente: se sustituye poniendo otra en vigencia, o se ajusta generando una versión |
 | Dos rutinas VIGENTE, o dos PROPUESTA, del mismo alumno                             | RI-06                                                                                                                               |
 | BLOQUEADA → VIGENTE                                                                | Requiere pasar por PROPUESTA, es decir, requiere entrenador                                                                         |

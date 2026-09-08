@@ -22,7 +22,7 @@ La v2.4 aceptó [ADR 0009](decisions/adr/0009-servicio-generativo-online-en-el-p
 
 **Y quedan dos preguntas abiertas que condicionan la planificación**, no la documentación: cuánta capacidad de construcción hay realmente (I-09 en D12/§5) y si el Product Owner libera el compromiso sobre la interpretación de lenguaje natural (I-10).
 
-La v2.7 incorpora el [modelo relacional PostgreSQL](architecture/database-relational-model.md), contratos JSON versionados sin datos identificatorios, candidatos con vencimiento por inactividad y estados técnicos de generación. Los presets dejan de ser contingencia obligatoria y pasan a alcance `COULD`; la primera entrega conserva plantillas privadas y creación manual por entrenadores.
+La v2.7 incorpora el [modelo relacional PostgreSQL](architecture/database-relational-model.md), contratos JSON versionados sin datos identificatorios, candidatos con vencimiento por inactividad y estados técnicos de generación. Plantillas y presets se unifican bajo alcance opcional `COULD`; la primera entrega centra la prescripción en la generación asistida por IA y la revisión directa del entrenador.
 
 ---
 

@@ -7,6 +7,8 @@
 
 Este documento separa dos decisiones distintas que suelen confundirse: **qué modelo** correr y **qué runtime** usar para servirlo. Cambiar una no obliga a cambiar la otra.
 
+> **Vigencia (2026-09-08):** hardware verificado (48 GB VRAM) → perfil A confirmado y modelo promovido a **Qwen3.5-9B-Instruct** (GGUF `Q4_K_M`). Ver [ia-etapa1 §6](ia-etapa1.md). La evidencia comparativa de este documento sigue válida (las razones que favorecían a la familia Qwen —licencia Apache 2.0, español, tool calling— aplican igual a Qwen3.5); sólo cambian la versión y el tamaño elegidos.
+
 ## 1. Modelo
 
 No se asumió de antemano que Llama o Qwen fueran la mejor opción. Se evaluaron cuatro familias con pesos abiertos, self-hostable, en el rango de tamaño realista para un servidor institucional de uso compartido (7B-14B parámetros, cuantizado).
@@ -29,7 +31,7 @@ No se asumió de antemano que Llama o Qwen fueran la mejor opción. Se evaluaron
 3. **Structured output / tool calling**: maduro, necesario para RF-053/RF-054/RF-113 (validación de JSON Schema, reintento).
 4. **Ecosistema de despliegue**: soporte GGUF amplio, compatible con Ollama de forma directa.
 
-**Llama 3.1-8B-Instruct** queda documentado como alternativa de segunda preferencia: si la evaluación empírica sobre el conjunto de casos de [generative-ai.md §9](generative-ai.md) muestra que Llama supera a Qwen en el dominio real del proyecto, o si el ecosistema de soporte comunitario resulta determinante para el equipo, se promueve sin cambiar nada fuera del AI Gateway (ver §15 de [generative-ai.md](generative-ai.md)).
+**Llama 3.1-8B-Instruct** queda documentado como alternativa de segunda preferencia: si la evaluación empírica sobre el conjunto de casos de [generative-ai.md §10](generative-ai.md) muestra que Llama supera a Qwen en el dominio real del proyecto, o si el ecosistema de soporte comunitario resulta determinante para el equipo, se promueve sin cambiar nada fuera del AI Gateway (ver §15 de [generative-ai.md](generative-ai.md)).
 
 **Gemma queda deprioritizada**, no descartada de forma absoluta: si Qwen y Llama no cumplen calidad o rendimiento, Gemma es la siguiente opción a evaluar, pero requiere antes una revisión legal explícita de la política de uso prohibido contra el contenido real que este sistema genera (condiciones físicas, pauta nutricional).
 

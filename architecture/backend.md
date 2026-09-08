@@ -31,13 +31,13 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 
 - Cada intento generativo vence inicialmente a los 120 segundos y admite un único reintento.
 - Una salida inválida nunca se presenta. Tras el segundo fallo la capacidad queda no disponible; no existe fallback determinístico de generación.
-- El resto del sistema continúa y las plantillas privadas del entrenador y su creación manual permanecen disponibles (RF-019). ✎ El preset publicado (RF-021) pasa a alcance opcional y **no es la contingencia**: ver [D11/DD-35](../decisions/design-decisions.md).
+- El resto del sistema continúa operativo. Presets y plantillas (RF-019 a RF-021) son alcance opcional COULD diferido (ver [D11/DD-35](../decisions/design-decisions.md)).
 - Credenciales y conexiones test/producción son distintas; ninguna URL de base se recibe desde una petición.
 - El Polo recibe sólo contexto necesario y un identificador técnico, nunca credenciales ni identificadores personales innecesarios.
 
 ## Invariantes
 
-1. Una plantilla se copia al solicitar una rutina; cambios posteriores no reescriben versiones existentes.
+1. Una rutina asignada es independiente de su origen; modificaciones posteriores no reescriben versiones existentes.
 2. Al comenzar una sesión se congela lo prescripto junto a lo realmente ejecutado.
 3. Historial e indicadores derivados no son fuentes de verdad editables.
 4. El entrenador es la puerta de aprobación para poner una rutina en vigencia.

@@ -62,14 +62,14 @@ Reconstruidas a partir de la crítica del análisis de scope. **No son citas del
 
 | #     | Necesidad reconstruida                 | Cobertura                                                                                                                  |
 | ----- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| N-R01 | Gestionar rutinas y entrenamientos     | RF-019 a RF-035                                                                                                            |
+| N-R01 | Gestionar rutinas y entrenamientos     | RF-022 a RF-035 (RF-019 a RF-021 diferidos como COULD)                                                                     |
 | N-R02 | Seguimiento entrenador–alumno          | RF-036 a RF-039. Resuelto como observación, intervención y comentarios asincrónicos; **no** como mensajería (RF-077 WON'T) |
 | N-R03 | Estadísticas y progreso                | RF-040 a RF-052                                                                                                            |
 | N-R04 | Modelo visual del cuerpo humano        | RF-049 en dos dimensiones. **RF-080 excluido** por coste y riesgo frente a la misma necesidad informativa                  |
 | N-R05 | Nutrición                              | Ver N-23                                                                                                                   |
 | N-R06 | Administración del gimnasio            | RF-065 a RF-069 y RF-114, orientado a analítica y a inventario, no a gestión administrativa                                |
 | N-R07 | Componentes de inteligencia artificial | Módulos 9, 10 y 15                                                                                                         |
-| N-R08 | Presets de rutina                      | RF-021 `COULD`: un preset es una plantilla publicada y se implementa sólo si el cronograma lo permite                     |
+| N-R08 | Presets y plantillas de rutina         | RF-019, RF-020, RF-021 `COULD`: rutinas prearmadas agrupadas, se implementan sólo si el cronograma lo permite              |
 
 ## 3. Pedidos del cliente no cubiertos, y por qué
 

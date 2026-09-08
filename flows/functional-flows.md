@@ -22,7 +22,7 @@
 | **FL-05** · ejecución de una sesión            | Sin cambios funcionales. Ahora es la especificación de un único requisito, RF-027, que absorbió RF-032 y RF-033                                                    |
 | **FL-01, FL-02, FL-09, FL-10, FL-12** ⭐        | **Sin cambios.** Son el ciclo que el cliente declaró condición de aprobación                                                                                       |
 
-**Y un cambio de comportamiento en FL-04 que no es de alcance sino de consecuencia:** su excepción por indisponibilidad generativa ya no puede remitir a los presets del gimnasio. La vía que queda es que el entrenador asigne una plantilla propia (RF-019, RF-058, [DD-35](../decisions/design-decisions.md)). Si el gimnasio no tiene ninguna, **el flujo no tiene salida** y el alumno queda sin rutina.
+**Y un cambio de comportamiento en FL-04:** al quedar diferidos presets y plantillas (RF-019 a RF-021 como `COULD`), su excepción por indisponibilidad generativa deshabilita temporalmente la generación y avisa al usuario sin exponer detalles técnicos (RF-058, RN-99).
 
 **Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** FL-16 (estimación de riesgo de abandono) queda **derogado** al pasar RF-061 a RF-063 a WON'T · FL-13 pierde "riesgo de abandono alto" del orden de urgencia · el orden de las alternativas de sustitución en FL-04/A4 y FL-06 lo produce ahora la capa generativa, con el orden determinista de RN-49a como fallback.
 
@@ -133,7 +133,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 **Curso normal**
 
-1. El entrenador abre la rutina propuesta desde su cartera y ve, junto a la estructura: el origen de la rutina, el contexto del alumno con el que se construyó, el estado de compatibilidad de cada ejercicio, y **qué difiere de la salida original del componente o de la plantilla de origen** (RN-129, RF-120).
+1. El entrenador abre la rutina propuesta desde su cartera y ve, junto a la estructura: el origen de la rutina, el contexto del alumno con el que se construyó, el estado de compatibilidad de cada ejercicio, y **qué difiere de la salida original del componente generativo** (RN-129, RF-120).
 2. Revisa día por día. Puede modificar cualquier ejercicio, serie, repetición, carga o descanso antes de aprobar.
 3. Aprueba. El sistema revalida compatibilidad y rangos de RN-39a sobre la versión final.
 4. La rutina pasa a VIGENTE con su versión 1, la anterior queda ARCHIVADA, se registra la revisión en auditoría y se avisa al alumno.
@@ -203,7 +203,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 |                                                           |                                                                                                                                                                                                                         |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1 · Generación no disponible ✎                           | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. **La vía que queda es que un entrenador cree y asigne una plantilla propia** (RF-019, RN-99, [DD-35](../decisions/design-decisions.md)); el preset sólo existe si se implementa RF-021                                                       |
+| A1 · Generación no disponible ✎                           | Se deshabilita temporalmente la generación y se informa sin detalles técnicos (RF-058, RN-99). Presets y plantillas son alcance opcional COULD diferido. |
 | A2 · La interpretación del lenguaje natural es incorrecta | El solicitante corrige los parámetros en el paso 2. Por eso el paso 2 existe                                                                                                                                            |
 | ~~A3 · Ajusta el candidato **a mano**~~ ⏸ diferido        | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
 | A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno (RN-49a), ordenadas por la capa generativa sobre ese subconjunto ya prefiltrado (RF-059) y revalidadas por RN-44a-d (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a. El solicitante elige de esa lista; no escribe valores |

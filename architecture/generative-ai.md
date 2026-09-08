@@ -25,7 +25,7 @@ La capa generativa cubre exclusivamente **componentes narrativos y de interpreta
 
 El runtime de inferencia corre en un servidor administrado por el Polo Educativo de la Universidad, autohospedado, sin salir a un proveedor externo (ver [ADR-0004](../decisions/adr/0004-self-hosted-llm-server.md)).
 
-**Hardware disponible: `NO VERIFICADO`.** No hay documentación de CPU, GPU, VRAM, RAM ni almacenamiento del servidor institucional en ningún repositorio del proyecto. La arquitectura se diseña para no depender de un tamaño de modelo fijo, exactamente por esta razón: el modelo y su cuantización son **configuración** (variable de entorno leída por el runtime), no una decisión hardcodeada en el backend.
+**Vigencia (2026-09-08):** hardware verificado — 48 GB VRAM → perfil A confirmado con Qwen3.5-9B-Instruct (GGUF `Q4_K_M`). Ver [ia-etapa1 §6](ia-etapa1.md) y la nota en [ai-model-selection.md](ai-model-selection.md). Lo que sigue es la evidencia previa que sostuvo la decisión hasta la verificación; el principio permanece: el modelo y su cuantización son **configuración**, no una decisión hardcodeada.
 
 Dos perfiles de despliegue, a confirmar contra el hardware real antes de congelar el tamaño de modelo:
 
@@ -41,65 +41,37 @@ Selección de modelo y runtime justificada en [ai-model-selection.md](ai-model-s
 Dos capas separadas, que no deben confundirse (ver §5 de la tarea de origen: modelo ≠ runtime):
 
 ```text
-Backend (Express, monolito modular)
-   |
-   |  llamada de función in-process
-   v
-AI Gateway  ── módulo interno, puerto + adaptador ──
-   |             (src/modules/ai-gateway en el backend)
-   |  HTTP interno, red privada del servidor institucional
-   v
-LLM Server  ── runtime de inferencia (Ollama) sirviendo el modelo elegido ──
+Backend (Express/Vercel) ──HTTPS──▶ API Python/Polo ──▶ LLM Server/Polo
+      (autoriza, minimiza contexto,      (AI Gateway: puerto + adaptador,
+       valida salidas, persiste           worker durable, conector privado
+       rutinas y revisiones)               al modelo)
 ```
 
-- **AI Gateway** vive **dentro del backend**, como un módulo más del monolito modular (no un servicio desplegado aparte). Expone un puerto (`GenerativeAiPort`) con un método por capacidad (`interpretarSolicitud`, `generarRutina`, `justificarRutina`, `resumirEvolucion`, `generarPautaNutricional`, `sugerirAlternativas`, `describirPerfil`) y una única implementación (`OllamaAdapter`) que habla el protocolo HTTP compatible con OpenAI que expone Ollama.
-- **LLM Server** es el proceso de Ollama corriendo en el servidor del Polo, sirviendo el modelo configurado. No expone ningún endpoint de negocio: sólo inferencia de texto.
-- El backend **nunca** ejecuta el motor Python de IA predictiva ni el runtime del LLM dentro del proceso de una petición HTTP entrante del frontend; sólo hace una llamada saliente al LLM Server y espera su respuesta dentro del presupuesto de RNF-04.
-
-Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispersa por cada punto de llamada: ver [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md). Su **ubicación de despliegue** quedó reemplazada por [ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md): el Gateway vive dentro del servicio Python del Polo, no dentro del monolito del backend.
+- **AI Gateway** vive **dentro del servicio Python del Polo** ([ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md)), con el patrón puerto + adaptador de [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md): un puerto (`GenerativeAiPort`) con un método por capacidad y una única implementación (`OllamaAdapter`) hacia el protocolo HTTP del runtime. Timeout, reintento, límite por usuario, validación de esquema, redacción de registros y versionado de prompt viven en ese único punto.
+- **LLM Server** es el proceso de inferencia corriendo en el servidor del Polo, sirviendo el modelo configurado. No expone ningún endpoint de negocio: sólo inferencia de texto.
+- El backend **nunca** ejecuta el motor Python de IA predictiva ni el runtime del LLM dentro de una petición HTTP del frontend; el transporte asíncrono (`202` + worker) vive en [generative-ai-integration.md](generative-ai-integration.md).
 
 ## 4. Flujo generativo (mapea FL-04)
 
+El detalle operativo por prompt (entradas, pasos, reintentos) vive en [prompts-catalogo.md](prompts-catalogo.md) Nivel 1; el transporte asíncrono en [generative-ai-integration.md](generative-ai-integration.md). Aquí el esqueleto vigente (Etapa 1: sin candidato ajustable, sin vía determinística):
+
 ```text
-Alumno/Entrenador
-   │  1. describe en lenguaje natural, o completa formulario
-   ▼
-Backend (router de rutinas)
-   │  2. AI Gateway.interpretarSolicitud(texto)
-   ▼
-AI Gateway ──prompt versionado + schema──▶ LLM Server
-   │  3. respuesta JSON candidata
-   ▼
-AI Gateway  4. valida contra JSON Schema; si falla, reintenta 1 vez (RF-113)
-   │
-   ▼
-Backend  5. presenta parámetros para CONFIRMACIÓN del usuario (RF-053, paso 2 de FL-04)
-   │
-   ▼
-Backend  6. AI Gateway.generarRutina(parámetros, contexto del alumno)
-   │
-   ▼
-AI Gateway ──prompt + catálogo prescribible + contexto──▶ LLM Server
-   │  7. estructura candidata de rutina (JSON)
-   ▼
-Backend  8. VALIDACIÓN DETERMINÍSTICA: RN-39a, RN-44a-d, D5/§6 (código, no LLM)
-   │
-   ├─ inválida → 1 reintento del paso 6 → si vuelve a fallar, vía determinística (RN-95b)
-   │
-   ▼
-Backend  9. AI Gateway.justificarRutina(estructura validada) → texto (RF-055)
-   │
-   ▼
-Frontend  10. candidato (RN-124): estructura + estado de compatibilidad + justificación
+1. describe en lenguaje natural, o completa formulario
+2. P1 interpretarPedido → JSON de parámetros → CONFIRMACIÓN del usuario
+3. solicitud idempotente → `202` → worker + LLM (P2 generarRutina)
+4. VALIDACIÓN DETERMINÍSTICA: RN-39a, RN-44a-d, D5/§6 (código, no LLM)
+   └─ inválida → 1 reintento → indisponibilidad declarada (RN-95b)
+5. P3 explicarCriterios sobre la estructura validada → texto + valores_citados
+6. rutina PROPUESTA → revisión del entrenador (FL-02)
 ```
 
-Cada llamada a `AI Gateway` se resuelve con timeout, y si el LLM Server no responde o el resultado no valida tras el reintento, el flujo continúa por la alternativa determinística (RF-058, RF-113, RN-99): entrada por formulario estructurado, justificación tabulada, generación por reglas simples. **Nunca se presenta un error al usuario por esta causa** (RNF-11).
+Cada llamada se resuelve con timeout (120 s por intento). Si el LLM Server no responde o el resultado no valida tras el reintento, la generación queda deshabilitada temporalmente sin exponer errores técnicos (RN-95b, RN-99, RF-058); en la Etapa 1 no hay vía alternativa de prescripción ([DD-35](../decisions/design-decisions.md)). **Nunca se presenta un error técnico al usuario por esta causa** (RNF-11).
 
 ## 5. Contrato interno del AI Gateway
 
-Cada método del puerto recibe y devuelve una estructura tipada; el backend nunca pasa texto libre del LLM directamente a una vista o a persistencia sin haber pasado por validación de schema.
+Cada método del puerto recibe y devuelve una estructura tipada; el backend nunca pasa texto libre del LLM directamente a una vista o a persistencia sin haber pasado por validación de schema. El inventario operativo por prompt (pasos, reintentos, matriz por flujo) vive en [prompts-catalogo.md](prompts-catalogo.md); aquí el diseño de los contratos. Nombres vigentes (`interpretarPedido`, `explicarCriterios`) según [ia-etapa1](ia-etapa1.md).
 
-### 5.1 `interpretarSolicitud` (RF-053)
+### 5.1 `interpretarPedido` (RF-053)
 
 Entrada: texto libre del usuario, contexto mínimo (gimnasio, alumno).
 
@@ -123,7 +95,7 @@ Entrada: parámetros confirmados + contexto del alumno ([D2 §1.9](../product/gl
 
 Salida: estructura completa de días → ejercicios → series prescriptas, usando exclusivamente identificadores del catálogo prescribible recibido como entrada (nunca nombres inventados). Se valida contra RN-39a y D5/§6 en código antes de mostrarse.
 
-### 5.3 `justificarRutina` / `resumirEvolucion` / `generarPautaNutricional` (RF-055, RF-056, RF-075/108)
+### 5.3 `explicarCriterios` / `resumirProgreso` / `generarPautaNutricional` (RF-055, RF-056, RF-075/108)
 
 Entrada: la estructura o los indicadores ya calculados (nunca datos crudos que el modelo deba resumir por su cuenta).
 
@@ -168,7 +140,7 @@ Las plantillas de prompt viven versionadas en el repositorio del backend (no en 
 
 ## 7. Tool calling: herramientas invocables desde el LLM
 
-RF-054 y RF-119 necesitan que, mientras arma el candidato de rutina (FL-04), el modelo pueda pedir alternativas de sustitución para un ejercicio puntual (RF-059, A4 de FL-04). Tras el replanteo de IA del 2026-08-28 ([DD-34](../decisions/design-decisions.md)), ese orden **lo produce la propia capa generativa** (`sugerirAlternativas`, §5.4) sobre el subconjunto del catálogo ya prefiltrado de forma determinista — ya no hay un modelo clásico de ranking. Lo que **sí** se mantiene como herramienta determinista es la verificación de compatibilidad. Fundamento en [ADR-0008 (revisada)](../decisions/adr/0008-tool-calling-for-ml-components.md).
+RF-054 necesita que, mientras arma la estructura de rutina (FL-04), el modelo pueda pedir alternativas de sustitución para un ejercicio puntual (RF-059, A4 de FL-04). Tras el replanteo de IA del 2026-08-28 ([DD-34](../decisions/design-decisions.md)), ese orden **lo produce la propia capa generativa** (`sugerirAlternativas`, §5.4) sobre el subconjunto del catálogo ya prefiltrado de forma determinista — ya no hay un modelo clásico de ranking. Lo que **sí** se mantiene como herramienta determinista es la verificación de compatibilidad. Fundamento en [ADR-0008 (revisada)](../decisions/adr/0008-tool-calling-for-ml-components.md).
 
 **Herramientas expuestas por el AI Gateway al modelo:**
 
@@ -199,7 +171,7 @@ Ver justificación completa y el umbral de reapertura en [ADR-0007](../decisions
 | --- | --- |
 | Alucinación de valores numéricos en texto narrativo | Verificación de `valores_citados` contra la entrada (RNF-24); descarte automático si no coincide |
 | Alternativa de sustitución con un id inventado o fuera del subconjunto prefiltrado | El backend descarta todo id que no esté en la lista de entrada y revalida compatibilidad (RF-113); si no queda ninguno válido, se aplica el orden determinista de RN-49a |
-| Salida fuera del schema | Validación de JSON Schema; 1 reintento; luego vía determinística (RF-113) |
+| Salida fuera del schema | Validación de JSON Schema; 1 reintento; luego indisponibilidad declarada (RF-113, RN-95b) |
 | Indicación médica | Prohibición explícita en el system prompt + filtro de patrones (palabras clave clínicas) sobre la salida antes de mostrarla; RF-057 lo exige como requisito, no como buena práctica |
 | Inyección de instrucciones en el texto libre del usuario ("ignorá las reglas anteriores y...") | El contexto dinámico y la instrucción de tarea van en secciones separadas y delimitadas del prompt; ninguna instrucción de negocio depende de que el modelo la respete — la validación determinística (RN-39a, RN-44a-d) es la barrera real, no el prompt |
 | Uso indebido de datos del alumno | Ver §11 — el AI Gateway decide qué campos del contexto se serializan hacia el prompt; un campo nuevo en el modelo de datos no llega al LLM automáticamente |
@@ -227,7 +199,7 @@ Métricas sobre este conjunto y sobre una muestra ampliada (alineado con RNF-24/
 - **Formato**: tasa de respuestas que no validan contra el JSON Schema en el primer intento.
 - **Adherencia a instrucciones**: tasa de rutinas generadas que requieren el reintento de RF-113.
 - **Latencia**: percentil 95 de cada método, contra el presupuesto de RNF-04 (20 s incluida validación).
-- **Tasa de error/timeout**: proporción de llamadas que terminan en la vía determinística por indisponibilidad o timeout del LLM Server.
+- **Tasa de error/timeout**: proporción de llamadas que terminan en indisponibilidad declarada por fallo de validación, timeout del LLM Server o segundo intento fallido.
 - **Consistencia**: misma entrada, incluida la temperatura configurada, produce estructuras dentro del mismo rango de validación en ejecuciones repetidas (no se exige determinismo exacto, se exige validez repetida).
 
 No se usa únicamente evaluación subjetiva: las primeras cuatro métricas son automáticas y se ejecutan en CI sobre el conjunto de casos fijo antes de cambiar un prompt o un modelo.
@@ -253,15 +225,15 @@ No se usa únicamente evaluación subjetiva: las primeras cuatro métricas son a
 
 ## 13. Fallback
 
-> ⚠️ **v4.0 del alcance.** Donde este documento dice «presets publicados del gimnasio», léase **«plantillas del entrenador» (RF-019)**: RF-021 quedó diferido en la Etapa 1 y con él la publicación de presets. El objeto subyacente es el mismo —una plantilla de rutina—; lo que no existe es compartirla dentro del gimnasio. **El fallback deja de ser automático: requiere que exista al menos una plantilla cargada y que un entrenador la asigne.** Ver [DD-35](../decisions/design-decisions.md), RN-95b y D12/R-17.
+> ⚠️ **Etapa 1 (baseline v4.1).** No se construye rutina determinística alternativa (RN-95b) y plantillas/presets son alcance opcional diferido (RF-019 a RF-021): ante indisponibilidad generativa la generación queda deshabilitada temporalmente sin exponer errores técnicos (RF-058, RN-99), sin vía alternativa de prescripción ([DD-35](../decisions/design-decisions.md)). El resto del sistema (sesiones, histórico, indicadores) continúa operativo sin depender del LLM (RNF-11, RNF-12).
 
 | Falla | Comportamiento |
 | --- | --- |
-| LLM no responde / timeout | Vía determinística: formulario estructurado en vez de NL, generación por reglas simples si corresponde, justificación tabulada (RF-058, A1 de FL-04) |
+| LLM no responde / timeout | Generación declarada no disponible, sin error técnico (RF-058). La entrada por formulario estructurado sigue disponible como alternativa a P1, no como generador |
 | LLM no responde al pedir alternativas de sustitución (FL-04/A4, FL-06) | Orden determinista de RN-49a sobre el subconjunto ya prefiltrado (coincidencia de participación muscular primaria y luego secundaria); el flujo de sustitución no se interrumpe (RN-99) |
 | LLM no responde al pedir la descripción de perfil (RF-064) | La vista muestra los indicadores numéricos sin el texto descriptivo; nada más se degrada |
-| Salida inválida (no pasa el JSON Schema o la validación de negocio) | 1 reintento; si vuelve a fallar, vía determinística (RF-113, E1 de FL-04). Nunca se presenta una propuesta inválida ni un error |
-| GPU/recursos agotados en el LLM Server | El timeout de la llamada lo captura igual que una indisponibilidad; mismo camino que la fila anterior |
+| Salida inválida (no pasa el JSON Schema o la validación de negocio) | 1 reintento; si vuelve a fallar, generación no disponible (RF-113, RN-95b). Nunca se presenta una propuesta inválida ni un error |
+| GPU/recursos agotados en el LLM Server | El timeout de la llamada lo captura igual que una indisponibilidad; mismo camino que la primera fila |
 | Servicio completo fuera de línea | El resto del sistema sigue operando: registro de sesiones, revisión de rutinas, consulta de indicadores — nada de esto depende del LLM (RNF-11, RNF-12) |
 
 ## 14. Observabilidad
@@ -273,7 +245,7 @@ Métricas por método del Gateway (`interpretarSolicitud`, `generarRutina`, `jus
 - throughput (llamadas/minuto);
 - tasa de error y de timeout;
 - tasa de reintento (RF-113);
-- tasa de fallback a vía determinística;
+- tasa de indisponibilidad declarada;
 - versión de modelo y de prompt activas.
 
 Nunca se registra información sensible del alumno en estas métricas (RNF-19) — son agregados numéricos y etiquetas de versión, no contenido.
@@ -284,7 +256,7 @@ Nunca se registra información sensible del alumno en estas métricas (RNF-19) �
 - **Prompt**: `generative/<capacidad>@<n>`, incrementado en cada cambio de contenido, con changelog en el propio archivo de plantilla.
 - **Schema de salida**: versionado junto al prompt que lo referencia; un cambio de schema es incompatible por definición y requiere versión nueva de ambos.
 - Cada resultado narrativo persistido conserva `version_modelo` y `version_prompt` (§5.3), cumpliendo RF-072 también para narrativos, aunque no sean "componentes de decisión" en el sentido de DD-14.
-- La lista de alternativas de sustitución que se incorpora a un candidato de rutina se persiste con `version_modelo` y `version_prompt` (§5.4). Como el orden generativo no es exactamente reproducible, RF-072/RNF-27 se cumplen guardando la salida, no reejecutándola (ver [DD-34](../decisions/design-decisions.md)). La descripción de perfil (§5.5) es efímera y no se persiste.
+- La lista de alternativas de sustitución aceptada se persiste con `version_modelo` y `version_prompt` (§5.4). Como el orden generativo no es exactamente reproducible, RF-072/RNF-27 se cumplen guardando la salida, no reejecutándola (ver [DD-34](../decisions/design-decisions.md)). La descripción de perfil (§5.5) es efímera y no se persiste.
 
 ## 16. Reemplazo del modelo en el futuro
 

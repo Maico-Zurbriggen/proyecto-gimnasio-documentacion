@@ -33,7 +33,7 @@ proyecto-gimnasio-back (Express)
 ## Invariantes
 
 1. El frontend nunca accede directamente a PostgreSQL, Prisma, IA, ngrok ni proveedores externos.
-2. Una plantilla se copia al solicitar una rutina; cambios posteriores no reescriben versiones existentes.
+2. Una rutina asignada es independiente de su origen; cambios posteriores no reescriben versiones existentes.
 3. El entrenador es la puerta de aprobación para poner una rutina en vigencia.
-4. La indisponibilidad de IA deshabilita la generación, no el resto del producto. ✎ Lo que permanece es la creación y asignación manual de plantillas por el entrenador (RF-019); los presets, sólo si se implementa RF-021 ([DD-35](../decisions/design-decisions.md)).
+4. La indisponibilidad de IA deshabilita la generación, no el resto del producto. Presets y plantillas son alcance opcional `COULD` diferido ([DD-35](../decisions/design-decisions.md)).
 5. Ninguna lógica de autorización o compatibilidad se confía sólo al cliente.

@@ -72,9 +72,9 @@ De ahí se derivan tres consecuencias que gobiernan todo el corpus:
    nueva prescripción ◀── REVISIÓN DEL ENTRENADOR ◀── propuesta fundamentada
                                    ▲
                         toda rutina pasa por acá,
-                  venga de una plantilla del entrenador,
-                de una generación, o de un preset si se
-                          implementa RF-021
+                      venga de una generación, o de
+                       un preset/plantilla si se
+                           implementa RF-021
 ```
 
 El registro de entrenamientos, los indicadores, los tableros y la vista de cartera **son el insumo de este ciclo, no productos separados**. Existen porque sin ellos no hay diagnóstico, y sin diagnóstico no hay adaptación fundamentada.
@@ -90,9 +90,7 @@ Siendo la inteligencia el centro, la continuidad operativa deja de ser una conce
 
 Es decir: si falla el servicio externo el sistema sigue decidiendo, sólo que deja de hablar. Si además se apagaran los componentes de decisión, el sistema sigue siendo usable como herramienta de prescripción y registro manual — pero deja de ser este producto.
 
-> **Corrección de la v2.1, y es importante.** El párrafo anterior era cierto mientras la capacidad de decidir viviera dentro del sistema. En la Etapa 1 **no vive dentro del sistema**: al no construirse presets ni un generador determinístico, la construcción de una rutina la resuelve por completo el servicio generativo del Polo. Si ese servicio no responde, el sistema **no sigue decidiendo**: la única vía que queda es que un entrenador asigne a mano una plantilla suya (RF-019, RF-058, [D11/DD-35](../decisions/design-decisions.md)).
->
-> Un alumno nuevo en un gimnasio sin plantillas cargadas y con el servicio caído **no obtiene ninguna rutina**, y con eso la capacidad C1 deja de cumplirse. No hay mitigación técnica dentro del alcance de esta etapa; la mitigación es operativa —cargar plantillas de arranque al aprovisionar cada gimnasio— y hay que ejecutarla, no suponerla. Ver [D12/R-17](../planning/risks-and-assumptions.md) y la decisión PD-03 del baseline.
+> **Corrección de la v2.1 y v4.1.** En la Etapa 1, al ser presets y plantillas alcance opcional (`COULD`) y no construirse un generador determinístico, la construcción de una rutina la resuelve el servicio generativo. Si ese servicio no responde, el sistema declara la indisponibilidad temporal sin exponer errores técnicos (RF-058, RN-99). Ver [D11/DD-35](../decisions/design-decisions.md).
 
 ## 4. Actores
 
@@ -136,7 +134,7 @@ La distinción importa: lo de §6 no es este problema y no volverá. Lo de aquí
 | Fuera de la Etapa 1                                         | Consecuencia para el usuario en esta etapa                                                                                                     |
 | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Toda la nutrición, incluida la estimación energética        | El sistema no dice nada sobre alimentación `[2/8 votos]`                                                                                        |
-| Presets publicados y compartidos entre entrenadores         | Cada entrenador construye y reutiliza **sus** plantillas; no se comparten dentro del gimnasio `[1/8]`                                          |
+| Presets y plantillas de rutina                              | Modelos prearmados diferidos como alcance opcional (`COULD`); la prescripción opera por generación de IA y adaptación del entrenador `[1/8]` |
 | Solicitud de rutina iniciada por el alumno, y su ajuste     | La rutina la origina el entrenador o la generación automática de la incorporación. El alumno recibe, no pide `[3/8]`                          |
 | Comentarios asincrónicos                                    | No hay canal entrenador↔alumno más allá de los avisos del sistema `[1/8]`                                                                       |
 | Representación muscular sobre esquema del cuerpo            | El mismo dato se presenta como barras por grupo muscular. **Es una degradación visible del diferencial declarado del producto** `[4/8]`        |
