@@ -7,7 +7,7 @@
 >
 > **El patrón sigue vigente:** puerto estable más adaptador reemplazable, con timeout, reintento, límite por usuario, validación de esquema, redacción de registros y versionado de prompt concentrados en un único punto. Lo que cambia es dónde vive ese punto, no que exista.
 >
-> **La advertencia de coste operativo sigue vigente:** el Polo todavía debe operar Ollama y ngrok. Ver ADR 0010.
+> **La advertencia de coste operativo sigue vigente:** el Polo todavía debe operar Ollama y Cloudflare Tunnel. Ver ADR 0010 y ADR 0011.
 
 ## Contexto
 

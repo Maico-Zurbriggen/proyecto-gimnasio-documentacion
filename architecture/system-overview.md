@@ -16,9 +16,9 @@ proyecto-gimnasio-ia (FastAPI / Vercel)              |
               v                                      |
        Vercel Queues -> worker Python ----------------+
                               |
-                              | HTTPS + Basic Auth
+                              | HTTPS + Bearer token
                               v
-                         ngrok estable
+                    Cloudflare Tunnel
                               |
                               v
                          Ollama / Polo
@@ -44,7 +44,7 @@ Los trabajos analíticos y predictivos futuros comparten el repositorio IA, pero
 4. Toda salida inteligente registra versión, instante y contexto mínimo reproducible.
 5. Backend mantiene autorización y validaciones de negocio; IA sólo persiste estados y resultados en estructuras designadas.
 6. La indisponibilidad generativa no produce una rutina insegura ni degrada el resto del sistema: se deshabilita esa capacidad y permanecen las plantillas y operaciones manuales. ✎ **Deja de ser una degradación menor**: sin presets obligatorios, la generación es la única vía automática de prescripción, de modo que su caída impide dar plan a un alumno nuevo si el gimnasio no tiene plantillas cargadas. Ver [D11/DD-35](../decisions/design-decisions.md) y D12/R-17.
-7. Test y producción no comparten base ni credenciales, aunque inicialmente compartan API y configuración del modelo.
+7. Test y producción no comparten base ni credencial backend–IA. Inicialmente comparten LLM, configuración, `LLM_API_URL` y `LLM_API_TOKEN`.
 
 ## Detalle por componente
 

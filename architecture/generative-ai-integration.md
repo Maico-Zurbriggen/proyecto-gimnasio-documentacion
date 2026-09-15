@@ -1,6 +1,6 @@
 # Integración de IA generativa, ambientes y pruebas
 
-**Estado:** aceptada · **Actualizada:** 2026-09-15 · **Decisión:** [ADR 0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md)
+**Estado:** aceptada · **Actualizada:** 2026-09-15 · **Decisiones:** [ADR 0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md) y [ADR 0011](../decisions/adr/0011-cloudflare-tunnel-para-el-llm.md)
 
 ## Alcance y autoridad
 
@@ -20,12 +20,12 @@ React/Vercel -> Express/Vercel -> FastAPI/Vercel -> Vercel Queues
                        +----------- Neon <---- worker --+
                                                         |
                                                         v
-                                              ngrok -> Ollama/Polo
+                                  Cloudflare Tunnel -> Ollama/Polo
 ```
 
-- Backend nunca llama a ngrok; llama al deployment Vercel de IA de su ambiente.
+- Backend nunca llama al túnel; llama al deployment Vercel de IA de su ambiente.
 - La API Python acepta trabajos con `202`; Vercel Queues invoca un consumidor privado fuera de la petición.
-- Ngrok expone sólo la inferencia necesaria del LLM y exige autenticación de servicio.
+- Cloudflare Tunnel expone sólo la inferencia necesaria del LLM. IA envía `LLM_API_TOKEN` como Bearer.
 - El servicio Python persiste estados y resultados en estructuras de integración. El LLM no conoce PostgreSQL.
 - El frontend consulta estado exclusivamente al backend.
 - Backend e IA se despliegan de manera independiente mediante contratos versionados.
@@ -49,7 +49,7 @@ El contexto enviado excluye datos identificatorios que no aportan a la rutina. E
 
 El servicio IA sólo puede leer y escribir las estructuras de integración acordadas. No accede a tablas de identidad ni modifica rutinas, sesiones o aprobaciones. Backend es el único que transforma un resultado en entidad de dominio.
 
-Un único proyecto Vercel genera dos deployments estables. Preview de `test` usa Neon Test y Production de `main` usa Neon Producción. Sus URLs, conexiones, roles y secretos son distintos y nunca se eligen mediante datos enviados por el cliente.
+Un único proyecto Vercel genera dos deployments estables. Preview de `test` usa Neon Test y Production de `main` usa Neon Producción. Sus URLs de servicio IA, conexiones, roles y claves backend–IA son distintos y nunca se eligen mediante datos enviados por el cliente. Ambos deployments comparten inicialmente `LLM_API_URL` y `LLM_API_TOKEN` porque consumen el mismo LLM del Polo.
 
 ## Trabajo local y ambientes
 
@@ -84,7 +84,7 @@ feature/* -> PR -> develop -> PR -> test -> PR -> main
 | Unidad | reglas, permisos, minimización, parser y máquina de estados | cada PR |
 | Contrato | OpenAPI backend–IA, idempotencia y compatibilidad | cada PR |
 | Persistencia | permisos del rol IA, reclamo durable y aislamiento de ambientes | cada PR/promoción |
-| Integración | Vercel Queues, ngrok, timeout, reintento, redelivery y caída del LLM | en `test` |
+| Integración | Vercel Queues, Cloudflare Tunnel, token, timeout, reintento, redelivery y caída del LLM | en `test` |
 | Evaluación | catálogo, compatibilidad, rangos, números respaldados y lenguaje médico | cambios de IA |
 | E2E | solicitud, polling, candidato, revisión, aprobación e indisponibilidad generativa | antes de `main` |
 
@@ -92,4 +92,4 @@ El dataset fijo cubre contexto incompleto, condiciones físicas, equipamiento au
 
 ## Operación mínima
 
-Vercel opera API Python, cola y consumidor. Ollama y el agente ngrok deben arrancar con la máquina del Polo y reiniciarse ante fallos. El dominio ngrok debe ser estable y autenticado. Si API, cola, consumidor, túnel o LLM fallan, la generación se declara no disponible sin degradar el resto del sistema.
+Vercel opera API Python, cola y consumidor. Ollama y el agente `cloudflared` deben arrancar con la máquina del Polo y reiniciarse ante fallos. El dominio del túnel debe ser estable y exigir el token configurado. Si API, cola, consumidor, túnel o LLM fallan, la generación se declara no disponible sin degradar el resto del sistema.

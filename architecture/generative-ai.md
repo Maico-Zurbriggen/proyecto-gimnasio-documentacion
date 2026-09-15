@@ -49,7 +49,7 @@ Servicio IA / Vercel ── FastAPI -> Vercel Queues -> consumidor Python
    |
    | HTTPS + autenticación de servicio
    v
-ngrok estable -> LLM Server / Polo ── Ollama sirviendo el modelo elegido
+Cloudflare Tunnel -> LLM Server / Polo ── Ollama sirviendo el modelo elegido
 ```
 
 - **El adaptador del backend** sólo crea y despacha una solicitud idempotente hacia el OpenAPI del servicio IA.
@@ -74,7 +74,7 @@ FastAPI  3. autentica, verifica, encola y responde 202
 Vercel Queues  4. entrega al consumidor privado
    │
    ▼
-Servicio IA ──prompt versionado + schema──▶ ngrok ──▶ Ollama/Polo
+Servicio IA ──prompt versionado + schema──▶ Cloudflare Tunnel ──▶ Ollama/Polo
    │  5. valida la respuesta y registra intento/resultado
    ▼
 Backend  6. consulta y aplica validación determinística de catálogo, compatibilidad y rangos

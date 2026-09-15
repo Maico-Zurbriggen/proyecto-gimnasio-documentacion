@@ -17,7 +17,7 @@ Express/Vercel -> FastAPI/Vercel -> Vercel Queues -> worker Python
                          +---------- Neon --------------+
                                                         |
                                                         v
-                                              ngrok -> Ollama/Polo
+                                  Cloudflare Tunnel -> Ollama/Polo
 ```
 
 - Expone HTTP versionado para backend; nunca para frontend.
@@ -39,7 +39,7 @@ Express/Vercel -> FastAPI/Vercel -> Vercel Queues -> worker Python
 
 ## Operación
 
-Vercel opera la API FastAPI, la cola y el consumidor. En el Polo sólo Ollama y el agente ngrok deben arrancar con la máquina y reiniciarse ante fallos. Ngrok publica mediante un dominio estable únicamente los endpoints de inferencia necesarios, protegidos con autenticación de servicio.
+Vercel opera la API FastAPI, la cola y el consumidor. En el Polo sólo Ollama y el agente `cloudflared` deben arrancar con la máquina y reiniciarse ante fallos. Cloudflare Tunnel publica mediante un dominio estable únicamente los endpoints de inferencia necesarios; el servicio IA envía `LLM_API_TOKEN` como Bearer.
 
 ## Invariantes
 

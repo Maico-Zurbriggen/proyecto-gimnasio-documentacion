@@ -6,10 +6,10 @@
 Backend/Vercel -> FastAPI/Vercel -> Vercel Queues -> consumidor Python
                                                         |
                                                         v
-                                              ngrok -> Ollama/Polo
+                                  Cloudflare Tunnel -> Ollama/Polo
 ```
 
-Un único proyecto Vercel del repositorio IA produce Preview para `test` y Production para `main`. Los ambientes no comparten URL, claves de servicio ni conexión Neon. La decisión está registrada en [ADR 0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md).
+Un único proyecto Vercel del repositorio IA produce Preview para `test` y Production para `main`. Los ambientes no comparten URL de servicio IA, clave backend–IA ni conexión Neon; inicialmente comparten el mismo LLM, URL y token. Las decisiones están registradas en [ADR 0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md) y [ADR 0011](../decisions/adr/0011-cloudflare-tunnel-para-el-llm.md).
 
 ## 1. Preparar el Polo
 
@@ -20,28 +20,16 @@ Un único proyecto Vercel del repositorio IA produce Preview para `test` y Produ
    ```
 
 2. Mantener Ollama escuchando sólo en la interfaz local y comprobar `http://127.0.0.1:11434/api/tags` desde el Polo.
-3. Reservar un dominio HTTPS estable en ngrok.
-4. Crear una credencial Basic Auth larga y aleatoria para cada ambiente. Guardarla en el vault de ngrok; no escribirla en Git.
-5. Aplicar una Traffic Policy equivalente a:
-
-   ```yaml
-   on_http_request:
-     - actions:
-         - type: basic-auth
-           config:
-             credentials:
-               - vercel-test:${secrets.get('gym-llm', 'test-password')}
-               - vercel-production:${secrets.get('gym-llm', 'production-password')}
-   ```
-
-6. Iniciar el agente contra Ollama con el dominio y la policy configurados. Administrar Ollama y ngrok como servicios con reinicio automático según el sistema operativo del Polo.
-7. Verificar desde una red externa:
+3. Configurar Cloudflare Tunnel con un dominio HTTPS estable que enrute exclusivamente hacia Ollama.
+4. Configurar el endpoint para exigir un token Bearer largo y aleatorio. Guardarlo como secreto de infraestructura; no escribirlo en Git.
+5. Iniciar `cloudflared` contra Ollama. Administrar Ollama y `cloudflared` como servicios con reinicio automático según el sistema operativo del Polo.
+6. Verificar desde una red externa:
 
    ```bash
-   curl -u "vercel-test:REEMPLAZAR" https://DOMINIO-ESTABLE.ngrok.app/api/tags
+   curl -H "Authorization: Bearer REEMPLAZAR" https://LLM_DOMINIO/api/tags
    ```
 
-No publicar el puerto de Ollama directamente ni usar la clave de la API administrativa de ngrok como credencial de inferencia.
+No publicar el puerto de Ollama directamente ni reutilizar `AI_SERVICE_API_KEY` o credenciales administrativas de Cloudflare como token de inferencia.
 
 ## 2. Crear el proyecto IA en Vercel
 
@@ -63,10 +51,9 @@ Configurar valores diferentes en **Preview** y **Production** y volver a despleg
 | `DATABASE_URL` | Neon Test, rol runtime IA, pooler | Neon Producción, rol runtime IA, pooler |
 | `AI_SERVICE_API_KEY` | secreto backend–IA test | secreto backend–IA producción |
 | `QUEUE_REGION` | `gru1` | `gru1` |
-| `LLM_API_URL` | dominio HTTPS estable ngrok | dominio HTTPS estable ngrok |
+| `LLM_API_URL` | dominio HTTPS estable de Cloudflare Tunnel | mismo dominio del LLM |
+| `LLM_API_TOKEN` | token Bearer del LLM | mismo token inicial del LLM |
 | `LLM_MODEL` | `qwen2.5:7b-instruct` | `qwen2.5:7b-instruct` |
-| `LLM_BASIC_AUTH_USERNAME` | `vercel-test` | `vercel-production` |
-| `LLM_BASIC_AUTH_PASSWORD` | contraseña test | contraseña producción |
 | `LLM_CONFIGURATION_VERSION` | `generative/generar-rutina@1` | igual, salvo promoción versionada |
 | `GENERATION_TIMEOUT_SECONDS` | `120` | `120` |
 | `GENERATION_MAX_RETRIES` | `1` | `1` |
@@ -82,7 +69,7 @@ curl https://URL-IA/health
 curl -H "Authorization: Bearer AI_SERVICE_API_KEY" https://URL-IA/ready
 ```
 
-`/health` debe devolver `200` aunque una dependencia esté caída. `/ready` devuelve `200` únicamente si puede consultar Neon y `/api/tags` de Ollama; un `503` se investiga en Vercel Logs, ngrok y el proceso Ollama.
+`/health` debe devolver `200` aunque una dependencia esté caída. `/ready` devuelve `200` únicamente si puede consultar Neon y `/api/tags` de Ollama; un `503` se investiga en Vercel Logs, Cloudflare Tunnel y el proceso Ollama.
 
 ## 5. Conectar backend
 
@@ -109,7 +96,7 @@ IA verifica que la solicitud exista, publica su UUID y responde `202`. El fronte
 2. Confirmar `/health` y `/ready` en ambos servicios.
 3. Crear una solicitud desde el caso de uso backend y comprobar la secuencia `PENDIENTE → PROCESANDO → COMPLETADA` o, ante dos fallos, `NO_DISPONIBLE`.
 4. Comprobar en Neon que hay como máximo dos intentos y un único resultado por intento.
-5. Simular caída de Ollama o ngrok y verificar timeout, reintento y que el resto del backend continúa disponible.
+5. Simular caída de Ollama o Cloudflare Tunnel y verificar timeout, reintento y que el resto del backend continúa disponible.
 6. Validar salida y aprobación con un entrenador antes de promover a `main`.
 7. Repetir smoke tests sobre Production sin reutilizar secretos ni datos de Test.
 

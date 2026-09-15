@@ -3,6 +3,7 @@
 - Estado: aceptada
 - Fecha: 2026-09-15
 - Reemplaza parcialmente: [ADR 0009](0009-servicio-generativo-online-en-el-polo.md)
+- Reemplazada parcialmente por: [ADR 0011](0011-cloudflare-tunnel-para-el-llm.md), para transporte y autenticación IA–LLM
 
 ## Contexto
 

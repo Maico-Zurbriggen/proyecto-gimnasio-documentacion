@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 3.2 · **Fecha** 2026-09-15 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md) y ADR 0010. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
+**Versión del corpus** 3.3 · **Fecha** 2026-09-15 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md), ADR 0010 y ADR 0011. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -21,6 +21,8 @@ La v2.4 aceptó [ADR 0009](decisions/adr/0009-servicio-generativo-online-en-el-p
 **La v3.1 confirma la baseline v4.0 y congela la frontera de persistencia de la Etapa 1.** No se crean candidato ajustable, comentarios, sesiones diferidas, desbloqueos, baja anonimizada ni tablas predictivas. Diagnósticos, propuestas, ajustes y récords se incorporan a `app`; generación conserva sólo sus solicitudes, intentos, resultados y validaciones en `ai_integration`. Lo diferido se agregará, si vuelve al alcance, mediante migraciones futuras.
 
 **La v3.2 traslada la API y el worker Python a Vercel sin mover el LLM del Polo.** ADR 0010 reemplaza la ubicación decidida por ADR 0009: FastAPI acepta con `202`, Vercel Queues entrega el UUID de forma durable y un consumidor Python llama a Ollama mediante ngrok autenticado. Preview de `test` y Production de `main` conservan bases, URLs y secretos aislados.
+
+**La v3.3 reemplaza ngrok por Cloudflare Tunnel para acceder al único LLM del Polo.** ADR 0011 define `LLM_API_URL` y un `LLM_API_TOKEN` Bearer compartidos inicialmente por test y producción; `AI_SERVICE_API_KEY` continúa separado por ambiente para autenticar backend hacia IA.
 
 **Y quedan dos preguntas abiertas que condicionan la planificación**, no la documentación: cuánta capacidad de construcción hay realmente (I-09 en D12/§5) y si el Product Owner libera el compromiso sobre la interpretación de lenguaje natural (I-10).
 
@@ -71,4 +73,4 @@ Son determinísticas, auditables y discutibles con un entrenador real. En genera
 6. **Verificar la carga de datos simulados y su marcado inequívoco** para demostrar diagnóstico y adaptación sin confundirlos con actividad real.
 7. **Cerrar los puntos de producto abiertos** de D12/§5.
 8. **Resolver la creación de migraciones** sin ejecutar `migrate dev` sobre Neon Test compartida (D12/I-07).
-9. **Confirmar la operación en el Polo**: contrato LLM, dominio ngrok estable, procesos permanentes y rollback (D12/I-08).
+9. **Confirmar la operación en el Polo**: contrato LLM, dominio Cloudflare Tunnel estable, procesos permanentes y rollback (D12/I-08).
