@@ -38,25 +38,26 @@ Selección de modelo y runtime justificada en [ai-model-selection.md](ai-model-s
 
 ## 3. Componentes y comunicación
 
-Dos capas separadas, que no deben confundirse (ver §5 de la tarea de origen: modelo ≠ runtime):
+Tres capas separadas, que no deben confundirse (modelo ≠ orquestador ≠ runtime):
 
 ```text
-Backend (Express, monolito modular)
+Backend / Vercel
    |
-   |  llamada de función in-process
+   | HTTPS; sólo UUID de solicitud
    v
-AI Gateway  ── módulo interno, puerto + adaptador ──
-   |             (src/modules/ai-gateway en el backend)
-   |  HTTP interno, red privada del servidor institucional
+Servicio IA / Vercel ── FastAPI -> Vercel Queues -> consumidor Python
+   |
+   | HTTPS + autenticación de servicio
    v
-LLM Server  ── runtime de inferencia (Ollama) sirviendo el modelo elegido ──
+ngrok estable -> LLM Server / Polo ── Ollama sirviendo el modelo elegido
 ```
 
-- **AI Gateway** vive **dentro del backend**, como un módulo más del monolito modular (no un servicio desplegado aparte). Expone un puerto (`GenerativeAiPort`) con un método por capacidad (`interpretarSolicitud`, `generarRutina`, `justificarRutina`, `resumirEvolucion`, `generarPautaNutricional`, `sugerirAlternativas`, `describirPerfil`) y una única implementación (`OllamaAdapter`) que habla el protocolo HTTP compatible con OpenAI que expone Ollama.
+- **El adaptador del backend** sólo crea y despacha una solicitud idempotente hacia el OpenAPI del servicio IA.
+- **El servicio IA** concentra autenticación, contrato, prompts, validación estructural, cola, persistencia técnica y el adaptador Ollama.
 - **LLM Server** es el proceso de Ollama corriendo en el servidor del Polo, sirviendo el modelo configurado. No expone ningún endpoint de negocio: sólo inferencia de texto.
-- El backend **nunca** ejecuta el motor Python de IA predictiva ni el runtime del LLM dentro del proceso de una petición HTTP entrante del frontend; sólo hace una llamada saliente al LLM Server y espera su respuesta dentro del presupuesto de RNF-04.
+- El backend nunca llama al LLM ni espera su respuesta. FastAPI responde `202` después de encolar y el frontend consulta el estado sólo al backend.
 
-Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispersa por cada punto de llamada: ver [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md). Su **ubicación de despliegue** quedó reemplazada por [ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md): el Gateway vive dentro del servicio Python del Polo, no dentro del monolito del backend.
+Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispersa por cada punto de llamada: ver [ADR-0005](../decisions/adr/0005-ai-gateway-in-process-module.md). Su ubicación vigente está en [ADR-0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md).
 
 ## 4. Flujo generativo (mapea FL-04)
 
@@ -64,36 +65,27 @@ Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispers
 Alumno/Entrenador
    │  1. describe en lenguaje natural, o completa formulario
    ▼
-Backend (router de rutinas)
-   │  2. AI Gateway.interpretarSolicitud(texto)
-   ▼
-AI Gateway ──prompt versionado + schema──▶ LLM Server
-   │  3. respuesta JSON candidata
-   ▼
-AI Gateway  4. valida contra JSON Schema; si falla, reintenta 1 vez (RF-113)
+Backend  2. crea solicitud con contexto minimizado y envía sólo su UUID
    │
    ▼
-Backend  5. presenta parámetros para CONFIRMACIÓN del usuario (RF-053, paso 2 de FL-04)
+FastAPI  3. autentica, verifica, encola y responde 202
    │
    ▼
-Backend  6. AI Gateway.generarRutina(parámetros, contexto del alumno)
+Vercel Queues  4. entrega al consumidor privado
    │
    ▼
-AI Gateway ──prompt + catálogo prescribible + contexto──▶ LLM Server
-   │  7. estructura candidata de rutina (JSON)
+Servicio IA ──prompt versionado + schema──▶ ngrok ──▶ Ollama/Polo
+   │  5. valida la respuesta y registra intento/resultado
    ▼
-Backend  8. VALIDACIÓN DETERMINÍSTICA: RN-39a, RN-44a-d, D5/§6 (código, no LLM)
+Backend  6. consulta y aplica validación determinística de catálogo, compatibilidad y rangos
    │
-   ├─ inválida → 1 reintento del paso 6 → si vuelve a fallar, vía determinística (RN-95b)
-   │
-   ▼
-Backend  9. AI Gateway.justificarRutina(estructura validada) → texto (RF-055)
+   ├─ inválida/fallo → un reintento; segundo fallo → NO_DISPONIBLE
    │
    ▼
-Frontend  10. candidato (RN-124): estructura + estado de compatibilidad + justificación
+Backend  7. crea directamente la rutina PROPUESTA y notifica al entrenador
 ```
 
-Cada llamada a `AI Gateway` se resuelve con timeout, y si el LLM Server no responde o el resultado no valida tras el reintento, el flujo continúa por la alternativa determinística (RF-058, RF-113, RN-99): entrada por formulario estructurado, justificación tabulada, generación por reglas simples. **Nunca se presenta un error al usuario por esta causa** (RNF-11).
+Cada intento vence a los 120 segundos. Si el LLM no responde o el resultado no valida tras el único reintento, la generación queda `NO_DISPONIBLE`; no existe un generador determinístico alternativo. Las plantillas privadas y la creación manual del entrenador continúan operativas.
 
 ## 5. Contrato interno del AI Gateway
 

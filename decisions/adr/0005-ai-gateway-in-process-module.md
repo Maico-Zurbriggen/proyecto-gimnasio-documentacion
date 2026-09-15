@@ -1,13 +1,13 @@
 # ADR 0005: AI Gateway como módulo interno del backend
 
-- Estado: **parcialmente reemplazada** por [ADR 0009](0009-servicio-generativo-online-en-el-polo.md) el 2026-09-01
+- Estado: **parcialmente reemplazada** por [ADR 0009](0009-servicio-generativo-online-en-el-polo.md) y luego [ADR 0010](0010-servicio-ia-en-vercel-y-llm-en-el-polo.md)
 - Fecha: 2026-08-25
 
-> **Qué queda reemplazado y qué no.** La **ubicación de despliegue** decidida aquí —opción (b), módulo dentro del monolito del backend— queda reemplazada: la ADR 0009 despliega el servicio generativo como un proceso Python propio con worker durable en el Polo, es decir la opción (c) que esta ADR descarta. El motivo es una restricción física que esta ADR no consideró: un intento de generación puede durar hasta 120 segundos y Vercel no sostiene una petición de esa duración.
+> **Qué queda reemplazado y qué no.** La ubicación dentro del monolito backend fue reemplazada primero por ADR 0009 y luego por ADR 0010. El servicio Python se despliega separado en Vercel y desacopla los intentos de hasta 120 segundos mediante Vercel Queues.
 >
 > **El patrón sigue vigente:** puerto estable más adaptador reemplazable, con timeout, reintento, límite por usuario, validación de esquema, redacción de registros y versionado de prompt concentrados en un único punto. Lo que cambia es dónde vive ese punto, no que exista.
 >
-> **La advertencia de coste operativo sigue vigente y sin resolver:** operar un proceso adicional es trabajo que la capacidad de construcción del proyecto no contabiliza. Ver ADR 0009, «Puntos operativos pendientes».
+> **La advertencia de coste operativo sigue vigente:** el Polo todavía debe operar Ollama y ngrok. Ver ADR 0010.
 
 ## Contexto
 

@@ -3,7 +3,7 @@
 |                |                                                     |
 | -------------- | --------------------------------------------------- |
 | **Estado**     | Propuesto                                           |
-| **Depende de** | [generative-ai.md](generative-ai.md), [generative-ai-integration.md](generative-ai-integration.md), [D7](../flows/functional-flows.md), [D8](../requirements/functional-requirements.md), [D9](../requirements/non-functional-requirements.md), [ADR-0008](../decisions/adr/0008-tool-calling-for-ml-components.md), [ADR-0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md) |
+| **Depende de** | [generative-ai.md](generative-ai.md), [generative-ai-integration.md](generative-ai-integration.md), [D7](../flows/functional-flows.md), [D8](../requirements/functional-requirements.md), [D9](../requirements/non-functional-requirements.md), [ADR-0008](../decisions/adr/0008-tool-calling-for-ml-components.md), [ADR-0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md) |
 
 ## Alcance y autoridad
 

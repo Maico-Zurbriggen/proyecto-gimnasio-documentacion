@@ -5,9 +5,12 @@
 ```text
 React SPA -> Express + TypeScript -> Neon PostgreSQL
                  |
-                 | HTTPS / OpenAPI IA
+                 | HTTPS / OpenAPI IA (Vercel)
                  v
-             ngrok -> API Python / Polo
+             FastAPI / Vercel -> Vercel Queues -> worker Python
+                                                    |
+                                                    v
+                                           ngrok -> Ollama / Polo
 ```
 
 El backend es un monolito modular desplegado en Vercel y dueño del OpenAPI público, las invariantes transaccionales, la autorización, Prisma y las migraciones.

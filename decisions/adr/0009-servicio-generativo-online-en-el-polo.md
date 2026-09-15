@@ -1,9 +1,11 @@
 # ADR 0009: servicio generativo online en el Polo
 
-- Estado: aceptada
+- Estado: reemplazada parcialmente por [ADR 0010](0010-servicio-ia-en-vercel-y-llm-en-el-polo.md) el 2026-09-15
 - Fecha: 2026-08-29 (renumerada el 2026-09-01)
 
 ## Nota de renumeración
+
+> La ubicación de la API y del worker en el Polo fue reemplazada por ADR 0010. Se conserva este documento como registro histórico y siguen vigentes, a través de ADR 0010, la asincronía, el timeout, el único reintento y la política de indisponibilidad.
 
 Esta ADR se emitió con el número 0004, ya ocupado por [ADR 0004: LLM autohospedado sobre infraestructura del Polo Educativo](0004-self-hosted-llm-server.md). Eran dos decisiones distintas con el mismo identificador. Se renumera a **0009** conservando su fecha y su contenido. Relación con las otras dos ADR del mismo dominio:
 

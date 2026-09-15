@@ -1,6 +1,6 @@
 # Integración de IA generativa, ambientes y pruebas
 
-**Estado:** aceptada · **Fecha:** 2026-08-29 · **Decisión:** [ADR 0009](../decisions/adr/0009-servicio-generativo-online-en-el-polo.md)
+**Estado:** aceptada · **Actualizada:** 2026-09-15 · **Decisión:** [ADR 0010](../decisions/adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md)
 
 ## Alcance y autoridad
 
@@ -15,13 +15,17 @@ El LLM produce una salida estructurada que nunca es vigente por sí misma. El ba
 ## Topología
 
 ```text
-React/Vercel -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
-                       |                     |
-                       +---- Neon -----------+
+React/Vercel -> Express/Vercel -> FastAPI/Vercel -> Vercel Queues
+                       |              |                 |
+                       +----------- Neon <---- worker --+
+                                                        |
+                                                        v
+                                              ngrok -> Ollama/Polo
 ```
 
-- Ngrok expone sólo la API Python; el LLM permanece local o privado en el Polo.
-- La API Python acepta trabajos con `202`; un worker los procesa fuera de la petición.
+- Backend nunca llama a ngrok; llama al deployment Vercel de IA de su ambiente.
+- La API Python acepta trabajos con `202`; Vercel Queues invoca un consumidor privado fuera de la petición.
+- Ngrok expone sólo la inferencia necesaria del LLM y exige autenticación de servicio.
 - El servicio Python persiste estados y resultados en estructuras de integración. El LLM no conoce PostgreSQL.
 - El frontend consulta estado exclusivamente al backend.
 - Backend e IA se despliegan de manera independiente mediante contratos versionados.
@@ -29,8 +33,8 @@ React/Vercel -> Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 ## Flujo de generación
 
 1. El solicitante confirma parámetros estructurados.
-2. Backend crea una solicitud idempotente con contexto anonimizado.
-3. El servicio IA acepta la solicitud y el worker llama al LLM.
+2. Backend crea una solicitud idempotente con contexto anonimizado y envía sólo su UUID a IA.
+3. El servicio IA valida el UUID, lo encola y responde `202`; el consumidor llama al LLM.
 4. Cada intento tiene un límite configurable inicial de 120 segundos.
 5. Una respuesta inválida o un fallo técnico admite un único reintento.
 6. IA registra resultado, modelo, configuración, contrato e instante.
@@ -45,7 +49,7 @@ El contexto enviado excluye datos identificatorios que no aportan a la rutina. E
 
 El servicio IA sólo puede leer y escribir las estructuras de integración acordadas. No accede a tablas de identidad ni modifica rutinas, sesiones o aprobaciones. Backend es el único que transforma un resultado en entidad de dominio.
 
-Una única API y configuración del modelo atienden inicialmente ambos ambientes. La credencial de consumo determina en el servidor si se usa Neon Test o Neon Producción. Las conexiones, roles y secretos son distintos y nunca se eligen mediante datos enviados por el cliente.
+Un único proyecto Vercel genera dos deployments estables. Preview de `test` usa Neon Test y Production de `main` usa Neon Producción. Sus URLs, conexiones, roles y secretos son distintos y nunca se eligen mediante datos enviados por el cliente.
 
 ## Trabajo local y ambientes
 
@@ -53,7 +57,7 @@ Una única API y configuración del modelo atienden inicialmente ambos ambientes
 | --- | --- | --- | --- |
 | Frontend | Vite | Vercel Preview estable | Vercel Production |
 | Backend | Express, conectado a Neon Test | Vercel + Neon Test | Vercel + Neon Producción |
-| IA online | Python local opcional o servicio compartido del Polo | API y worker en el Polo | misma API/worker, credencial aislada |
+| IA online | FastAPI local con Test; cola real mediante Vercel CLI | Vercel Preview + Queues + Neon Test | Vercel Production + Queues + Neon Producción |
 | LLM | API del Polo cuando sea accesible | LLM del Polo | mismo LLM/configuración inicial |
 | Analítica futura | jobs manuales sobre datos sintéticos/test | jobs batch | jobs batch |
 
@@ -68,7 +72,7 @@ feature/* -> PR -> develop -> PR -> test -> PR -> main
 ```
 
 - Todo PR ejecuta formato, tipos, unitarias y contratos, con aprobación de otra persona.
-- `test` despliega Neon Test, Vercel y la versión test del servicio IA; allí se ejecutan integración, evaluación y E2E.
+- `test` despliega Preview de frontend, backend e IA contra Neon Test; allí se ejecutan integración, evaluación y E2E.
 - `main` exige aprobación del dueño, checks verdes y smoke test posterior.
 - Un cambio de modelo, prompt o parámetros necesita además una evaluación comparativa y validación de al menos un entrenador.
 - Los cambios incompatibles backend–IA se despliegan por etapas y conservan compatibilidad temporal.
@@ -80,7 +84,7 @@ feature/* -> PR -> develop -> PR -> test -> PR -> main
 | Unidad | reglas, permisos, minimización, parser y máquina de estados | cada PR |
 | Contrato | OpenAPI backend–IA, idempotencia y compatibilidad | cada PR |
 | Persistencia | permisos del rol IA, reclamo durable y aislamiento de ambientes | cada PR/promoción |
-| Integración | ngrok, timeout, reintento, caída del LLM y recuperación del worker | en `test` |
+| Integración | Vercel Queues, ngrok, timeout, reintento, redelivery y caída del LLM | en `test` |
 | Evaluación | catálogo, compatibilidad, rangos, números respaldados y lenguaje médico | cambios de IA |
 | E2E | solicitud, polling, candidato, revisión, aprobación e indisponibilidad generativa | antes de `main` |
 
@@ -88,4 +92,4 @@ El dataset fijo cubre contexto incompleto, condiciones físicas, equipamiento au
 
 ## Operación mínima
 
-API Python, worker, LLM y agente ngrok deben arrancar con la máquina, reiniciarse ante fallos y exponer salud observable. El dominio ngrok debe ser estable. Si API, worker, túnel o LLM fallan, la generación se declara no disponible sin degradar el resto del sistema.
+Vercel opera API Python, cola y consumidor. Ollama y el agente ngrok deben arrancar con la máquina del Polo y reiniciarse ante fallos. El dominio ngrok debe ser estable y autenticado. Si API, cola, consumidor, túnel o LLM fallan, la generación se declara no disponible sin degradar el resto del sistema.

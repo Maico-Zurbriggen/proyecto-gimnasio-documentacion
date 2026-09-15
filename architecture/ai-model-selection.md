@@ -58,8 +58,8 @@ No confundir con el modelo: el runtime es el proceso que sirve el modelo, no el 
 ```text
 Modelo:   Qwen2.5-7B-Instruct (GGUF, Q4_K_M/Q5_K_M según hardware verificado)
 Runtime:  Ollama
-Gateway:  puerto + adaptador dentro del servicio Python del Polo
-          (patrón de ADR-0005; despliegue según ADR-0009)
+Gateway:  puerto + adaptador dentro del servicio Python en Vercel
+          (patrón de ADR-0005; despliegue según ADR-0010)
 ```
 
 Justificación completa y consecuencias en [ADR-0006](../decisions/adr/0006-llm-model-and-runtime-selection.md).

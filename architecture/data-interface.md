@@ -7,11 +7,12 @@ PostgreSQL contiene dos interfaces diferentes para IA: estructuras operativas de
 ## Generación online
 
 - Backend crea la solicitud idempotente con contexto minimizado.
+- Backend envía a la API IA únicamente el UUID de esa solicitud; la API lo publica de forma idempotente en Vercel Queues.
 - El servicio IA reclama trabajos y escribe estados o resultados sólo en estructuras designadas.
 - El resultado registra identificador, intento, modelo, configuración, contrato e instante.
 - Backend valida y convierte una salida válida directamente en rutina `PROPUESTA`; IA no escribe rutinas ni aprobaciones.
 - El rol IA recibe privilegios mínimos y separados para Neon Test y Neon Producción.
-- La credencial autenticada ante IA selecciona internamente la conexión; el cliente nunca envía una URL de base.
+- Cada deployment IA tiene una única conexión fija: Preview usa Test y Production usa Producción. El cliente nunca envía una URL de base ni un selector de ambiente.
 
 Las solicitudes abandonadas, respuestas inválidas y fallos se eliminan a los 30 días. Los resultados aceptados conservan contexto mínimo y versiones según la política de auditoría.
 

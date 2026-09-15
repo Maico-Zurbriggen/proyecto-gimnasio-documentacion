@@ -11,14 +11,17 @@ proyecto-gimnasio-back (Express / Vercel) ------> Neon PostgreSQL
               |                                      ^
               | HTTPS                                |
               v                                      |
-        ngrok estable                                |
+proyecto-gimnasio-ia (FastAPI / Vercel)              |
               |                                      |
               v                                      |
-proyecto-gimnasio-ia (API + worker Python / Polo) ---+
-              |
-              | API privada/local
-              v
-           LLM / Polo
+       Vercel Queues -> worker Python ----------------+
+                              |
+                              | HTTPS + Basic Auth
+                              v
+                         ngrok estable
+                              |
+                              v
+                         Ollama / Polo
 ```
 
 Los trabajos analíticos y predictivos futuros comparten el repositorio IA, pero son procesos batch separados del servicio generativo online. La documentación común vive en `proyecto-gimnasio-documentacion`; los cuatro repositorios se versionan de manera independiente y no comparten código fuente.
@@ -28,6 +31,7 @@ Los trabajos analíticos y predictivos futuros comparten el repositorio IA, pero
 - Backend es dueño del OpenAPI público, del esquema transaccional, de las estructuras de integración y de las migraciones.
 - Frontend genera tipos y cliente desde una versión explícita del OpenAPI del backend.
 - IA es dueña del OpenAPI de su servicio de orquestación; backend genera o valida el cliente desde una versión explícita.
+- Vercel Queues transporta sólo el UUID técnico de la solicitud; PostgreSQL conserva el estado durable y la idempotencia de dominio.
 - El conector IA–LLM es privado del repositorio IA.
 - Los jobs batch usan datasets versionados mediante vistas o snapshots descritos en [data-interface.md](data-interface.md).
 - Un cambio incompatible conserva compatibilidad temporal y coordina PR relacionados.

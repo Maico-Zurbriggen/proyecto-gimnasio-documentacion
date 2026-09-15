@@ -28,7 +28,7 @@ Ollama, vLLM, llama.cpp. Comparadas en operación, uso de GPU, concurrencia y ma
 
 ## Consecuencias
 
-- El modelo y su cuantización quedan fijados en configuración del AI Gateway ([ADR-0005](0005-ai-gateway-in-process-module.md), desplegado según [ADR-0009](0009-servicio-generativo-online-en-el-polo.md)), no hardcodeados, porque el hardware real del servidor institucional todavía no está verificado.
+- El modelo y su cuantización quedan fijados en configuración del servicio IA ([ADR-0005](0005-ai-gateway-in-process-module.md), desplegado según [ADR-0010](0010-servicio-ia-en-vercel-y-llm-en-el-polo.md)), no hardcodeados, porque el hardware real del servidor institucional todavía no está verificado.
 - Llama 3.1-8B queda documentado como segunda preferencia si la evaluación empírica sobre el conjunto de casos de [generative-ai.md §9](../../architecture/generative-ai.md) lo justifica.
 - Gemma no se adopta sin que antes exista una revisión legal explícita de su política de uso frente al contenido real generado por este sistema.
 - Si la concurrencia real supera lo que Ollama sostiene bien, se reemplaza `OllamaAdapter` por `VllmAdapter` detrás del mismo puerto, sin tocar el resto del backend (ver [generative-ai.md §15](../../architecture/generative-ai.md)).

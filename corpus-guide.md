@@ -1,6 +1,6 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
-**Versión del corpus** 3.1 · **Fecha** 2026-09-02 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md) y ADR 0009. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
+**Versión del corpus** 3.2 · **Fecha** 2026-09-15 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md) y ADR 0010. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).
 
@@ -19,6 +19,8 @@ La v2.4 aceptó [ADR 0009](decisions/adr/0009-servicio-generativo-online-en-el-p
 3. **Se cerraron tres defectos estructurales del propio corpus:** DD-34 estaba citada por ocho documentos y nunca redactada · dos ADR compartían el número 0004 decidiendo cosas incompatibles · nueve documentos no estaban registrados en el manifiesto, con lo que la validación automática fallaba. Los tres están corregidos.
 
 **La v3.1 confirma la baseline v4.0 y congela la frontera de persistencia de la Etapa 1.** No se crean candidato ajustable, comentarios, sesiones diferidas, desbloqueos, baja anonimizada ni tablas predictivas. Diagnósticos, propuestas, ajustes y récords se incorporan a `app`; generación conserva sólo sus solicitudes, intentos, resultados y validaciones en `ai_integration`. Lo diferido se agregará, si vuelve al alcance, mediante migraciones futuras.
+
+**La v3.2 traslada la API y el worker Python a Vercel sin mover el LLM del Polo.** ADR 0010 reemplaza la ubicación decidida por ADR 0009: FastAPI acepta con `202`, Vercel Queues entrega el UUID de forma durable y un consumidor Python llama a Ollama mediante ngrok autenticado. Preview de `test` y Production de `main` conservan bases, URLs y secretos aislados.
 
 **Y quedan dos preguntas abiertas que condicionan la planificación**, no la documentación: cuánta capacidad de construcción hay realmente (I-09 en D12/§5) y si el Product Owner libera el compromiso sobre la interpretación de lenguaje natural (I-10).
 

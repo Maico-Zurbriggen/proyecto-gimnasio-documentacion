@@ -4,7 +4,7 @@
 
 `proyecto-gimnasio-ia` contiene componentes separados:
 
-1. **Servicio generativo online:** API Python y worker asíncrono desplegados en el Polo.
+1. **Servicio generativo online:** API FastAPI y consumidor asíncrono desplegados en Vercel.
 2. **Analítica batch:** extracción, features, entrenamiento, evaluación y scoring predictivo futuros.
 
 Compartir repositorio no permite que un componente use la frontera del otro ni que el trabajo batch entre en una petición.
@@ -12,10 +12,12 @@ Compartir repositorio no permite que un componente use la frontera del otro ni q
 ## Servicio generativo
 
 ```text
-Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
-                              |
-                              v
-                         Neon PostgreSQL
+Express/Vercel -> FastAPI/Vercel -> Vercel Queues -> worker Python
+                         |                              |
+                         +---------- Neon --------------+
+                                                        |
+                                                        v
+                                              ngrok -> Ollama/Polo
 ```
 
 - Expone HTTP versionado para backend; nunca para frontend.
@@ -23,7 +25,8 @@ Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 - Orquesta el LLM mediante un conector privado y valida el esquema de su respuesta.
 - Usa únicamente contexto minimizado y estructuras de integración autorizadas.
 - Escribe estados y resultados técnicos; no crea, aprueba ni activa rutinas.
-- Una única instancia atiende inicialmente test y producción con credenciales y conexiones aisladas.
+- Preview de `test` y Production de `main` usan URL, credencial y conexión aisladas.
+- El mensaje de cola contiene únicamente el UUID de la solicitud y el consumidor es idempotente ante redelivery.
 - No existe modo fake ejecutable; los tests sí pueden usar dobles internos.
 
 ## Analítica batch
@@ -34,9 +37,9 @@ Express/Vercel -> ngrok -> API Python/Polo -> LLM/Polo
 - Ejecuta extracción, validación, features point-in-time, entrenamiento, evaluación y persistencia idempotente.
 - Si un modelo no supera un criterio simple, se conserva el criterio simple.
 
-## Operación en el Polo
+## Operación
 
-API, worker, LLM y agente ngrok son procesos distintos. Deben arrancar con la máquina, reiniciarse ante fallos y exponer salud observable. Ngrok publica sólo la API Python mediante un dominio estable; el LLM queda local o privado.
+Vercel opera la API FastAPI, la cola y el consumidor. En el Polo sólo Ollama y el agente ngrok deben arrancar con la máquina y reiniciarse ante fallos. Ngrok publica mediante un dominio estable únicamente los endpoints de inferencia necesarios, protegidos con autenticación de servicio.
 
 ## Invariantes
 
