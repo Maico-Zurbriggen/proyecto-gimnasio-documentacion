@@ -16,7 +16,7 @@ Un único proyecto Vercel del repositorio IA produce Preview para `test` y Produ
 1. Instalar Ollama y descargar el modelo configurado:
 
    ```bash
-   ollama pull qwen2.5:7b-instruct
+   ollama pull qwen3.5:9b
    ```
 
 2. Mantener Ollama escuchando sólo en la interfaz local y comprobar `http://127.0.0.1:11434/api/tags` desde el Polo.
@@ -53,7 +53,7 @@ Configurar valores diferentes en **Preview** y **Production** y volver a despleg
 | `QUEUE_REGION` | `gru1` | `gru1` |
 | `LLM_API_URL` | dominio HTTPS estable de Cloudflare Tunnel | mismo dominio del LLM |
 | `LLM_API_TOKEN` | token Bearer del LLM | mismo token inicial del LLM |
-| `LLM_MODEL` | `qwen2.5:7b-instruct` | `qwen2.5:7b-instruct` |
+| `LLM_MODEL` | `qwen3.5:9b` | `qwen3.5:9b` |
 | `LLM_CONFIGURATION_VERSION` | `generative/generar-rutina@1` | igual, salvo promoción versionada |
 | `GENERATION_TIMEOUT_SECONDS` | `120` | `120` |
 | `GENERATION_MAX_RETRIES` | `1` | `1` |
