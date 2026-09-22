@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "corpus_version": "3.4",
-  "updated_at": "2026-09-16",
+  "corpus_version": "3.6",
+  "updated_at": "2026-09-22",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
@@ -25,6 +25,7 @@
     {"id":"ARCH-SYSTEM","path":"architecture/system-overview.md","scope":"system","authoritative_for":["repository topology","system boundaries","integration ownership"],"load_when":["starting technical work","changing an integration"]},
     {"id":"ARCH-FRONTEND","path":"architecture/frontend.md","scope":"frontend","authoritative_for":["frontend boundary","frontend responsibilities"],"load_when":["frontend architecture","frontend integration"]},
     {"id":"ARCH-BACKEND","path":"architecture/backend.md","scope":"backend","authoritative_for":["backend boundary","backend responsibilities"],"load_when":["backend architecture","API design","persistence"]},
+    {"id":"ARCH-IMPLEMENTED-SEQUENCES","path":"architecture/implemented-sequence-diagrams.md","scope":"system","authoritative_for":["as-built sequence diagrams","implemented cross-repository flows","current frontend coverage"],"load_when":["drawing sequence diagrams","reviewing implemented functionality","mapping frontend to backend endpoints","auditing backend-AI integration"]},
     {"id":"ARCH-DATABASE","path":"architecture/database-relational-model.md","scope":"backend,analytics","authoritative_for":["database design","database constraints","AI integration storage"],"load_when":["database changes","writing migrations","seeding data","implementing persistence"]},
     {"id":"ARCH-DATABASE-SCHEMA","path":"architecture/database-schema-reference.md","scope":"backend,frontend,analytics","authoritative_for":["current physical PostgreSQL tables","current PostgreSQL columns","current PostgreSQL foreign keys"],"load_when":["implementing persistence","designing DTOs","implementing frontend data access","querying PostgreSQL"]},
     {"id":"ARCH-ANALYTICS","path":"architecture/analytics-engine.md","scope":"analytics","authoritative_for":["online AI service boundary","batch pipeline","analytics boundary"],"load_when":["analytics work","generative AI service work","model lifecycle"]},

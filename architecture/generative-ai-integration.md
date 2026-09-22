@@ -32,14 +32,15 @@ React/Vercel -> Express/Vercel -> FastAPI/Vercel -> Vercel Queues
 
 ## Flujo de generación
 
-1. El solicitante confirma parámetros estructurados.
-2. Backend crea una solicitud idempotente con contexto anonimizado y envía sólo su UUID a IA.
-3. El servicio IA valida el UUID, lo encola y responde `202`; el consumidor llama al LLM.
-4. Cada intento tiene un límite configurable inicial de 120 segundos.
-5. Una respuesta inválida o un fallo técnico admite un único reintento.
-6. IA registra resultado, modelo, configuración, contrato e instante.
-7. Backend valida la salida y, si es válida, presenta el candidato.
-8. Al confirmarse, la rutina queda PROPUESTA y pasa al entrenador.
+1. El alumno autenticado solicita para sí una rutina y confirma texto libre o parámetros estructurados.
+2. Backend verifica identidad, minimiza el contexto y prefiltra el catálogo compatible.
+3. Backend envía idempotency key, contexto y catálogo a la API IA.
+4. La API IA crea o recupera la solicitud técnica, confirma la transacción, publica sólo su UUID en Vercel Queues y responde `202` o `200`.
+5. Backend registra el ownership solicitud–alumno–solicitante y frontend consulta el estado exclusivamente a backend.
+6. Cada intento tiene un límite configurable inicial de 120 segundos; una salida inválida o fallo técnico admite un único reintento.
+7. IA registra resultado, modelo, configuración, contrato e instante.
+8. Al quedar `COMPLETADA`, frontend solicita la finalización técnica; backend revalida y crea idempotentemente una rutina `PROPUESTA`.
+9. El entrenador asignado revisa esa propuesta y es el único que puede aprobarla para ponerla en vigencia.
 
 Tras el segundo fallo, la generación queda temporalmente no disponible. No hay generador determinístico alternativo ni adaptador `fake` ejecutable. El resto del sistema, las plantillas privadas y la creación manual por entrenadores permanecen operativos. Los presets sólo existirán si alcanza el tiempo para implementar RF-021.
 

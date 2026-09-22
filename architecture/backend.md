@@ -24,14 +24,18 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 - OpenAPI del backend es la fuente de verdad para frontend.
 - Prisma no se expone como contrato HTTP.
 - PostgreSQL es la única fuente de verdad transaccional.
-- Backend autoriza, minimiza el contexto y crea solicitudes idempotentes antes de invocar IA.
+- Backend autoriza, minimiza el contexto e invoca idempotentemente a IA; IA persiste la solicitud técnica y backend registra su ownership local antes de responder al frontend.
+- Sólo el alumno autenticado puede iniciar, consultar y finalizar técnicamente una generación, y únicamente para su propio `studentId`; entrenador y administrador no originan solicitudes.
 - El cliente del servicio IA se genera o valida desde el OpenAPI versionado por ese repositorio.
 - El backend nunca espera al LLM: la API IA acepta con `202` y frontend consulta estado al backend.
-- IA puede escribir sólo estados y resultados en estructuras de integración; backend es el único que crea directamente la rutina `PROPUESTA` después de validar una salida.
+- IA puede escribir sólo estados y resultados en estructuras de integración; backend es el único que crea la rutina `PROPUESTA` después de una finalización `POST` explícita y de validar la salida.
+- La finalización técnica no aprueba la rutina ni la pone en vigencia; la revisión explícita del entrenador asignado sigue siendo obligatoria.
 - Entrenamiento y scoring predictivo siguen fuera del camino de las peticiones.
 
 ## Fallos y seguridad
 
+- La autenticación usa sesiones propias persistidas como hash. En Vercel la cookie es `HttpOnly; Secure; SameSite=None` por el despliegue cross-site; en local es `HttpOnly; SameSite=Lax`. La eliminación conserva los mismos atributos.
+- Los headers `x-user-*` existen sólo como soporte interno de tests con `NODE_ENV=test`; desarrollo local, Test y Producción autentican exclusivamente mediante sesión.
 - Cada intento generativo vence inicialmente a los 120 segundos y admite un único reintento.
 - Una salida inválida nunca se presenta. Tras el segundo fallo la capacidad queda no disponible; no existe fallback determinístico de generación.
 - El resto del sistema continúa y las plantillas privadas del entrenador y su creación manual permanecen disponibles (RF-019). ✎ El preset publicado (RF-021) pasa a alcance opcional y **no es la contingencia**: ver [D11/DD-35](../decisions/design-decisions.md).

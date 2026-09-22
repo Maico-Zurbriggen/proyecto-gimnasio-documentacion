@@ -62,13 +62,13 @@ Por qué el Gateway es un puerto con adaptador reemplazable y no lógica dispers
 ## 4. Flujo generativo (mapea FL-04)
 
 ```text
-Alumno/Entrenador
+Alumno
    │  1. describe en lenguaje natural, o completa formulario
    ▼
-Backend  2. crea solicitud con contexto minimizado y envía sólo su UUID
+Backend  2. autoriza, minimiza contexto y prefiltra catálogo
    │
    ▼
-FastAPI  3. autentica, verifica, encola y responde 202
+FastAPI  3. crea/recupera solicitud, encola su UUID y responde 202/200
    │
    ▼
 Vercel Queues  4. entrega al consumidor privado

@@ -49,7 +49,7 @@ El entrenador ve su cartera ordenada por urgencia —primero lo que espera su re
 
 ### Lo que este alcance deliberadamente ya no incluye
 
-Ninguna forma de nutrición. Ningún comentario ni mensajería. Ningún panel analítico del gimnasio. Ninguna estimación de riesgo de abandono. Ningún preset publicado ni catálogo de preajustes. Ninguna solicitud de rutina iniciada por el alumno. Ninguna representación muscular sobre esquema corporal —el mismo dato se presenta como barras por grupo muscular—. Ningún registro diferido de sesiones pasadas. Ninguna parametrización de reglas de cálculo. Ninguna baja de cuenta con portabilidad y anonimización (§P/PD-02).
+Ninguna forma de nutrición. Ningún comentario ni mensajería. Ningún panel analítico del gimnasio. Ninguna estimación de riesgo de abandono. Ningún preset publicado ni catálogo de preajustes. Ninguna representación muscular sobre esquema corporal —el mismo dato se presenta como barras por grupo muscular—. Ningún registro diferido de sesiones pasadas. Ninguna parametrización de reglas de cálculo. Ninguna baja de cuenta con portabilidad y anonimización (§P/PD-02).
 
 ---
 
@@ -297,8 +297,8 @@ Cuatro elementos del corpus estaban escritos como requisitos funcionales sin ser
 | RF-018 | Curación y desactivación de ejercicios | 0     | Un ejercicio propio mal cargado no se puede retirar. Mitigación: RF-017 es de ámbito de gimnasio y su autor puede corregirlo. **Deuda aceptada**, registrada en §M/R-20                                                  |
 | RF-101 | Ejercicio desactivado en rutina vigente | —    | Cae con RF-018: sin desactivación no hay caso                                                                                                                                                                            |
 | RF-021 | Publicación y reutilización de presets | 1     | Ver §F.4 — es la exclusión de mayor impacto arquitectónico                                                                                                                                                               |
-| RF-025 | Solicitud de rutina por el alumno      | 3     | La rutina la origina el entrenador o la generación inicial automática (RF-087). C1 se sigue cumpliendo. Arrastra a RF-119 y RF-120                                                                                       |
-| RF-119 | Candidato de rutina ajustable          | —     | **Deroga [DD-33](../decisions/design-decisions.md) para esta etapa.** Sin solicitud del alumno no hay solicitante que ajuste. Retira RN-124 a RN-129 y el flujo FL-03                                                    |
+| RF-025 | Solicitud de rutina por el alumno      | 3     | **Reincorporado por decisión del Product Owner.** Sólo el alumno solicita para sí; la salida válida queda PROPUESTA y exige aprobación del entrenador. No reincorpora RF-119 ni RF-120                                                |
+| RF-119 | Candidato de rutina ajustable          | —     | **Permanece diferido para esta etapa.** El alumno solicita la generación, pero no edita un candidato intermedio; backend materializa directamente una salida válida como PROPUESTA. Retira RN-124 a RN-129 y el flujo FL-03                 |
 | RF-120 | Diferencia visible para el revisor     | —     | Cae con RF-119: el entrenador revisa la salida del componente sin capa intermedia                                                                                                                                       |
 | RF-034 | Registro y corrección diferidos        | 2     | Una sesión no registrada el mismo día se pierde. **Sesga la adherencia a la baja** — hay que declararlo al presentar el indicador. Arrastra a RF-117                                                                     |
 | RF-117 | Desbloqueo de sesión                   | —     | Cae con RF-034. El plazo de corrección vuelve a ser absoluto, con el costo de CB-70                                                                                                                                     |
@@ -390,7 +390,7 @@ El recorte no altera el núcleo del modelo, pero retira entidades completas.
 | **Se retira** `Comentario`                                                                                                      | RF-039 fuera                                                        |
 | **Se retira** el atributo `nivel de actividad` de `PerfilAlumno`                                                                | RF-012 fuera                                                        |
 | **Se retira** `PlantillaRutina.publicada`                                                                                       | RF-021 fuera; una plantilla ya no se publica                        |
-| **Se reduce** `RutinaAsignada.origen` a `PLANTILLA_ENTRENADOR` y `GENERADA`                                                      | RF-021 y RF-025 fuera                                               |
+| **Se reduce** `RutinaAsignada.origen` a `PLANTILLA_ENTRENADOR` y `GENERADA`                                                      | RF-021 fuera; RF-025 no requiere un origen adicional                |
 | **Se retiran** de `SesionEntrenamiento` los atributos `es diferida` y `desbloqueada hasta`                                       | RF-034 y RF-117 fuera                                               |
 | **Se retiran** `ScoreRiesgo` y `SegmentoPerfil`                                                                                 | Ya derogadas en D4 v2.1                                             |
 | **Se reduce** `RegistroAuditoria` a las operaciones de RF-038, RF-066, RF-091 y RF-114                                           | RF-097 reducido                                                     |
@@ -731,7 +731,7 @@ Sólo las que requieren decisión humana. No hay respuesta técnica que las cier
 | RF-022      | Asignación por copia independiente      | 0     | DEP-01   | **Reincorporado.** Voto nulo por lectura equivocada             |
 | RF-023      | Personalización de la rutina asignada   | 1     | F2       | → RF-038                                                        |
 | RF-024      | Objetivo de frecuencia semanal          | 2     | DEP-03   | RF-024 · CAP-4 · N1                                             |
-| RF-025      | Autoasignación por el alumno            | 3     | —        | Fuera · arrastra RF-119 y RF-120                                |
+| RF-025      | Solicitud generativa por el alumno       | 3     | PO       | **Reincorporado sin autoasignación** · propuesta sujeta a RF-110 · N1 |
 | RF-026      | Vigencia y archivado                    | 6     | ≥5       | RF-026 · CAP-4 · N1                                             |
 | RF-027      | Inicio de sesión de entrenamiento       | 8     | F1       | RF-027 · ciclo de vida completo · N1                            |
 | RF-028      | Congelamiento de la prescripción        | 5     | ≥5       | RF-028 · CAP-5 · N1                                             |
