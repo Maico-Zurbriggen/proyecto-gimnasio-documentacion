@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.3        |
-| **Fecha**      | 2026-09-02 |
+| **Versión**    | 2.4        |
+| **Fecha**      | 2026-09-28 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D3, D4 |
 
@@ -26,6 +26,8 @@
 **Lo que no se toca, y conviene decirlo.** RN-39a (derivación del tipo de rutina), RN-44a a RN-44d (compatibilidad), RN-79a (criterios de diagnóstico) y RN-89a (reglas de ajuste) quedan **intactas**. Son el núcleo determinístico del producto y el recorte no las alcanza. Sus umbrales y magnitudes siguen siendo convenciones del proyecto marcadas `[S]`, discutibles con el cliente y registradas en D12/§1.1.
 
 **Cambios de la v2.3 (baseline v4.0 confirmada).** Se retiran del comportamiento implementable el candidato, la sesión diferida, el desbloqueo excepcional y la baja con anonimización. La auditoría queda acotada y RF-073 se materializa como regresión generativa en repositorio y CI, no como tabla de producción.
+
+**Cambios de la v2.4:** se define el control de peso y altura por ciclos cerrados, el cómputo estrictamente consecutivo de faltas y el flujo de regularización por el alumno seguido de aprobación del entrenador.
 
 ## Marcado de origen
 
@@ -78,6 +80,19 @@ _(RN-04 —"toda cuenta creada por autorregistro nace con rol ALUMNO"— queda *
 | **RN-15**  | Una medición corporal es única por alumno, tipo y fecha. Cargar una segunda para la misma combinación sustituye a la anterior, con registro de auditoría                                        | `[I]` de RI-08  |
 | **RN-16**  | No se aceptan mediciones corporales con fecha futura                                                                                                                                            | `[I]`           |
 | **RN-17**  | Rangos admisibles: peso corporal **20,0–400,0 kg**; altura **100–250 cm**; perímetros **10,0–250,0 cm**. Fuera de rango se rechaza indicando el rango                                           | `[S]` rangos    |
+
+### 3.1 Control periódico y bloqueo por mediciones
+
+| #           | Regla | Origen |
+| ----------- | ----- | ------ |
+| **RN-130**  | Mientras no exista un bloqueo activo, el alumno con rutina vigente tiene ciclos consecutivos de **60 días**. La primera línea de base es la puesta en vigencia de su rutina inicial; para alumnos preexistentes al inicio del seguimiento persistido se usa el **2026-09-28**, porque no puede reconstruirse una confirmación histórica de altura sin inventar datos. Cambiar de rutina conserva la continuidad y la aprobación de un desbloqueo crea una línea de base nueva. Al cerrar un ciclo se crea un único control: es `CUMPLIDO` si existe un peso válido y una confirmación válida de altura con instante `inicio del ciclo < dato ≤ vencimiento`; si falta uno o ambos, el resultado es una sola `FALTA`. Un ciclo abierto, un bloqueo activo y un alumno sin rutina vigente no se evalúan | `[F]` decisión del cliente, 2026-09-28; `[S]` plazo y corte de adopción |
+| **RN-131**  | La racha se calcula desde el control cerrado más reciente hacia atrás y termina en el primer `CUMPLIDO`. Una falta aislada anterior a un cumplimiento permanece en el historial, pero no aporta a la racha actual | `[F]` decisión del cliente, 2026-09-28 |
+| **RN-132**  | Al alcanzar **3 faltas consecutivas**, un job diario e idempotente crea un bloqueo por mediciones en `PENDIENTE_MEDICION`. El job deriva los controles desde la base de datos, admite recuperar ciclos cerrados no evaluados y nunca confía en contadores recibidos por una API | `[F]` decisión del cliente, 2026-09-28; `[S]` umbral y periodicidad |
+| **RN-133**  | El bloqueo por mediciones no cambia `Usuario.estado`: la cuenta continúa ACTIVA. Sólo restringe las capacidades del rol ALUMNO a autenticarse, cerrar sesión, consultar el bloqueo y cargar las mediciones pendientes. Los demás roles del mismo usuario conservan sus permisos | `[F]` decisión del cliente, 2026-09-28 |
+| **RN-134**  | El alumno bloqueado regulariza personalmente el peso y la altura. Ambos deben ser válidos y posteriores a `bloqueado en`; la operación atómica registra el peso, actualiza la altura y su instante de confirmación, y lleva el bloqueo a `PENDIENTE_APROBACION`. No lo desbloquea | `[F]` decisión del cliente, 2026-09-28 |
+| **RN-135**  | Sólo el entrenador con asignación vigente puede aprobar la regularización. Dentro de la misma transacción se vuelven a verificar la asignación, el estado `PENDIENTE_APROBACION` y la existencia de ambos datos posteriores al bloqueo; si todo es válido, el bloqueo pasa a `RESUELTO` y se audita | `[F]` decisión del cliente, 2026-09-28 |
+| **RN-136**  | Al resolver el bloqueo, los controles históricos no se modifican y `aprobado en` se convierte en el inicio del ciclo nuevo. No se crean controles mientras el bloqueo está activo; por ello los tres controles que lo originaron ni el tiempo dedicado a regularizar pueden producir un bloqueo nuevo | `[I]` de RN-130, RN-131 y requisito de idempotencia |
+| **RN-137**  | Si el alumno no tiene entrenador vigente puede regularizar, pero permanece `PENDIENTE_APROBACION`; el sistema señala el caso al administrador y nadie distinto de un entrenador posteriormente asignado puede aprobarlo | `[I]` de RN-21 y RN-135 |
 
 ## 4. Asignación entrenador–alumno
 

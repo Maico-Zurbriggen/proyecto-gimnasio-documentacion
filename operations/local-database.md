@@ -51,3 +51,20 @@ CI también aplica el historial completo sobre PostgreSQL 17 limpio dentro del c
 - Los cambios incompatibles usan expansión, migración de consumidores y contracción posterior para permitir rollback.
 
 Los environments de GitHub `test` y `Production` contienen un secret homónimo `MIGRATION_DATABASE_URL`, con URL directa y rol migrador propio de cada ambiente. Estas credenciales no se guardan en Vercel ni se entregan a desarrolladores. El workflow las expone a Prisma como `DATABASE_URL` sólo durante el job.
+
+## Aplicación manual excepcional desde pgAdmin
+
+La migración `20260928190000_student_measurement_blocking` se entrega como SQL revisable porque el responsable de la base decidió aplicarla desde pgAdmin. Este procedimiento no reemplaza el flujo normal de CI:
+
+1. Conectarse mediante la URL directa de Neon y el rol propietario `migrator_test` o `migrator_prod`; no usar el pooler ni el rol runtime.
+2. Verificar que Prisma no tenga una migración ejecutándose y que no exista un advisory lock pendiente.
+3. Ejecutar completo `prisma/migrations/20260928190000_student_measurement_blocking/migration.sql`. El archivo abre y confirma una única transacción; ante un error no queda una migración parcial.
+4. Verificar columna, enums, tablas, índices, triggers y permisos antes de marcarla.
+5. Configurar temporalmente `DATABASE_URL` con la misma conexión directa del migrador y ejecutar:
+
+   ```bash
+   npx prisma migrate resolve --applied "20260928190000_student_measurement_blocking"
+   npx prisma migrate status
+   ```
+
+Sin `migrate resolve`, el siguiente `prisma migrate deploy` intentaría ejecutar de nuevo el SQL y fallaría porque los objetos ya existen. Marcarla como aplicada antes de ejecutarla también es incorrecto: Prisma dejaría de crear objetos que todavía faltan.

@@ -2,8 +2,8 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 3.0                                          |
-| **Fecha**      | 2026-09-01                                   |
+| **Versión**    | 3.1                                          |
+| **Fecha**      | 2026-09-28                                   |
 | **Estado**     | Normativo, con la limitación declarada en §0 |
 | **Depende de** | D8                                           |
 
@@ -55,6 +55,7 @@ Todo lo anterior sólo se conoce a través de la crítica que el análisis de sc
 | N-26 | **El sistema no es abierto: el gimnasio debe estar afiliado y avisar al usuario para que se registre**                  | RF-115 · RF-116 · RF-098 · RN-02a a RN-02e · **DD-29, DD-30** · FL-00, FL-19                 | Total                                                                                                                                                                                                                                                                                            |
 | N-27 | **El foco está en el usuario, pero lo mantiene el gimnasio: la prescripción depende de qué máquinas tiene el gimnasio** | RF-114 · RF-118 · RN-115 a RN-118 · RN-44d, RN-47 · **DD-26** · FL-20                        | Total. Cambió el modelo: el alumno ya no declara equipamiento y la falta de equipamiento pasó de advertir a impedir                                                                                                                                                                              |
 | **N-28** 🆕 | **El usuario debe poder ver cómo se ejecuta cada ejercicio; el cliente mencionó video** (Acta de Redefinición §1.4 y §4.3/N11, prioridad SHOULD) | RF-015 exige «al menos un recurso visual» · RF-079 excluye el alojamiento propio           | **Parcial, y es un hueco que el corpus nunca registró.** RF-015 admite una imagen y da por cumplido el requisito; el cliente habló de video, y §4.3 del acta lo pedía como enlace embebido de terceros. **Nadie decidió si el enlace embebido es exigible o si la imagen alcanza.** Ver PD-10 del [baseline](../planning/baseline-alcance-2026-09.md) |
+| **N-29** 🆕 | **Tres ciclos consecutivos sin peso y altura deben bloquear funcionalmente al alumno; él carga primero las mediciones pendientes y su entrenador aprueba después** | RF-123, RF-124 · RN-130 a RN-137 · FL-22 · D6/§12 | Total. Se distingue una racha consecutiva de faltas aisladas, el bloqueo funcional de la suspensión administrativa y la regularización de la aprobación |
 
 ## 2. Necesidades reconstruidas del pedido original
 
@@ -116,7 +117,7 @@ Requerimientos que **nadie pidió** y que existen porque sin ellos el sistema es
 
 La votación no es la voz del cliente: es la del equipo decidiendo qué construye en esta etapa. Se registra aquí porque a partir de la v4.0 de D8 explica por qué un requisito está o no está en el alcance, y sin ese registro las marcas de alcance de D8 quedan sin origen.
 
-**Forma.** Planilla de requerimientos RF-001 a RF-081, una marca por integrante. Votaron 8 de 9. **Regla de corte: 5 votos o más entra al alcance de la Etapa 1.** RF-082 a RF-094 se agregaron a la planilla después de la reunión con el cliente y **nunca se votaron**: entran por autoridad del cliente. RF-095 a RF-122 no existían cuando se votó.
+**Forma.** Planilla de requerimientos RF-001 a RF-081, una marca por integrante. Votaron 8 de 9. **Regla de corte: 5 votos o más entra al alcance de la Etapa 1.** RF-082 a RF-094 se agregaron a la planilla después de la reunión con el cliente y **nunca se votaron**: entran por autoridad del cliente. RF-095 a RF-124 no existían cuando se votó; RF-123 y RF-124 entran por la decisión directa N-29.
 
 **Lo que la votación confirmó.** El ciclo central obtuvo mayorías amplias sin excepción: contexto del alumno 8/8, catálogo 8/8, plantillas 8/8, registro de series 8/8, historial 8/8, indicadores de volumen y capacidad máxima 8/8, generación y su justificación 8/8, alternativas de sustitución 8/8. **La votación no cuestionó el producto: cuestionó su periferia.**
 
@@ -145,6 +146,6 @@ Cada capacidad central de D1 y los requerimientos que la sostienen. Si alguna co
 | C2 · Ninguna prescripción contradice el estado de la persona | RF-086, RF-094, RF-009, RF-084, RF-085, RF-060, RF-114, RF-118 |
 | C3 · La evolución se evalúa sola                             | RF-088, RF-040 a RF-046 ✎ *(v3.0: se retira RF-061)*           |
 | C4 · El cambio lo decide el sistema, con fundamento          | RF-089, RF-090, RF-054, RF-059, RF-057, RF-072, RF-073         |
-| C5 · El entrenador es la puerta                              | RF-110, RF-091, RF-036, RF-038, RF-109, RF-107                 |
-| Sustrato de datos del que todo depende                       | RF-027 a RF-035, RF-031, RF-102, RF-103, RF-104                |
+| C5 · El entrenador es la puerta                              | RF-110, RF-091, RF-036, RF-038, RF-109, RF-107, RF-124         |
+| Sustrato de datos del que todo depende                       | RF-027 a RF-035, RF-031, RF-102, RF-103, RF-104, RF-123        |
 | Condición de existencia del gimnasio                         | RF-115, RF-116, RF-114, RF-118                                 |

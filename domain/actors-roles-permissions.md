@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.3        |
-| **Fecha**      | 2026-09-01 |
+| **Versión**    | 2.4        |
+| **Fecha**      | 2026-09-28 |
 | **Estado**     | Normativo  |
 | **Depende de** | D1, D2     |
 
@@ -14,6 +14,8 @@
 **Cambios de la v2.2 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** se retiran las filas "Estimación de riesgo de abandono" (RF-061 a RF-063 → WON'T) y "Segmentación de perfiles" de la matriz de permisos; la descripción de perfil (RF-064) la produce la capa generativa de forma efímera y se muestra a entrenador y administrador junto a los indicadores.
 
 **Cambios de la v2.3 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** Las reglas de acceso RA-01 a RA-10 **no cambian**: son el núcleo de seguridad del sistema y ninguna depende de algo diferido. Quedan sin sujeto en la Etapa 1 las filas de la matriz correspondientes a comentarios (RF-039), pauta nutricional (RF-075, RF-108), panel analítico del gimnasio (RF-068) y solicitud de rutina por el alumno (RF-025).
+
+**Cambios de la v2.4:** se agrega RA-11 y se asignan explícitamente la regularización al alumno y la aprobación del desbloqueo a su entrenador vigente.
 
 **Dos consecuencias del recorte sobre permisos que conviene no perder de vista:**
 
@@ -40,7 +42,7 @@ Se lo declara como actor porque ejecuta una operación indispensable. Modelarlo 
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Objetivo**   | Entrenar con un plan que se mantenga adecuado a su estado, y saber si progresa                                                                                                                                                                                                                                                                         |
 | **Consulta**   | Su rutina vigente y su rutina propuesta, su historial de sesiones, sus indicadores, sus mediciones, el catálogo, las propuestas de adaptación que le afectan y su estado de resolución, sus avisos                                                                                                                                                     |
-| **Modifica**   | Su perfil, objetivo, condiciones físicas, aptitud, mediciones; sus sesiones dentro del plazo de corrección; comentarios propios. **Puede solicitar** una rutina generada y **moldear el candidato** antes de enviarlo a revisión, dentro de las operaciones de D5/§5.2; al confirmarlo se crea la rutina propuesta. Puede elegir un preset sólo si se implementa RF-021 |
+| **Modifica**   | Su perfil, objetivo, condiciones físicas, aptitud, mediciones; sus sesiones dentro del plazo de corrección; comentarios propios. **Puede solicitar** una rutina generada. Cuando está bloqueado por mediciones, carga personalmente el peso y la altura pendientes, pero no puede ejecutar las demás operaciones de alumno hasta la aprobación. Puede elegir un preset sólo si se implementa RF-021 |
 | **Nunca hace** | Poner en vigencia una rutina, resolver una propuesta de adaptación, modificar su rutina vigente **ni su rutina propuesta una vez confirmada**, fijar series, repeticiones, descansos o cargas, declarar equipamiento                                                                                                                                   |
 | **Nunca ve**   | La descripción de perfil que se presenta al entrenador y al administrador; información de otros alumnos                                                                                                                                                                                                                                                |
 
@@ -53,7 +55,7 @@ Se lo declara como actor porque ejecuta una operación indispensable. Modelarlo 
 | **Objetivo**            | Que los alumnos de su cartera entrenen con la prescripción correcta, sin tener que revisarlos uno por uno                                                                                                       |
 | **Función indelegable** | Es la puerta: **ninguna rutina rige para un alumno suyo sin su revisión**, cualquiera sea su origen                                                                                                             |
 | **Consulta**            | Su cartera ordenada por urgencia, la ficha integral de cada alumno asignado, lo pendiente de su revisión, sus plantillas, el catálogo, sus indicadores agregados de cartera, sus avisos                         |
-| **Modifica**            | Sus plantillas; las rutinas de sus alumnos asignados; su perfil profesional; comentarios; ejercicios propios del gimnasio. Resuelve propuestas. Emite invitaciones con rol ALUMNO. Desbloquea sesiones a pedido |
+| **Modifica**            | Sus plantillas; las rutinas de sus alumnos asignados; su perfil profesional; comentarios; ejercicios propios del gimnasio. Resuelve propuestas. Emite invitaciones con rol ALUMNO. Aprueba la regularización de mediciones de sus alumnos asignados |
 | **Nunca ve**            | Alumnos sin asignación vigente con él; información de otro gimnasio                                                                                                                                             |
 | **Nunca hace**          | Modificar el inventario del gimnasio, registrar la aptitud de un alumno, otorgar roles distintos de ALUMNO                                                                                                      |
 
@@ -84,6 +86,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Condición física e historial                     | `L/E` P                      | `L` A                       | —                       |
 | Aptitud                                          | `L/E` P                      | `L` A                       | `L/E` G                 |
 | Medición corporal                                | `L/E` P                      | `L` A                       | —                       |
+| Control y bloqueo por mediciones                 | `L` P; `E` regularización    | `L` A; `E` aprobación       | Sólo estado operativo G |
 | Estado de membresía                              | `L` P                        | `L` A                       | `L/E` G                 |
 | Catálogo base                                    | `L`                          | `L`                         | `L`                     |
 | Catálogo del gimnasio                            | `L`                          | `L` + `E` propios           | `L` + curar G           |
@@ -138,6 +141,8 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 
 **RA-10 — Un entrenador sólo invita alumnos.** Y el alumno resultante queda asignado a él. `[F: RN-02d]`
 
+**RA-11 — Restricción funcional por rol.** Un bloqueo por mediciones restringe únicamente las operaciones del rol ALUMNO. Mientras está `PENDIENTE_MEDICION`, ese rol sólo puede consultar su identidad y el bloqueo, cerrar la sesión de usuario y cargar la regularización; mientras está `PENDIENTE_APROBACION`, sólo puede consultar identidad y estado o cerrar sesión. No puede iniciar ni registrar sesiones de entrenamiento. Los permisos de otros roles del mismo usuario se evalúan con normalidad. `[F: RF-123, RF-124]`
+
 ## 4. Evolución de los permisos cuando cambia una relación
 
 | Evento                                          | Efecto inmediato                                                                                                                                                                                                                                                                                                                                |
@@ -150,6 +155,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Un entrenador pierde el rol de entrenador       | Sus asignaciones vigentes finalizan en ese instante. Sus plantillas publicadas permanecen utilizables. Sus alumnos conservan su rutina vigente pero no pueden recibir ninguna rutina nueva ni ninguna adaptación hasta ser reasignados                                                                                                          |
 | Un administrador pierde el rol de administrador | Se rechaza si es el último administrador activo del gimnasio (RN-03a)                                                                                                                                                                                                                                                                           |
 | Se suspende una cuenta                          | No puede autenticarse. Sus datos y sus asignaciones permanecen: la suspensión es reversible y no destruye relaciones                                                                                                                                                                                                                            |
+| Se crea un bloqueo por mediciones               | La cuenta continúa ACTIVA; sólo el rol ALUMNO queda limitado conforme RA-11. El entrenador vigente gana la acción de aprobación cuando la regularización esté completa                                                                                                                                            |
 | Se da de baja una cuenta                        | Anonimización, no borrado. Ver D5/RN-106 y D10/CB-38                                                                                                                                                                                                                                                                                            |
 | Cambia el inventario del gimnasio               | No altera permisos, pero recalcula el catálogo prescribible y dispara la reevaluación de las rutinas vigentes afectadas (RN-117)                                                                                                                                                                                                                |
 

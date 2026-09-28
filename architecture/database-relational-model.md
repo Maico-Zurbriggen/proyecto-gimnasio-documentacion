@@ -1,6 +1,6 @@
 # Modelo relacional de PostgreSQL
 
-**Estado:** aprobado para la migración inicial · **Fecha:** 2026-09-02
+**Estado:** migración inicial aprobada; extensión de controles de medición diseñada para migración posterior · **Fecha:** 2026-09-28
 
 ## Alcance y autoridad
 
@@ -667,6 +667,63 @@ Los diagnósticos son append-only: cada cálculo inserta un registro nuevo con v
 
 `risk_scores` no forma parte del modelo porque RF-061 a RF-063 están en estado WON'T. `profile_segments` tampoco se persiste: RF-064 define una descripción generativa efímera. `component_evaluations` no se crea: RF-121 y RF-122 están diferidos y RF-073 se implementa como un conjunto de regresión generativa versionado en el repositorio de IA y ejecutado en CI. Avisos y auditoría pertenecen a `app` y están definidos en la sección 6.
 
+### 8.1 Extensión planificada: controles y bloqueos por mediciones
+
+Esta extensión implementa RF-123 y RF-124 y **todavía no describe el esquema físico desplegado**. Hasta que su migración se aplique, [database-schema-reference.md](database-schema-reference.md) continúa siendo la referencia de las tablas existentes.
+
+```mermaid
+erDiagram
+    STUDENT_PROFILES ||--o{ STUDENT_MEASUREMENT_CHECKPOINTS : evaluated
+    ROUTINES ||--o{ STUDENT_MEASUREMENT_CHECKPOINTS : establishes
+    ROUTINE_VERSIONS ||--o{ STUDENT_MEASUREMENT_CHECKPOINTS : contextualizes
+    BODY_MEASUREMENTS o|--o{ STUDENT_MEASUREMENT_CHECKPOINTS : proves_weight
+    STUDENT_PROFILES ||--o{ STUDENT_MEASUREMENT_BLOCKS : restricts
+    STUDENT_MEASUREMENT_CHECKPOINTS ||--o| STUDENT_MEASUREMENT_BLOCKS : triggers
+    BODY_MEASUREMENTS o|--o{ STUDENT_MEASUREMENT_BLOCKS : regularizes
+    USERS o|--o{ STUDENT_MEASUREMENT_BLOCKS : approves
+
+    STUDENT_MEASUREMENT_CHECKPOINTS {
+        uuid id PK
+        uuid student_id FK
+        uuid routine_id FK
+        uuid routine_version_id FK
+        date cycle_starts_on
+        date due_on
+        string result
+        uuid weight_measurement_id FK
+        datetime height_confirmed_at
+        datetime evaluated_at
+    }
+
+    STUDENT_MEASUREMENT_BLOCKS {
+        uuid id PK
+        uuid student_id FK
+        string state
+        string reason_code
+        int consecutive_misses_at_block
+        uuid triggering_checkpoint_id FK
+        datetime blocked_at
+        uuid regularization_weight_measurement_id FK
+        datetime regularization_height_confirmed_at
+        datetime submitted_at
+        uuid approved_by_trainer_id FK
+        datetime approved_at
+    }
+```
+
+También se agrega `student_profiles.height_updated_at timestamptz`, obligatorio cuando existe `height_cm`. La carga o confirmación de altura actualiza ambos valores en la misma operación.
+
+Restricciones de la extensión:
+
+- `UNIQUE (student_id, due_on)` en `student_measurement_checkpoints`.
+- Índice parcial único en `student_measurement_blocks (student_id) WHERE state <> 'RESUELTO'`.
+- `triggering_checkpoint_id` es único y debe señalar un control `FALTA` del mismo alumno.
+- `cycle_starts_on < due_on`; `evaluated_at` no puede preceder el vencimiento.
+- `CUMPLIDO` exige `weight_measurement_id` y `height_confirmed_at` dentro de `(cycle_starts_on, due_on]`; `FALTA` conserva nulo al menos uno de ellos.
+- `PENDIENTE_APROBACION` exige evidencia posterior a `blocked_at`; `RESUELTO` exige aprobador y fecha de aprobación.
+- Las claves de rutina, versión, alumno, medición y aprobador deben pertenecer al mismo gimnasio; el backend revalida además la asignación vigente dentro de la transacción.
+- El rol de runtime puede leer y escribir estas dos tablas, pero no alterar su estructura. La migración y los `ALTER DEFAULT PRIVILEGES` los ejecuta el rol migrador propietario.
+
 ## 9. Orden de migraciones recomendado
 
 1. Esquemas, extensiones necesarias, enums y tablas de referencia.
@@ -678,6 +735,7 @@ Los diagnósticos son append-only: cada cálculo inserta un registro nuevo con v
 7. Avisos y auditoría transaccional en `app`.
 8. Diagnósticos, propuestas de adaptación, ajustes y récords personales en `app`.
 9. Interfaz durable `ai_integration`, procedencia de rutinas generadas y permisos mínimos del rol IA.
+10. En una migración posterior a la baseline: `height_updated_at`, controles de ciclo y bloqueos por mediciones de §8.1, junto con sus permisos de runtime.
 
 Las estructuras diferidas no se reservan: si vuelven al alcance se incorporarán mediante migraciones futuras.
 
@@ -706,4 +764,4 @@ El backend versiona un script idempotente `seed-reference.sql` (`INSERT ... ON C
 4. Contexto, preferencias y salida usan contratos JSON versionados, sin datos identificatorios.
 5. La autenticación usa sesiones propias; se conservan `auth_sessions` y `password_reset_tokens`.
 6. Diagnósticos, propuestas, ajustes y récords se persisten en `app`; no se crea un esquema `analytics`.
-7. Comentarios, sesiones diferidas, desbloqueos, presets y demás estructuras diferidas no se modelan. Si vuelven al alcance se agregarán mediante migraciones futuras.
+7. Comentarios, sesiones diferidas, desbloqueos excepcionales de sesiones de entrenamiento, presets y demás estructuras diferidas no se modelan. El desbloqueo funcional por mediciones de §8.1 es otra capacidad y sí queda diseñado para una migración posterior.

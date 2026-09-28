@@ -2,12 +2,14 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 4.0        |
-| **Fecha**      | 2026-09-01 |
+| **Versión**    | 4.1        |
+| **Fecha**      | 2026-09-28 |
 | **Estado**     | Normativo en cuanto al enunciado de cada requisito. **La clasificación de alcance de la Etapa 1 es propuesta**: depende de PD-01 y PD-00 del [baseline de alcance](../planning/baseline-alcance-2026-09.md) |
 | **Depende de** | D1 a D7    |
 
-**Identificadores estables.** Ningún identificador se reutiliza, se renumera ni se borra. RF-001 a RF-122 conservan su numeración aunque su enunciado, tipo, prioridad o alcance hayan cambiado. Renumerarlos rompería veinte documentos del corpus y los `AGENTS.md` de los tres repositorios de código, a cambio de nada.
+**Identificadores estables.** Ningún identificador se reutiliza, se renumera ni se borra. RF-001 a RF-124 conservan su numeración aunque su enunciado, tipo, prioridad o alcance hayan cambiado. Renumerarlos rompería veinte documentos del corpus y los `AGENTS.md` de los tres repositorios de código, a cambio de nada.
+
+**Cambios de la v4.1:** RF-123 y RF-124 incorporan el bloqueo por tres ciclos consecutivos sin peso y altura, la regularización personal del alumno y la aprobación posterior del entrenador.
 
 ### Cambios de la v3.3 → v4.0
 
@@ -95,6 +97,8 @@ La v4.0 incorpora tres fuentes que la v3.3 no tenía: la **votación del equipo*
 | RF-084 | Registrar la aptitud con fecha de emisión y de vencimiento, cargada por el alumno o por un administrador, y **advertir de forma destacada** su ausencia o vencimiento al poner una rutina en vigencia y al iniciar una sesión, sin impedir ninguna operación                             | WEB  | MUST ✎ N2 | RF-007                 |
 | RF-085 | Conservar el historial de condiciones físicas con sus fechas de inicio y fin, de modo que sea determinable qué condiciones estaban vigentes en una fecha dada                                                                                                                            | WEB  | MUST **N1** | RF-009                 |
 | RF-111 | Determinar y exponer si un alumno tiene contexto suficiente para que se produzcan decisiones automáticas sobre él, e indicar qué falta cuando no lo tiene                                                                                                                                | DATA | MUST N2 | RF-007, RF-008, RF-009 |
+| RF-123 | Evaluar diariamente los ciclos de 60 días ya cerrados de cada rutina vigente, persistir un único control por ciclo y restringir las capacidades del rol ALUMNO al alcanzar tres faltas consecutivas de peso y altura, sin contar faltas aisladas separadas por un ciclo cumplido y sin suspender la cuenta | WEB | MUST 🆕 **N1** · decisión cliente | RF-007, RF-010, RF-026 |
+| RF-124 | Permitir al alumno restringido cargar personalmente el peso y la altura adeudados y, sólo después, permitir al entrenador con asignación vigente aprobar el desbloqueo en una operación atómica que revalide la asignación, resuelva el bloqueo y establezca una nueva línea de base | WEB | MUST 🆕 **N1** · decisión cliente | RF-123, RF-066, RF-010 |
 
 ## Módulo 3 · Catálogo de ejercicios
 
@@ -275,12 +279,12 @@ Núcleo del producto. Pedido directo del cliente.
 
 | Prioridad      | Cantidad |     | Tipo                 | Cantidad |
 | -------------- | -------- | --- | -------------------- | -------- |
-| MUST           | 79       |     | WEB                  | 63       |
+| MUST           | 81       |     | WEB                  | 65       |
 | SHOULD         | 13       |     | DATA                 | 24       |
 | COULD          | 5        |     | HYBRID               | 16       |
 | WON'T          | 9        |     | ML                   | 3        |
 | Derogado       | 1        |     | AI                   | 7        |
-| **En el producto** | **97** |   | **Total**            | **97**   |
+| **En el producto** | **99** |   | **Total**            | **99**   |
 
 La prioridad no cambió en la v4.0: sigue expresando cuánto importa cada requisito **al producto**. Lo que se agrega es la segunda dimensión.
 
@@ -288,10 +292,10 @@ La prioridad no cambió en la v4.0: sigue expresando cuánto importa cada requis
 
 | Alcance                                     | Cantidad | Qué significa                                                                    |
 | ------------------------------------------- | -------- | ---------------------------------------------------------------------------------- |
-| **N1** · núcleo, no se recorta              | **57**   | Sin esto el producto no cumple lo que el cliente declaró condición de aprobación |
+| **N1** · núcleo, no se recorta              | **59**   | Sin esto el producto no cumple lo que el cliente declaró condición de aprobación |
 | N2 · comprometido                           | 19       | Se construye en la Etapa 1                                                       |
 | N3 · condicionado al hito del Sprint 3      | 4        | Se construye si el circuito de prescripción cerró a tiempo                        |
-| **En alcance — Etapa 1**                    | **80**   |                                                                                    |
+| **En alcance — Etapa 1**                    | **82**   |                                                                                    |
 | ⏸ DIFERIDO                                  | 23       | Fuera de la Etapa 1, dentro del producto                                         |
 | ⊂ absorbido por fusión                      | 6        | RF-004, RF-023, RF-032, RF-033, RF-060, RF-107                                    |
 | → degradado a regla                         | 4        | RF-098, RF-102, RF-103, RF-104                                                   |
@@ -303,9 +307,9 @@ La prioridad no cambió en la v4.0: sigue expresando cuánto importa cada requis
 
 | Conjunto     | Requisitos | Optimista (8 h) | Realista (10–12 h) | Frente a ~504 h |
 | ------------ | ---------- | --------------- | ------------------ | --------------- |
-| N1           | 57         | ~456 h          | 570 – 684 h        | 0,9 × a 1,4 ×   |
-| N1 + N2      | 76         | ~608 h          | 760 – 912 h        | 1,2 × a 1,8 ×   |
-| N1 + N2 + N3 | 80         | ~640 h          | 800 – 960 h        | 1,3 × a 1,9 ×   |
+| N1           | 59         | ~472 h          | 590 – 708 h        | 0,9 × a 1,4 ×   |
+| N1 + N2      | 78         | ~624 h          | 780 – 936 h        | 1,2 × a 1,9 ×   |
+| N1 + N2 + N3 | 82         | ~656 h          | 820 – 984 h        | 1,3 × a 2,0 ×   |
 
 **El recorte redujo el alcance un 18 %, no lo que hacía falta.** Lo que la votación retiró —nutrición, comentarios, paneles agregados, parametrización, mapa muscular— es barato; lo que confirmó por mayoría amplia es el ciclo central, que es donde está el trabajo. **El núcleo solo cabe si todo sale bien y nada más se construye.**
 

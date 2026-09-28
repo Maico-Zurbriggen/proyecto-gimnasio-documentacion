@@ -33,6 +33,8 @@ proyecto-gimnasio-back (Express)
 - Estados de carga, reintento e indisponibilidad. ✎ No se ofrece un preset como salida alternativa: RF-021 es alcance opcional. Ante indisponibilidad generativa el alumno ve el estado, no una acción que puede no existir.
 - Validaciones de experiencia de usuario que la API vuelve a comprobar.
 - Guardas y navegación por los roles de la sesión: un área sólo se muestra si el backend devolvió su rol; los usuarios multirrol pueden alternar únicamente entre sus áreas concedidas.
+- Guarda funcional del área ALUMNO mediante `GET /students/me/measurement-block`: con `PENDIENTE_MEDICION` reemplaza las pantallas normales por la carga personal de peso y altura; con `PENDIENTE_APROBACION` muestra la espera de aprobación. El área de entrenador de una cuenta multirrol no queda restringida.
+- La ficha del entrenador nunca captura las mediciones de regularización: sólo habilita `POST /students/:studentId/unlock` cuando el backend informa `PENDIENTE_APROBACION`.
 
 ## Invariantes
 

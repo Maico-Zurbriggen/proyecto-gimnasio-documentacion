@@ -50,3 +50,52 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 4. El entrenador es la puerta de aprobación para poner una rutina en vigencia.
 5. La autorización combina rol y propiedad o asignación del recurso.
 6. Ningún resultado IA evita las validaciones de catálogo, compatibilidad, rangos y permisos.
+
+## Contrato objetivo: bloqueo por mediciones
+
+Este contrato implementa RF-123, RF-124 y FL-22. El bloqueo funcional es independiente de `users.state`.
+
+### Alumno
+
+`GET /students/me/measurement-block`
+
+- Requiere sesión y rol `ALUMNO`.
+- Devuelve `200` con `measurementBlockState: NORMAL | PENDIENTE_MEDICION | PENDIENTE_APROBACION`, motivo, racha, fechas de bloqueo y envío, altura y fecha de la última medición.
+- No expone datos de otro alumno ni acepta un identificador en la URL.
+
+`POST /students/:studentId/measurements`
+
+- Conserva el contrato existente `{ weightKg, heightCm }` y la verificación de propiedad.
+- Siempre registra el peso y actualiza altura y `height_updated_at` atómicamente.
+- Si hay un bloqueo `PENDIENTE_MEDICION`, la misma transacción vincula la medición al bloqueo y lo lleva a `PENDIENTE_APROBACION`.
+- Si está `PENDIENTE_APROBACION`, responde `409 measurement_regularization_already_submitted` para no reemplazar silenciosamente la evidencia que revisa el entrenador.
+- Responde `201` con la medición y `measurementBlockState`.
+
+### Entrenador
+
+`GET /students/:studentId/status`
+
+- Conserva la verificación de asignación vigente.
+- Reemplaza el booleano derivado de `users.state` por `measurementBlockState`, `motivoBloqueo`, `faltasConsecutivas`, `blockedAt`, `submittedAt` y la fecha de la última medición.
+- No devuelve el detalle de la evidencia si el actor ya no tiene asignación vigente.
+
+`POST /students/:studentId/unlock`
+
+- Conserva la URL para reducir el cambio en frontend, pero pasa a ser una aprobación sin body.
+- Requiere rol `ENTRENADOR`, asignación vigente y bloqueo `PENDIENTE_APROBACION`.
+- En una única transacción vuelve a comprobar asignación y evidencia, cambia a `RESUELTO`, registra aprobador y fecha, crea auditoría y toma ese instante como inicio del ciclo nuevo.
+- Responde `200` con el estado actualizado; `409 pending_measurement_required` si falta la carga; `409 measurement_block_already_resolved` si otra operación ya lo resolvió; `403` si no existe asignación vigente.
+
+### Proceso interno
+
+`GET /internal/jobs/measurement-blocks`
+
+- No usa sesión de usuario. Exige `Authorization: Bearer ${CRON_SECRET}` con comparación segura.
+- Evalúa ciclos cerrados en la zona horaria de cada gimnasio, crea controles faltantes en orden y bloquea al alcanzar tres faltas consecutivas.
+- Es idempotente por `(student_id, due_on)`, por el control disparador y por el índice de un único bloqueo activo.
+- Responde `200` con contadores agregados, sin datos personales: `{ checkpointsCreated, blocksCreated, skippedConcurrentRun }`.
+- Producción se programa diariamente mediante Vercel Cron. El ambiente Preview/Test lo invoca manualmente o mediante un workflow programado de GitHub.
+
+### Restricción transversal
+
+Después de autenticar y resolver el rol activo, un middleware consulta el bloqueo vigente. Para operaciones como `ALUMNO`, sólo permite identidad propia, cierre de sesión, consulta del bloqueo y, en `PENDIENTE_MEDICION`, la carga de mediciones. No impide operar con roles `ENTRENADOR` o `ADMINISTRADOR` del mismo usuario.

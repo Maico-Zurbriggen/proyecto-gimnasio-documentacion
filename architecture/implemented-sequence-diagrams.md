@@ -51,10 +51,11 @@ La autenticación pública usa sesiones propias. El frontend nunca elige ni simu
 | SEQ-01 | Consultar rutina vigente y aviso de renovación | E2E | `/alumno` |
 | SEQ-02 | Consultar cartera priorizada del entrenador | E2E | `/entrenador`, `/entrenador/alumnos`, `/entrenador/rutinas` |
 | SEQ-03 | Consultar ficha y rutina resumida de un alumno | E2E | `/entrenador/alumnos/:studentId` |
-| SEQ-04 | Desbloquear alumno con medición adeudada | E2E | ficha del alumno bloqueado |
+| SEQ-04 | Regularizar mediciones y aprobar desbloqueo | E2E | área del alumno y ficha del entrenador |
+| SEQ-04b | Evaluar controles y crear bloqueos | API/Cron | sin pantalla propia |
 | SEQ-05 | Listar y abrir propuestas de adaptación | E2E | `/entrenador/rutinas/revisar` |
 | SEQ-06 | Resolver propuesta de adaptación | E2E | `/entrenador/rutinas/revisar/:proposalId` |
-| SEQ-07 | Evaluar y aplicar bloqueo por inactividad | API | sin pantalla |
+| SEQ-07 | Suspensión administrativa por endpoint legado | API | sin pantalla |
 | SEQ-08 | Consultar y finalizar una generación | E2E | ficha del alumno del entrenador |
 | SEQ-09 | Solicitar generación desde backend | E2E | ficha del alumno del entrenador |
 | SEQ-10 | Despachar y procesar generación dentro de IA | COMPONENTE | no accesible desde frontend |
@@ -230,50 +231,76 @@ sequenceDiagram
 
 Las pestañas `Rutina` y `Mediciones` cambian la URL pero renderizan la misma ficha; no cargan estructura de rutina ni historial de mediciones.
 
-## SEQ-04 — Desbloqueo con medición adeudada
+## SEQ-04 — Regularización personal y aprobación del desbloqueo
 
 ```mermaid
 sequenceDiagram
     autonumber
+    actor Alumno
     actor Entrenador
     participant FE as Frontend React
     participant API as Backend Express
-    participant Auth as Sesión y autorización
-    participant UC as UnlockStudentUseCase
-    participant Assign as TrainerAssignments
-    participant Repo as PrismaStudentsRepository
+    participant MeasureUC as RecordMeasurementUseCase
+    participant UnlockUC as UnlockStudentUseCase
+    participant Repo as Repositorios Prisma
     participant DB as PostgreSQL app
 
-    Entrenador->>FE: Ingresa peso y altura
-    FE->>FE: Validar peso 20..250 y altura 100..250
-    Entrenador->>FE: Presiona Desbloquear alumno
-    FE->>API: POST /students/:studentId/unlock<br/>{weightKg, heightCm}
-    API->>Auth: Exigir ENTRENADOR
-    API->>API: Zod valida UUID y body
-    API->>UC: execute(trainerId, studentId, valores)
-    UC->>Assign: isActive(trainerId, studentId)
-    alt entrenador no asignado
-        UC-->>FE: 403 forbidden_not_assigned
-    else asignado
-        UC->>Repo: findById(studentId)
-        Repo->>DB: Consultar usuario y perfil
-        alt alumno inexistente
-            UC-->>FE: 404 student_not_found
-        else alumno no está SUSPENDIDO
-            UC-->>FE: 409 student_not_blocked
-        else suspendido
-            UC->>Repo: unlock(...)
-            Repo->>DB: BEGIN
-            Repo->>DB: users.state = ACTIVO si sigue SUSPENDIDO
-            Repo->>DB: Upsert PESO_CORPORAL del día
-            Repo->>DB: Actualizar student_profiles.height_cm
-            Repo->>DB: Insertar audit_logs DESBLOQUEO_ALUMNO
-            Repo->>DB: COMMIT
-            Repo-->>UC: true
-            UC-->>FE: 200 StudentStatusDto activo
-            FE->>FE: Invalidar status y cartera en TanStack Query
-            FE-->>Entrenador: Confirmación de desbloqueo
+    Alumno->>FE: Consulta su estado
+    FE->>API: GET /students/me/measurement-block
+    API-->>FE: PENDIENTE_MEDICION y motivo
+    Alumno->>FE: Carga peso y altura válidos
+    FE->>API: POST /students/:studentId/measurements<br/>{weightKg, heightCm}
+    API->>MeasureUC: execute(studentId, valores)
+    MeasureUC->>Repo: record(...)
+    Repo->>DB: BEGIN
+    Repo->>DB: Upsert PESO_CORPORAL y actualizar altura + instante
+    Repo->>DB: Bloqueo -> PENDIENTE_APROBACION con evidencias
+    Repo->>DB: COMMIT
+    API-->>FE: 201 PENDIENTE_APROBACION
+
+    Entrenador->>FE: Aprueba desde la ficha
+    FE->>API: POST /students/:studentId/unlock sin body
+    API->>UnlockUC: execute(trainerId, studentId)
+    UnlockUC->>Repo: unlock(...)
+    Repo->>DB: BEGIN y revalidar estado + asignación vigente
+    alt falta la medición
+        Repo-->>API: 409 pending_measurement_required
+    else no está asignado
+        Repo-->>API: 403 forbidden_not_assigned
+    else aprobación válida
+        Repo->>DB: Bloqueo -> RESUELTO + aprobación + auditoría
+        Repo->>DB: COMMIT
+        API-->>FE: 200 NORMAL y racha 0
+    end
+```
+
+## SEQ-04b — Evaluación diaria de controles y bloqueo
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Cron as Vercel Cron / invocación manual Test
+    participant API as GET /internal/jobs/measurement-blocks
+    participant Repo as PrismaMeasurementCheckpointsRepository
+    participant DB as PostgreSQL app
+
+    Cron->>API: Authorization Bearer CRON_SECRET
+    API->>Repo: evaluateDueCycles(now)
+    Repo->>DB: BEGIN + pg_try_advisory_xact_lock
+    alt otra ejecución activa
+        Repo-->>API: skippedConcurrentRun = true
+    else lock adquirido
+        loop alumno con rutina vigente y sin bloqueo activo
+            Repo->>DB: Leer línea de base, controles y evidencias
+            loop ciclo cerrado no evaluado
+                Repo->>DB: Insertar CUMPLIDO o FALTA
+                alt tercera FALTA consecutiva
+                    Repo->>DB: Crear bloqueo PENDIENTE_MEDICION
+                end
+            end
         end
+        Repo->>DB: COMMIT
+        Repo-->>API: contadores agregados
     end
 ```
 
@@ -383,7 +410,9 @@ sequenceDiagram
     end
 ```
 
-## SEQ-07 — Bloqueo por inactividad
+## SEQ-07 — Suspensión administrativa por endpoint legado
+
+> **Implementación legado y separada.** Este endpoint continúa expuesto para `users.state`, pero no representa ni resuelve el bloqueo funcional de RF-123/RF-124. El flujo de mediciones implementado es SEQ-04/SEQ-04b y nunca cambia `users.state`.
 
 Estado `API`: no tiene interfaz frontend.
 

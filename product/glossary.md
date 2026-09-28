@@ -2,8 +2,8 @@
 
 |                |                                                                                                                                 |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Versión**    | 2.1                                                                                                                             |
-| **Fecha**      | 2026-09-01                                                                                                                      |
+| **Versión**    | 2.2                                                                                                                             |
+| **Fecha**      | 2026-09-28                                                                                                                      |
 | **Estado**     | Normativo                                                                                                                       |
 | **Depende de** | D1                                                                                                                              |
 | **Regla**      | Todo el corpus usa exclusivamente estos términos, con esta ortografía y este significado. Un término no definido aquí no se usa |
@@ -11,6 +11,8 @@
 **Cambios de la v1.0:** se define el verbo _asignar_ (colisionaba con _asignación_) · se define _progreso_ en lugar de prohibirlo · el equipamiento pasa a ser del gimnasio · se agregan _afiliación_, _invitación_, _inventario_, _articulación_, _contraindicación_ · se incorporan las siete enumeraciones cerradas de §4, que antes se presuponían sin existir.
 
 **Cambios de la v2.1 (replanteo de IA, [D11/DD-34](../decisions/design-decisions.md)):** el término "Riesgo de abandono" se retira (RF-061 a RF-063 → WON'T) y pasa a §2 como término retirado del alcance.
+
+**Cambios de la v2.2:** se incorporan los términos del control periódico de mediciones y se distingue el bloqueo funcional del alumno de la suspensión administrativa del usuario.
 
 ---
 
@@ -54,6 +56,11 @@
 | **Aptitud**              | Constancia de aptitud para la práctica deportiva registrada para un alumno, con fecha de emisión y de vencimiento. Su ausencia o vencimiento se advierte de forma destacada; nunca impide operar | Apto físico, certificado médico           |
 | **Estado de membresía**  | Situación declarada del alumno respecto del gimnasio. Exclusivamente informativa                                                                                                                 | Cuota, suscripción                        |
 | **Medición corporal**    | Valor numérico fechado de una magnitud del cuerpo del alumno. Como máximo un registro por tipo y fecha                                                                                           | Medida, antropometría                     |
+| **Control de mediciones** | Evaluación persistida de un ciclo de renovación ya cerrado. Determina si el alumno registró o confirmó el peso y la altura exigidos dentro de ese ciclo                                           | Chequeo, corte                            |
+| **Falta de mediciones**  | Resultado de un control cerrado en el que falta el peso, la confirmación de altura o ambos. Un ciclo produce como máximo una falta                                                               | Inactividad, ausencia aislada             |
+| **Racha de faltas**      | Cantidad de faltas de mediciones consecutivas contadas desde el control cerrado más reciente hacia atrás, hasta el primer control cumplido                                                        | Total de faltas, días inactivo            |
+| **Bloqueo por mediciones** | Restricción funcional del rol ALUMNO originada por tres faltas consecutivas. No suspende la cuenta: permite autenticarse y regularizar las mediciones, pero impide las demás operaciones del alumno | Suspensión, bloqueo administrativo        |
+| **Regularización de mediciones** | Carga personal de peso y confirmación de altura posterior al bloqueo, que deja el desbloqueo pendiente de aprobación por el entrenador vigente                                            | Desbloqueo automático                     |
 
 ### 1.4 Catálogo
 

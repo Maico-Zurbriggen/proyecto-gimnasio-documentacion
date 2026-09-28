@@ -2,14 +2,16 @@
 
 |                |                                        |
 | -------------- | -------------------------------------- |
-| **Versión**    | 2.1                                    |
-| **Fecha**      | 2026-08-24                             |
+| **Versión**    | 2.2                                    |
+| **Fecha**      | 2026-09-28                             |
 | **Estado**     | Normativo                              |
 | **Depende de** | D5 (reglas), D6 (estados), D7 (flujos) |
 
 **Cambios de la v1.0:** los cinco casos que remitían a reglas inexistentes ahora remiten a reglas reales (CB-13, CB-16, CB-21, CB-22, CB-32) · las dos decisiones pendientes quedan cerradas y convertidas en reglas (CB-53, CB-55) · casos nuevos de invitación, inventario, arranque, entrenador que entrena y corrección tardía.
 
 **Cambios de la v2.0:** CB-72 y CB-73, del candidato de rutina (D5/RN-124 a RN-129).
+
+**Cambios de la v2.2:** CB-74 a CB-82 cubren rachas, ejecución idempotente y regularización del bloqueo por mediciones.
 
 Este documento **no reescribe** reglas ni flujos: los referencia. Si un comportamiento cambia, cambia en D5 o D7 y aquí sólo cambia la referencia.
 
@@ -137,6 +139,20 @@ Este documento **no reescribe** reglas ni flujos: los referencia. Si un comporta
 | CB-58 | Un caso sin ninguna respuesta válida disponible                                          | El sistema lo declara explícitamente y transfiere la decisión a una persona, con toda la información que reunió. **Nunca produce una respuesta arbitraria para no quedarse callado**                                                                             | RN-49, CB-21            |
 | CB-70 | **Un alumno detecta hace un mes un error de carga que le produjo un récord falso**       | Pide a su entrenador el desbloqueo de esa sesión. El entrenador la reabre por 24 h, una sola vez, con motivo auditado. Corregida la serie, el récord se recalcula sobre el histórico completo y puede restaurarse el anterior o quedar el ejercicio sin récord   | RN-58a, RN-71, FL-08/A2 |
 | CB-71 | **Un alumno declara una condición severa que afecta a casi todos los grupos musculares** | Casi toda la rutina queda incompatible y la propuesta implica una rutina sustancialmente nueva. Si no hay alternativas suficientes, se aplica CB-21 y CB-22: el sistema lo declara y deriva al entrenador. **No construye una rutina vacía ni una incompatible** | RN-49, RN-92, FL-12/E1  |
+
+## K · Bloqueo por mediciones
+
+| ID | Escenario | Comportamiento esperado | Regla |
+| -- | --------- | ----------------------- | ----- |
+| CB-74 | Faltas separadas por un ciclo cumplido | El cumplimiento corta la racha: `FALTA, CUMPLIDO, FALTA, FALTA` produce racha 2 y no bloquea | RN-131 |
+| CB-75 | El ciclo actual todavía está abierto | No genera control ni falta aunque aún no haya mediciones; se evalúa después de su vencimiento | RN-130 |
+| CB-76 | El alumno no tiene rutina vigente | No se abren ni se reconstruyen ciclos de control y no se lo bloquea por esta causa | RN-130 |
+| CB-77 | El job no corrió durante varios días | Al volver, crea en orden los controles cerrados faltantes, una sola vez cada uno, y aplica el resultado final correcto | RN-132, RI-24 |
+| CB-78 | El job o la aprobación se repiten | No duplican controles, bloqueos, mediciones ni auditoría; el segundo intento informa el estado actual | RN-132, RN-135, RI-24, RI-25 |
+| CB-79 | Alumno bloqueado sin entrenador vigente | Puede cargar peso y altura; queda pendiente de aprobación y el administrador recibe el aviso | RN-137 |
+| CB-80 | Dos entrenadores intentan aprobar o la asignación cambia durante la aprobación | La asignación se comprueba dentro de la transacción; sólo el entrenador vigente puede producir una única resolución | RN-135 |
+| CB-81 | Usuario bloqueado con más de un rol | La restricción aplica únicamente al rol ALUMNO; sus capacidades de entrenador o administrador no se eliminan | RN-133 |
+| CB-82 | El alumno regulariza y se ejecuta el job antes o después de la aprobación | Los ciclos históricos que originaron el bloqueo permanecen como evidencia, pero no vuelven a generar otro bloqueo; la nueva racha comienza después de la resolución | RN-136 |
 
 ---
 

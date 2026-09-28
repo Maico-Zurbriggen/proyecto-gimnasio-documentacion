@@ -2,8 +2,8 @@
 
 |                |                                              |
 | -------------- | -------------------------------------------- |
-| **Versión**    | 2.3                                          |
-| **Fecha**      | 2026-09-02                                   |
+| **Versión**    | 2.4                                          |
+| **Fecha**      | 2026-09-28                                   |
 | **Estado**     | Normativo. Congelar antes de escribir código |
 | **Depende de** | D1, D2, D3                                   |
 
@@ -26,6 +26,8 @@
 **Añadir una columna después es barato; quitarla después de tener datos, no.** Por eso lo diferido no se crea ahora: los repositorios están en andamiaje y ninguna migración se ejecutó todavía.
 
 **Cambios de la v2.3 (baseline v4.0 confirmada).** Se aplican las retiradas también al detalle del modelo: desaparecen `Comentario`, `nivel de actividad`, sesión diferida y desbloqueo. `EvaluacionComponente` no se persiste: RF-121 y RF-122 están diferidos y RF-073 se resuelve con regresión generativa versionada en el repositorio de IA. Diagnóstico, propuesta, ajustes y récords pertenecen a `app` y forman parte del modelo de la Etapa 1.
+
+**Cambios de la v2.4:** se agregan `ControlMedicionCiclo` y `BloqueoMediciones` para representar faltas consecutivas reales y el proceso de regularización. El bloqueo funcional deja de inferirse del estado administrativo del usuario.
 
 ### Índices exigidos desde la primera migración
 
@@ -58,7 +60,9 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
  │     ├── PerfilAlumno ──< Objetivo(vigencia)
  │     │        ├─< CondicionFisica(vigencia, zona corporal, severidad)
  │     │        ├─< Aptitud
- │     │        └─< MedicionCorporal
+ │     │        ├─< MedicionCorporal
+ │     │        ├─< ControlMedicionCiclo
+ │     │        └─< BloqueoMediciones
  │     ├── PerfilEntrenador
  │     ├─< Consentimiento
  │     └─< AsignacionEntrenador (alumno ─ entrenador, vigencia)
@@ -104,11 +108,13 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                  | Atributos relevantes                                                                                                                         | Cardinalidad                                                                                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PerfilAlumno**         | usuario, fecha de nacimiento, sexo, altura, nivel de experiencia (§4.4), días semanales disponibles, estado de membresía                     | 1:1 con Usuario con rol ALUMNO                                                                                                                |
+| **PerfilAlumno**         | usuario, fecha de nacimiento, sexo, altura, altura actualizada en, nivel de experiencia (§4.4), días semanales disponibles, estado de membresía | 1:1 con Usuario con rol ALUMNO. `altura actualizada en` permite probar que fue confirmada dentro del ciclo o después del bloqueo              |
 | **Objetivo**             | perfil, tipo (§4.5), desde, hasta                                                                                                            | 1:N. **Como máximo uno** con `hasta = null`; ninguno antes de la primera declaración                                                          |
 | **CondicionFisica**      | perfil, zona corporal (§4.2 ∪ §4.3), severidad (§4.6), descripción libre, desde, hasta                                                       | 1:N. Varias pueden estar vigentes a la vez. **La zona corporal y la severidad son tipadas**: son las que hacen calculable la contraindicación |
 | **Aptitud**              | perfil, fecha de emisión, fecha de vencimiento, observación, cargada por                                                                     | 1:N. La vigente es la de vencimiento más lejano no superado. `cargada por` admite al alumno o a un administrador                              |
 | **MedicionCorporal**     | perfil, tipo (§4.11), valor, fecha                                                                                                           | 1:N. Única por (perfil, tipo, fecha)                                                                                                          |
+| **ControlMedicionCiclo** | perfil, rutina y versión de referencia, inicio, vencimiento, resultado ∈ {CUMPLIDO, FALTA}, medición de peso, confirmación de altura, evaluado en | 1:N. Único por (perfil, vencimiento). Es inmutable una vez cerrado y constituye el hecho del que se deriva la racha                            |
+| **BloqueoMediciones**    | perfil, control que lo originó, estado ∈ {PENDIENTE_MEDICION, PENDIENTE_APROBACION, RESUELTO}, motivo, faltas al bloquear, bloqueado en, regularizado en, aprobado en, aprobado por | 1:N histórico. Como máximo uno activo por alumno. Conserva la evidencia, regularización y aprobación que cerraron el bloqueo |
 | **PerfilEntrenador**     | usuario, especialidad, experiencia, presentación                                                                                             | 1:1 con Usuario con rol ENTRENADOR                                                                                                            |
 | **AsignacionEntrenador** | alumno, entrenador, desde, hasta, autor del alta, autor de la baja                                                                           | N:M con vigencia. Como máximo una vigente por alumno, por regla RN-18 y no por estructura                                                     |
 
@@ -254,6 +260,12 @@ El modelo soporta el historial completo; RN-18 impone la unicidad. Sin el histor
 
 **Arranque.** El primer administrador de un gimnasio no puede invitarse a sí mismo: lo crea el aprovisionamiento (RF-115), junto con el gimnasio. Es una operación del proveedor del sistema, fuera de la aplicación y de todo rol.
 
+### PD-09 — Controles y bloqueos de mediciones son hechos persistidos
+
+La racha actual se deriva leyendo los controles cerrados desde el más reciente hasta el primer `CUMPLIDO`; no se persiste como contador mutable. En cambio, cada `ControlMedicionCiclo` y cada `BloqueoMediciones` se persisten porque son hechos fechados que deben sobrevivir a reintentos del job, explicar por qué se restringió al alumno y evitar que los mismos tres ciclos históricos vuelvan a bloquearlo después de una aprobación.
+
+La suspensión administrativa continúa en `Usuario.estado`. El bloqueo por mediciones es una restricción del rol ALUMNO y pertenece a `BloqueoMediciones`: un usuario con varios roles conserva las capacidades de sus otros roles.
+
 ## 4. Restricciones de integridad
 
 | #      | Restricción                                                                                                                                             |
@@ -282,3 +294,6 @@ El modelo soporta el historial completo; RN-18 impone la unicidad. Sin el histor
 | RI-21  | Un ejercicio tiene como máximo una participación PRIMARIA                                                                                               |
 | RI-22  | Un récord personal vigente es único por (alumno, ejercicio, tipo)                                                                                       |
 | RI-23  | Un gimnasio tiene al menos un usuario con rol ADMINISTRADOR en estado activo                                                                            |
+| RI-24  | Un control de mediciones es único por (alumno, vencimiento), referencia una rutina y versión del mismo alumno y no cambia después de cerrarse             |
+| RI-25  | Un alumno tiene como máximo un bloqueo de mediciones cuyo estado no sea RESUELTO                                                                          |
+| RI-26  | Un bloqueo sólo pasa a PENDIENTE_APROBACION con peso y confirmación de altura posteriores a `bloqueado en`, y sólo se resuelve por su entrenador vigente   |

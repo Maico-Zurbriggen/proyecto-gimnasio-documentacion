@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "corpus_version": "3.6",
-  "updated_at": "2026-09-22",
+  "corpus_version": "3.7",
+  "updated_at": "2026-09-28",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",

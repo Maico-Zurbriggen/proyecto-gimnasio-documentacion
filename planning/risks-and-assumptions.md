@@ -2,8 +2,8 @@
 
 |                |                 |
 | -------------- | --------------- |
-| **Versión**    | 3.0             |
-| **Fecha**      | 2026-09-01      |
+| **Versión**    | 3.1             |
+| **Fecha**      | 2026-09-28      |
 | **Estado**     | Normativo       |
 | **Depende de** | D1, D5, D8, D11 |
 
@@ -12,6 +12,8 @@
 **Cambios de la v2.0:** §1.1 registra la constante del tope de regeneraciones del candidato de rutina (RN-127).
 
 **Cambios de la v3.0 ([baseline de alcance](baseline-alcance-2026-09.md)):** cuatro riesgos nuevos derivados del recorte de alcance · R-03 cerrado · §3 recalculada sobre el alcance de la Etapa 1 · §4 reemplazada por el orden de retirada por bandas · **I-09**, una inconsistencia sobre la propia capacidad que conviene resolver antes de usar §3 para negociar alcance.
+
+**Cambios de la v3.1:** se registran las constantes del control de mediciones y la limitación operativa del cron en ambientes Preview.
 
 ---
 
@@ -43,6 +45,9 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 | Rango de peso corporal                              | 20,0 – 400,0 kg                                   | RN-17         | `[S]`                                                                       |
 | Rango de altura                                     | 100 – 250 cm                                      | RN-17         | `[S]`                                                                       |
 | Rango de perímetros                                 | 10,0 – 250,0 cm                                   | RN-17         | `[S]`                                                                       |
+| Duración del ciclo de control de mediciones         | 60 días                                           | RN-130        | `[S]`, decisión del cliente 2026-09-28                                      |
+| Umbral de bloqueo por mediciones                    | 3 faltas consecutivas                             | RN-132        | `[S]`, decisión del cliente 2026-09-28                                      |
+| Periodicidad del proceso de control                 | diaria                                            | RN-132        | `[S]`, decisión del cliente 2026-09-28                                      |
 | Días de rutina                                      | 1 – 7                                             | RN-41         | `[S]`                                                                       |
 | Repeticiones prescriptas                            | 1 – 100                                           | RN-43         | `[S]`                                                                       |
 | Descanso                                            | 0 – 600 s                                         | RN-43         | `[S]`                                                                       |
@@ -99,6 +104,7 @@ Registro completo de las constantes que D5 fija. `[F]` proviene de una fuente ·
 | **R-18** 🆕 | **Contradicción arquitectónica descubierta al integrar**                              | Media ⬇      | **Alto**     | Las ADR 0005 y 0009 estuvieron ambas «aceptadas» decidiendo lo contrario sobre dónde vive el servicio de IA. **Resuelto el 2026-09-01**: prevalece la 0009 y la 0005 queda parcialmente reemplazada. Queda el riesgo residual de que alguien implemente contra la versión vieja del corpus |
 | **R-19** 🆕 | **La adherencia se mide sesgada y nadie lo declara**                                  | Media        | Medio        | Sin registro diferido (RF-034, 2 votos de 8), una sesión no cargada el mismo día se pierde para siempre. La adherencia —insumo de RN-89a global y del criterio de urgencia— queda sesgada a la baja. **Mitigación: declararlo en la presentación del indicador y en la defensa.** No corregirlo en silencio |
 | **R-20** 🆕 | **Un ejercicio propio mal cargado no se puede retirar**                               | Media        | Bajo         | Sin RF-018 (0 votos) no hay desactivación. Acotado al ámbito de un gimnasio y corregible por su autor. Deuda aceptada |
+| **R-21** 🆕 | **El control diario de mediciones no se ejecuta en Test**                              | Media        | Alto         | Vercel Cron invoca únicamente despliegues de producción; un Preview asociado a `test` no recibe esa ejecución automática. Producción usa el cron diario protegido por `CRON_SECRET`; Test debe invocarse manualmente o mediante un workflow programado de GitHub hasta separar proyectos Vercel. El job es idempotente para que cualquiera de las vías sea segura |
 
 ## 3. Aritmética del esfuerzo
 
@@ -122,13 +128,13 @@ Composición: 1 líder técnico + 2 desarrolladores senior + 3 junior
 
 ### Contraste con el alcance de la Etapa 1
 
-Sobre el alcance del [baseline](baseline-alcance-2026-09.md): 80 requisitos, de los cuales 57 son banda N1.
+Sobre el alcance vigente: 82 requisitos, de los cuales 59 son banda N1.
 
 | Conjunto     | Requisitos | Optimista (8 h) | Realista (10–12 h) | Frente a ~504 h | Frente a ~756 h |
 | ------------ | ---------- | --------------- | ------------------ | --------------- | --------------- |
-| N1           | 57         | ~456 h          | 570 – 684 h        | 0,9 × a 1,4 ×   | 0,6 × a 0,9 ×   |
-| N1 + N2      | 76         | ~608 h          | 760 – 912 h        | 1,2 × a 1,8 ×   | 0,8 × a 1,2 ×   |
-| N1 + N2 + N3 | 80         | ~640 h          | 800 – 960 h        | 1,3 × a 1,9 ×   | 0,8 × a 1,3 ×   |
+| N1           | 59         | ~472 h          | 590 – 708 h        | 0,9 × a 1,4 ×   | 0,6 × a 0,9 ×   |
+| N1 + N2      | 78         | ~624 h          | 780 – 936 h        | 1,2 × a 1,9 ×   | 0,8 × a 1,2 ×   |
+| N1 + N2 + N3 | 82         | ~656 h          | 820 – 984 h        | 1,3 × a 2,0 ×   | 0,9 × a 1,3 ×   |
 
 **Conclusión.** Con 504 h, ni siquiera el núcleo entra con holgura y el alcance completo está entre 1,3 y 1,9 veces por encima. Con 756 h, el núcleo entra y el alcance completo queda al límite. **La diferencia entre «hay que recortar el núcleo» y «hay que trabajar ordenado» depende de un dato que ningún documento midió** — y que el equipo tiene.
 
@@ -138,7 +144,7 @@ El promedio de 8 a 12 h por requisito además subestima tres subsistemas: el Mó
 
 Escrito de antemano para que la decisión ya esté tomada cuando llegue el momento. **Sustituye al orden de corte de la v2.1**, que se escribió antes de que existiera la clasificación por bandas.
 
-**Nunca se recorta la banda N1.** Son los 57 requisitos sin los cuales el producto no cumple lo que el cliente declaró condición de aprobación: alta e invitación · inventario y catálogo prescribible · contexto del alumno con sus condiciones · plantillas, copia al asignar y versionado · compatibilidad y rutina inicial · registro de sesiones y series · indicadores de base · el ciclo de diagnóstico y adaptación completo · la puerta del entrenador · generación y su comportamiento ante fallo.
+**Nunca se recorta la banda N1.** Son los 59 requisitos sin los cuales el producto no cumple lo que el cliente declaró condición de aprobación: alta e invitación · inventario y catálogo prescribible · contexto del alumno con sus condiciones · control y regularización de mediciones · plantillas, copia al asignar y versionado · compatibilidad y rutina inicial · registro de sesiones y series · indicadores de base · el ciclo de diagnóstico y adaptación completo · la puerta del entrenador · generación y su comportamiento ante fallo.
 
 **Orden de retirada, de primero a último:**
 

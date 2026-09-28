@@ -2,8 +2,8 @@
 
 |                |            |
 | -------------- | ---------- |
-| **Versión**    | 2.4        |
-| **Fecha**      | 2026-09-02 |
+| **Versión**    | 2.5        |
+| **Fecha**      | 2026-09-28 |
 | **Estado**     | Normativo  |
 | **Depende de** | D2, D4, D5 |
 
@@ -17,6 +17,8 @@
 - **`RutinaAsignada.origen` pierde `PRESET_ELEGIDO_POR_ALUMNO`**: quedan `PLANTILLA_ENTRENADOR` y `GENERADA`.
 
 **Cambios de la v2.4 (baseline v4.0 confirmada).** Se retiran del detalle el candidato técnico, el desbloqueo de sesiones y la baja de usuario. Las solicitudes e intentos generativos conservan sus estados técnicos; una salida validada origina directamente una rutina `PROPUESTA`.
+
+**Cambios de la v2.5:** se agrega el ciclo persistente del bloqueo por mediciones, separado de la suspensión administrativa de la cuenta.
 
 **Cambios de la v1.0:** ciclo de la invitación · estado `DESCARTADA` de rutina, que faltaba y dejaba indefinido un caso frecuente · desbloqueo excepcional de sesión · aclaración de que una versión nueva no transiciona la rutina · corrección del diagrama de rutina, cuya flecha de rechazo apuntaba al estado equivocado.
 
@@ -260,3 +262,23 @@ PENDIENTE → PROCESANDO ─┬→ COMPLETADO
 ```
 
 Cada solicitud admite como máximo dos intentos. Los cuatro estados de salida son terminales para el intento; tras el primer fallo la solicitud vuelve a `PENDIENTE`, y tras el segundo pasa a `NO_DISPONIBLE`. Una salida completada que supera la validación del backend origina directamente una rutina `PROPUESTA`; no existe un candidato persistido intermedio.
+
+## 12. Bloqueo por mediciones del alumno
+
+La ausencia de un registro activo equivale a operación normal. Cuando se alcanzan tres faltas consecutivas se crea un bloqueo:
+
+```text
+NORMAL ── tercera falta consecutiva ──▶ PENDIENTE_MEDICION
+PENDIENTE_MEDICION ── alumno carga peso y altura ──▶ PENDIENTE_APROBACION
+PENDIENTE_APROBACION ── entrenador vigente aprueba ──▶ RESUELTO ≡ NORMAL
+```
+
+| Estado | Acceso del rol ALUMNO | Salida permitida |
+| ------ | --------------------- | ---------------- |
+| PENDIENTE_MEDICION | Sólo autenticación, identidad, cierre de sesión de usuario, consulta del bloqueo y carga de peso y altura; no puede entrenar | Regularización válida por el propio alumno |
+| PENDIENTE_APROBACION | Sólo autenticación, identidad, cierre de sesión de usuario y consulta del bloqueo; no puede entrenar ni reemplazar silenciosamente la evidencia pendiente | Aprobación del entrenador vigente |
+| RESUELTO | Sin restricción funcional | Terminal e histórico |
+
+`Usuario.estado` permanece `ACTIVO` durante todo el ciclo. `SUSPENDIDO` sigue siendo exclusivamente administrativo y bloquea la autenticación. En un usuario multirrol, esta máquina restringe sólo las operaciones ejecutadas como ALUMNO.
+
+**Transiciones imposibles:** aprobar desde `PENDIENTE_MEDICION`; resolver sin datos posteriores al bloqueo; aprobar sin asignación vigente; volver un registro `RESUELTO` a activo; crear dos bloqueos activos para el mismo alumno.

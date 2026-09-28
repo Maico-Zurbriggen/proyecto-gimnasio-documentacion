@@ -2,14 +2,16 @@
 
 |                |                    |
 | -------------- | ------------------ |
-| **Versión**    | 2.3                |
-| **Fecha**      | 2026-09-01         |
+| **Versión**    | 2.4                |
+| **Fecha**      | 2026-09-28         |
 | **Estado**     | Normativo          |
 | **Depende de** | D2, D3, D4, D5, D6 |
 
 **Cambios de la v1.0:** flujos nuevos FL-00 (aprovisionamiento), FL-19 (invitación), FL-20 (inventario), FL-21 (paneles agregados) · FL-01 rehecho: el alta es por invitación y el alumno ya no declara equipamiento · FL-08 corregido: la contradicción entre RN-51, RN-59 y el registro diferido bajo rutina archivada · FL-09 y FL-10 remiten a los criterios de D5/§9.1 y §9.2, que en la v1.0 no existían.
 
 **Cambios de la v2.0:** FL-04 gana el **candidato de rutina** —el solicitante moldea la rutina generada antes de enviarla a revisión, a mano, pidiendo alternativas o volviendo al lenguaje natural (pasos 6 a 8, A3 a A7)— y FL-03 lo hereda. Ver D5/RN-124 a RN-129, D5/§5.2 y D11/DD-33.
+
+**Cambios de la v2.4 (2026-09-28):** se incorpora FL-22, que reemplaza el bloqueo manual por valores aportados en un request con controles persistidos, regularización personal del alumno y aprobación posterior del entrenador.
 
 **Cambios de la v2.3 ([baseline de alcance](../planning/baseline-alcance-2026-09.md)).** Ningún flujo del ciclo central cambia. Lo que cambia es qué flujos existen en la Etapa 1:
 
@@ -457,3 +459,28 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 **Alternativos.** A1: se filtra por período.
 
 **Excepción.** E1: no hay actividad suficiente para una cohorte → se declara, no se dibuja vacía (RN-73). E2: hay datos simulados en la base → se excluyen de la analítica presentada como real, y se indica que se excluyeron (RN-107). E3: el administrador intenta descender al detalle individual → no se ofrece esa navegación (RA-06).
+
+---
+
+## FL-22 · Control de mediciones, bloqueo y regularización ⭐
+
+|                     |                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Actores**         | Sistema · Alumno · Entrenador · Administrador                                                        |
+| **Precondición**    | Alumno con rutina vigente                                                                            |
+| **Postcondiciones** | Control cerrado persistido; bloqueo creado o resuelto de forma idempotente y auditable               |
+| **Reglas**          | RN-130 a RN-137 · RI-24 a RI-26                                                                      |
+
+**Curso normal.**
+
+1. Una vez por día, el backend identifica ciclos de 60 días ya cerrados y todavía no evaluados.
+2. Para cada ciclo persiste exactamente un control `CUMPLIDO` o `FALTA`, usando exclusivamente el peso y la confirmación de altura registrados en la base de datos.
+3. Calcula la racha desde el control más reciente. Un `CUMPLIDO` corta por completo la racha; una falta anterior y aislada no aporta.
+4. Al tercer `FALTA` consecutivo crea, si no existe, un bloqueo `PENDIENTE_MEDICION` y restringe las operaciones del rol ALUMNO.
+5. El alumno autenticado consulta el motivo y carga personalmente el peso y la altura adeudados. Una transacción registra ambos y mueve el bloqueo a `PENDIENTE_APROBACION`.
+6. El entrenador vigente abre la ficha, ve el motivo, el último dato previo y la regularización presentada, y aprueba.
+7. La misma transacción vuelve a verificar asignación y evidencia, resuelve el bloqueo, fija la aprobación como inicio de un ciclo nuevo y audita la operación. El alumno recupera las capacidades normales.
+
+**Alternativos.** A1: el job se ejecuta nuevamente → no duplica controles ni bloqueos. A2: un ciclo fue cumplido entre dos faltas → la racha vuelve a cero. A3: el alumno no tiene entrenador → puede regularizar y queda `PENDIENTE_APROBACION`; se avisa al administrador hasta que haya asignación vigente. A4: el usuario también es entrenador o administrador → sólo queda restringida su actuación como alumno.
+
+**Excepciones.** E1: falta peso o altura, o alguno no es posterior al bloqueo → se rechaza la regularización completa. E2: quien aprueba no es el entrenador vigente → rechazo sin cambios. E3: la asignación termina durante la confirmación → la revalidación transaccional rechaza toda la operación. E4: dos aprobaciones compiten → una resuelve; la segunda recibe el estado ya resuelto y no produce efectos.

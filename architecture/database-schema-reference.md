@@ -3,7 +3,7 @@
 ```yaml
 document_id: ARCH-DATABASE-SCHEMA
 status: implementation-reference
-snapshot_date: 2026-09-16
+snapshot_date: 2026-09-28
 source_of_structure: proyecto-gimnasio-back/prisma/schema.prisma
 database: PostgreSQL
 schemas: [app, ai_integration]
@@ -38,6 +38,9 @@ app.ExperienceLevel: [PRINCIPIANTE, INTERMEDIO, AVANZADO]
 app.TrainingPurpose: [FUERZA, HIPERTROFIA, RESISTENCIA_MUSCULAR, ACONDICIONAMIENTO_GENERAL]
 app.ConditionSeverity: [LEVE, MODERADA, SEVERA]
 app.BodyMeasurementType: [PESO_CORPORAL, PERIMETRO_CINTURA, PERIMETRO_CADERA, PERIMETRO_BRAZO, PERIMETRO_MUSLO, PERIMETRO_PECHO]
+app.MeasurementCheckpointResult: [CUMPLIDO, FALTA]
+app.MeasurementBlockState: [PENDIENTE_MEDICION, PENDIENTE_APROBACION, RESUELTO]
+app.MeasurementBlockReason: [TRES_FALTAS_CONSECUTIVAS]
 app.MovementPattern: [EMPUJE_HORIZONTAL, EMPUJE_VERTICAL, TRACCION_HORIZONTAL, TRACCION_VERTICAL, DOMINANTE_RODILLA, DOMINANTE_CADERA, CORE, AISLAMIENTO_SUPERIOR, AISLAMIENTO_INFERIOR]
 app.ExerciseOrigin: [CATALOGO_BASE, GIMNASIO]
 app.MuscleParticipation: [PRIMARIA, SECUNDARIA]
@@ -183,6 +186,7 @@ Propósito: atributos del alumno que condicionan la prescripción.
 | `birth_date` | `date` | dato personal |
 | `sex` | `text` | dato personal usado por perfil |
 | `height_cm` | `decimal(5,2)` | altura en centímetros |
+| `height_updated_at` | `timestamptz(6)` | DEFAULT `now()`; instante de la última confirmación de altura |
 | `experience_level` | `ExperienceLevel` | nivel vigente |
 | `available_days_per_week` | `integer` | disponibilidad semanal |
 
@@ -259,6 +263,46 @@ Propósito: serie temporal de mediciones corporales.
 | `measured_on` | `date` | fecha de medición |
 
 Único: `(student_id, type, measured_on)`.
+
+#### `app.student_measurement_checkpoints`
+
+Propósito: resultado inmutable del control de peso y altura al cerrar cada ciclo de 60 días.
+
+| Atributo | Tipo | Restricciones / relación |
+| --- | --- | --- |
+| `id` | `uuid` | PK, generado |
+| `student_id` | `uuid` | FK `app.student_profiles.user_id`, ON DELETE RESTRICT |
+| `routine_id` | `uuid` | FK `app.routines.id`, ON DELETE RESTRICT |
+| `routine_version_id` | `uuid` | FK `app.routine_versions.id`, ON DELETE RESTRICT |
+| `cycle_starts_on` | `date` | inicio exclusivo para la evidencia del ciclo |
+| `due_on` | `date` | vencimiento inclusivo; debe ser inicio + 60 días |
+| `result` | `MeasurementCheckpointResult` | `CUMPLIDO` exige ambas evidencias; `FALTA` exige que falte al menos una |
+| `weight_measurement_id` | `uuid` | NULL, UQ, FK `app.body_measurements.id`, ON DELETE RESTRICT |
+| `height_confirmed_at` | `timestamptz(6)` | NULL; confirmación dentro del ciclo |
+| `evaluated_at` | `timestamptz(6)` | DEFAULT `now()` |
+
+Único: `(student_id, due_on)`. Índices: `(student_id, evaluated_at)`, `(result, due_on)`. Triggers validan alumno, rutina, versión y evidencia del ciclo, y rechazan toda actualización o eliminación.
+
+#### `app.student_measurement_blocks`
+
+Propósito: historial del bloqueo funcional causado por tres faltas consecutivas y de su regularización.
+
+| Atributo | Tipo | Restricciones / relación |
+| --- | --- | --- |
+| `id` | `uuid` | PK, generado |
+| `student_id` | `uuid` | FK `app.student_profiles.user_id`, ON DELETE RESTRICT |
+| `state` | `MeasurementBlockState` | DEFAULT `PENDIENTE_MEDICION` |
+| `reason` | `MeasurementBlockReason` | DEFAULT `TRES_FALTAS_CONSECUTIVAS` |
+| `consecutive_misses_at_block` | `integer` | mínimo 3 |
+| `triggering_checkpoint_id` | `uuid` | UQ, FK `app.student_measurement_checkpoints.id`, ON DELETE RESTRICT |
+| `blocked_at` | `timestamptz(6)` | DEFAULT `now()` |
+| `regularization_weight_measurement_id` | `uuid` | NULL, UQ, FK `app.body_measurements.id`, ON DELETE RESTRICT |
+| `regularization_height_confirmed_at` | `timestamptz(6)` | NULL; posterior al bloqueo |
+| `submitted_at` | `timestamptz(6)` | NULL |
+| `approved_by_trainer_id` | `uuid` | NULL, FK `app.trainer_profiles.user_id`, ON DELETE RESTRICT |
+| `approved_at` | `timestamptz(6)` | NULL; nueva línea de base al resolver |
+
+Índices: `(student_id, state)`, `(approved_by_trainer_id, approved_at)`. Un índice parcial admite como máximo un bloqueo no resuelto por alumno. Checks y trigger exigen los datos correspondientes a cada estado, transiciones hacia adelante y asignación vigente al aprobar.
 
 #### `app.trainer_student_assignments`
 
@@ -797,6 +841,7 @@ app.users
   -> app.student_profiles (opcional 1:1), app.trainer_profiles (opcional 1:1)
 app.student_profiles
   -> app.goals, app.physical_conditions, app.fitness_clearances, app.body_measurements
+  -> app.student_measurement_checkpoints, app.student_measurement_blocks
   -> app.trainer_student_assignments, app.routines, app.training_sessions
   -> app.evolution_diagnostics, app.adaptation_proposals, app.personal_records
 app.trainer_profiles
