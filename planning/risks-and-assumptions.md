@@ -2,8 +2,8 @@
 
 |                |                 |
 | -------------- | --------------- |
-| **Versión**    | 3.1             |
-| **Fecha**      | 2026-09-28      |
+| **Versión**    | 3.2             |
+| **Fecha**      | 2026-09-29      |
 | **Estado**     | Normativo       |
 | **Depende de** | D1, D5, D8, D11 |
 
@@ -15,6 +15,8 @@
 
 **Cambios de la v3.1:** se registran las constantes del control de mediciones y la limitación operativa del cron en ambientes Preview.
 
+**Cambios de la v3.2:** I-13 cierra la contradicción del contrato backend–IA generativa: backend persiste solicitud, contexto y catálogo; IA recibe sólo el UUID para despacharlo a la cola.
+
 ---
 
 ## 1. Supuestos
@@ -25,7 +27,7 @@
 | **S-02** | La dedicación efectiva ronda las 10 h semanales por persona                                                                                                                                  | Análisis inicial                                                                                  | **Muy alto.** Ver §3                                                                                                                                                                                                                                                 |
 | **S-03** | Existe una fuente de datos externa con historial de entrenamiento por usuario y por serie a lo largo del tiempo                                                                              | Sin verificar                                                                                     | **Alto.** Los conjuntos públicos de gimnasio suelen ser de afluencia o catálogos de ejercicios, no historiales longitudinales por persona. Si no existe, la generación simulada (RF-071) es la única vía y la estimación de riesgo queda con la limitación declarada |
 | **S-04** | La caracterización del problema de D1/§1 y §2 corresponde a la realidad de un gimnasio                                                                                                       | Análisis interno, sin contraste                                                                   | **Alto y barato de verificar.** Una conversación con un entrenador en ejercicio confirma o refuta la premisa de todo el producto                                                                                                                                     |
-| **S-05** | El Polo permite operar el LLM y Cloudflare Tunnel con disponibilidad suficiente para test y producción | Decisión del cliente; verificación operativa pendiente | **Alto.** Si falla API, worker, túnel o máquina, la generación se deshabilita y permanecen las plantillas privadas y la creación manual por entrenadores |
+| **S-05** | El Polo mantiene disponible Ollama detr?s de la API autenticada por ngrok | Decisi?n del cliente; `/polo/api/tags` y el modelo se verificaron el 2026-09-29 | **Alto.** Si falla la API, el router o la m?quina, la generaci?n se deshabilita y permanecen las plantillas privadas y la creaci?n manual por entrenadores |
 | **S-06** | Es aplicable la legislación argentina de protección de datos personales, que trata la información de salud como dato sensible                                                                | Decisión del cliente                                                                              | **Bajo en diseño, alto en presentación.** El corpus ya incorpora consentimiento, minimización y anonimización                                                                                                                                                        |
 | **S-07** | Un gimnasio tiene una única zona horaria y no opera en varias sedes                                                                                                                          | Inferido de la exclusión de sucursales                                                            | **Bajo.** Si es falso, cambia la definición de día y de semana                                                                                                                                                                                                       |
 | **S-08** | La cátedra no exige nutrición, metodología ni entregables concretos                                                                                                                          | Confirmado sólo respecto de tecnologías                                                           | **Medio.** Puede invalidar el alcance de DD-13 y la forma de los entregables                                                                                                                                                                                         |
@@ -184,7 +186,7 @@ Del paso 12 en adelante, lo que se entrega deja de responder a la condición de 
 | I-01     | El cliente escribió "somos 3 personas" y listó 9                                | **Abierta.** Se tomó la lista. Confirmación pendiente (S-01)                      |
 | I-06     | `READAPTACION` quedó fuera de los tipos de rutina por sus implicancias clínicas | **Abierta, de bajo riesgo.** Decidido en DD-27; requiere confirmación del cliente |
 | I-07     | Creación segura de migraciones sin modificar Neon Test compartida               | **Abierta.** Elegir PostgreSQL efímero local o una base shadow separada antes de la primera migración |
-| I-08     | Operación productiva del LLM en el Polo mediante Cloudflare Tunnel | **Parcialmente resuelta por ADR 0010 y ADR 0011.** API y worker pasan a Vercel; el túnel, la URL y el token quedaron definidos. Falta confirmar arranque permanente de Ollama/`cloudflared` y mecanismo de rollback. Quién opera esos dos procesos sigue siendo trabajo no contabilizado en §3 |
+| I-08 | Operaci?n productiva del LLM en el Polo mediante la API ngrok | **Parcialmente resuelta por ADR 0010 y ADR 0012.** El dominio, `/polo`, el Bearer de `POLO_API_TOKEN` y las rutas est?n documentados; el smoke test de modelos respondi? correctamente. Falta verificar la conexi?n Neon desde el consumidor y el procedimiento operativo de recuperaci?n indicado por systemd. |
 | **I-10** 🆕 | **RF-053 obtuvo 3 votos de 8 pero está comprometido por escrito ante el Product Owner** (`deliverable PO/alcance-ia-generativa.md` v2.1) | **Abierta.** Una votación interna no revoca un compromiso asumido. O el Product Owner lo libera, o se construye pese al voto. Se conserva en alcance mientras tanto |
 | ~~I-11~~ | ~~Dos ADR con el número 0004, decidiendo cosas incompatibles~~                  | **Cerrada el 2026-09-01.** La del servicio del Polo se renumera a ADR 0009 y la ADR 0005 queda parcialmente reemplazada en su parte de ubicación de despliegue |
 | ~~I-12~~ | ~~DD-34 citada por ocho documentos y nunca redactada~~                          | **Cerrada el 2026-09-01.** Escrita en D11 v2.2 |
@@ -192,3 +194,4 @@ Del paso 12 en adelante, lo que se entrega deja de responder a la condición de 
 | ~~I-03~~ | Alerta ante valores atípicos                                                    | **Cerrada** en RN-55a                                                             |
 | ~~I-04~~ | Situación de estímulo insuficiente                                              | **Cerrada**: incorporada como quinta situación (RN-79a) con su regla de ajuste    |
 | ~~I-05~~ | Taxonomía muscular canónica                                                     | **Cerrada** en D2/§4.2 y §4.3. Queda el supuesto S-10 sobre su suficiencia        |
+| ~~I-13~~ | ~~El contrato backend–IA alternaba entre enviar el contexto completo por HTTP y enviar sólo un UUID ya persistido~~ | **Cerrada el 2026-09-28.** Prevalece la ADR 0010: backend persiste la solicitud idempotente, el contexto minimizado y el catálogo prefiltrado; IA sólo verifica el UUID y lo publica en Vercel Queues. La API usa `Authorization: Bearer` |

@@ -3,7 +3,7 @@
 ```yaml
 document_id: ARCH-DATABASE-SCHEMA
 status: implementation-reference
-snapshot_date: 2026-09-28
+snapshot_date: 2026-09-30
 source_of_structure: proyecto-gimnasio-back/prisma/schema.prisma
 database: PostgreSQL
 schemas: [app, ai_integration]
@@ -476,7 +476,7 @@ Propósito: series prescriptas dentro de un ejercicio de plantilla.
 | `position` | `integer` | UQ junto con `template_exercise_id` |
 | `min_repetitions` | `integer` | límite inferior |
 | `max_repetitions` | `integer` | límite superior |
-| `suggested_load` | `decimal(10,2)` | carga sugerida |
+| `suggested_load` | `decimal(10,2)` | NULL; carga sugerida opcional (RN-43) |
 | `rest_seconds` | `integer` | descanso |
 | `warmup` | `boolean` | DEFAULT `false` |
 
@@ -574,7 +574,7 @@ Propósito: series prescriptas de un ejercicio en una versión de rutina.
 | `position` | `integer` | posición dentro del ejercicio |
 | `min_repetitions` | `integer` | límite inferior |
 | `max_repetitions` | `integer` | límite superior |
-| `suggested_load` | `decimal(10,2)` | carga sugerida |
+| `suggested_load` | `decimal(10,2)` | NULL; carga sugerida opcional (RN-43) |
 | `rest_seconds` | `integer` | descanso |
 | `warmup` | `boolean` | DEFAULT `false` |
 
