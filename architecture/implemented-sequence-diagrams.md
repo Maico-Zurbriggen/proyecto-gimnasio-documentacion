@@ -37,7 +37,7 @@ DB             Neon PostgreSQL; schemas app y ai_integration
 AI API         FastAPI desplegada en Vercel
 Queue          Vercel Queues
 Worker         consumidor Python de generación
-LLM            Ollama en el Polo mediante Cloudflare Tunnel
+LLM            Polo API/ngrok con Ollama
 LocalStorage   estado local del navegador; no es fuente de verdad de negocio
 ```
 
@@ -110,7 +110,7 @@ El cierre ejecuta `POST /auth/logout`, revoca el hash de sesión, elimina la coo
 
 ## SEQ-01 — Rutina vigente y aviso de renovación
 
-Alcance real: devuelve metadatos y renovación. No devuelve días, ejercicios ni series; por eso `/alumno/rutina` no puede mostrar la prescripción completa.
+Alcance de `GET /routines/active`: devuelve metadatos y renovación. Los días, ejercicios y series se consultan mediante los endpoints de prescripción descritos debajo.
 
 ```mermaid
 sequenceDiagram
@@ -157,6 +157,16 @@ sequenceDiagram
 ```
 
 Variante entrenador/administrador: `GET /students/:studentId/routines/active` agrega validación de propiedad y, para entrenador, asignación vigente. Frontend la utiliza en la tarjeta resumida de la ficha del alumno.
+
+En `/alumno/rutina`, `StudentRoutinePage` consume `GET /students/:studentId/routines` y pide el contenido completo mediante `GET /students/:studentId/routines/:routineId` para la rutina `VIGENTE` y para la `PROPUESTA` o `BLOQUEADA`. Cada una se muestra en su sección. La propuesta informa que espera revisión; si está bloqueada, informa que falta asignar un entrenador. Ver una propuesta no la pone en vigencia ni ofrece al alumno aprobarla o entrenar bajo ella.
+
+El resumen del alumno también consulta ese listado y el contenido de la propuesta actual, o de la vigente si no existe propuesta, para mostrar los nombres reales de días y ejercicios. Ya no muestra ejercicios, cargas, adherencia ni rachas de ejemplo. El panel generativo está disponible tanto en el resumen como en `/alumno/rutina`: conserva el seguimiento al cambiar de pantalla y finaliza el resultado recuperado antes de actualizar la propuesta mostrada.
+
+El contenido de prescripción agrega `generationPrompt`, nullable. Backend lo obtiene de `sourceGenerationResult.attempt.request.preferences.free_text` de esa rutina concreta; no usa el texto actual del formulario. Resumen y Mi rutina muestran **Prompt solicitado** cuando existe. Las rutinas de plantilla o sin texto generativo devuelven `null`.
+
+La generación comprueba también las cantidades literales de ejercicios por músculo y por día: el catálogo incluye músculos primarios y las preferencias guardan `muscle_counts_per_day`. Se rechaza antes de llamar a IA un pedido que no puede cumplir el catálogo compatible; IA y backend descartan una salida que ignore la cantidad exacta por día. Ver el contrato y el límite de esta extracción en [data-interface.md](data-interface.md).
+
+La finalización de una generación invalida las consultas de rutinas del alumno y ofrece **Ver rutina**, que abre esa pantalla. Si backend responde `proposed_routine_already_exists` al solicitar o finalizar una generación, el panel ofrece **Ver rutina pendiente de revisión**. El conflicto al finalizar también actualiza las consultas del alumno y conserva el seguimiento de la generación anterior.
 
 ## SEQ-02 — Cartera priorizada del entrenador
 
@@ -532,21 +542,20 @@ sequenceDiagram
     alt alumno inexistente / input faltante / catálogo vacío
         API-->>Cliente: 404 o 422
     else contexto disponible
-        API->>Gateway: requestGeneration(contexto + catálogo)
-        Gateway->>AI: POST /v1/routine-generations<br/>X-API-Key + body completo
-        AI->>AI: Autenticar e idempotencia
-        AI->>DB: Insert ai_generation_request + contexto minimizado
-        AI->>AI: Publicar requestId en Vercel Queues
-        AI-->>Gateway: 202 pending o 200 existente
+        API->>DB: Insert/upsert ai_generation_request + contexto minimizado y catálogo
         API->>DB: Upsert app.routine_generation_ownership
+        Gateway->>AI: POST /v1/generation-requests/{requestId}/dispatch<br/>Authorization Bearer, sin cuerpo
+        AI->>AI: Autenticar y verificar solicitud procesable
+        AI->>AI: Publicar requestId en Vercel Queues
+        AI-->>Gateway: 202 queued
         API-->>Cliente: 202/200 {requestId, status}
     end
 ```
 
 ## SEQ-10 — Despacho y procesamiento implementados dentro de IA
 
-Estado `COMPONENTE`: FastAPI acepta la solicitud, persiste el contexto minimizado,
-publica el identificador y responde sin esperar al LLM.
+Estado `COMPONENTE`: Backend persiste la solicitud y el contexto minimizado.
+FastAPI verifica el identificador, publica el trabajo y responde sin esperar al LLM.
 
 ```mermaid
 sequenceDiagram
@@ -556,33 +565,28 @@ sequenceDiagram
     participant DB as PostgreSQL ai_integration
     participant Q as Vercel Queues
     participant W as Worker Python
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
-    Caller->>AI: POST /v1/routine-generations<br/>X-API-Key + contexto y catálogo
+    Caller->>AI: POST /v1/generation-requests/{requestId}/dispatch<br/>Authorization Bearer, sin cuerpo
     AI->>AI: Comparación segura de AI_SERVICE_API_KEY
     alt credencial inválida
         AI-->>Caller: 401 unauthorized
     else autorizada
-        AI->>DB: Buscar idempotency_key
-        alt solicitud existente
-            AI-->>Caller: 200 {requestId, status}
-        else nueva
-            AI->>DB: INSERT request + COMMIT
-            AI->>Q: send UUID con idempotency_key=requestId
-            AI-->>Caller: 202 pending
-            Q->>W: GenerationMessage(requestId)
-            W->>DB: SELECT ... FOR UPDATE SKIP LOCKED
-            W->>DB: state=PROCESANDO + lease<br/>crear attempt PROCESANDO
-            W->>LLM: POST /api/generate con stream<br/>Bearer LLM_API_TOKEN<br/>schema JSON compatible + contexto minimizado
-            LLM-->>W: Chunks NDJSON de salida estructurada
-            W->>W: Pydantic valida RutinaEstructurada
-            W->>W: Hash canónico de salida
-            W->>DB: BEGIN
-            W->>DB: Insert ai_generation_results<br/>contrato routine-generation@1.1
-            W->>DB: attempt=COMPLETADO
-            W->>DB: request=COMPLETADA y liberar lease
-            W->>DB: COMMIT
-        end
+        AI->>DB: Verificar requestId y estado procesable
+        AI->>Q: send UUID con idempotency_key=requestId
+        AI-->>Caller: 202 queued
+        Q->>W: GenerationMessage(requestId)
+        W->>DB: SELECT ... FOR UPDATE SKIP LOCKED
+        W->>DB: state=PROCESANDO + lease<br/>crear attempt PROCESANDO
+        W->>LLM: POST /polo/api/chat<br/>Bearer LLM_API_TOKEN + ngrok-skip-browser-warning: 1<br/>schema JSON + contexto minimizado y catálogo
+        LLM-->>W: Salida estructurada
+        W->>W: Pydantic valida RutinaEstructurada
+        W->>W: Hash canónico de salida
+        W->>DB: BEGIN
+        W->>DB: Insert ai_generation_results
+        W->>DB: attempt=COMPLETADO
+        W->>DB: request=COMPLETADA y liberar lease
+        W->>DB: COMMIT
     end
 ```
 
@@ -597,7 +601,7 @@ sequenceDiagram
     participant Q as Vercel Queues
     participant W as Worker Python
     participant DB as PostgreSQL ai_integration
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
     Q->>W: Entregar GenerationMessage
     W->>DB: Reclamar solicitud y crear intento N
@@ -630,7 +634,7 @@ sequenceDiagram
     participant Back as Backend Express
     participant AI as FastAPI IA
     participant DB as PostgreSQL
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
     Monitor->>Back: GET /health
     Back-->>Monitor: 200 {status: ok}
