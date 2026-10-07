@@ -15,6 +15,39 @@ Frontend no accede a PostgreSQL. Backend y servicio IA locales comparten `gym_lo
 
 La autenticación sin contraseña del contenedor queda limitada al desarrollo local con datos ficticios. Los deployments conservan roles y credenciales propios.
 
+### Cuentas de prueba y acceso
+
+El [seed de usuarios del backend](https://github.com/Maico-Zurbriggen/proyecto-gimnasio-back/blob/1f08ee42e11208e5fd506b1e7058566de7b5b104/prisma/seeds/seed-test.sql) contiene estas identidades ficticias del gimnasio **Gimnasio Test Norte**, todas con estado `ACTIVO`:
+
+| Correo | Roles |
+| --- | --- |
+| `admin.test@gimnasio.test` | `ADMINISTRADOR` |
+| `entrenador.lucia@gimnasio.test` | `ENTRENADOR` |
+| `entrenador.marco@gimnasio.test` | `ENTRENADOR` y `ALUMNO` |
+| `alumno.martin@gimnasio.test` | `ALUMNO` |
+| `alumna.sofia@gimnasio.test` | `ALUMNO` |
+| `alumno.diego@gimnasio.test` | `ALUMNO` |
+| `alumna.valen@gimnasio.test` | `ALUMNO` |
+
+La tabla describe el seed, no confirma que esas cuentas estén cargadas en una base o deployment concreto. El seed guarda **hashes ficticios sin contraseña utilizable** y usa `ON CONFLICT DO NOTHING`: ejecutarlo no habilita el login ni cambia las contraseñas de usuarios existentes.
+
+Para habilitar el acceso de Martín en `gym_local`, después de cargar los seeds, ejecutar desde backend:
+
+```powershell
+$env:LOCAL_TEST_PASSWORD = 'GymLocal2026!'
+try {
+    npm run db:seed:local-login
+} finally {
+    Remove-Item Env:LOCAL_TEST_PASSWORD
+}
+```
+
+`GymLocal2026!` es una clave ficticia de ejemplo: permite ingresar como `alumno.martin@gimnasio.test` sólo después de ejecutar correctamente el comando. El script configura únicamente esa cuenta y rechaza bases distintas de `gym_local`, hosts externos o un puerto diferente de `LOCAL_DATABASE_PORT` (por defecto `55432`). No configura al administrador ni a los entrenadores.
+
+En Neon Test, las claves que ya haya configurado el equipo las entrega la persona responsable por un canal seguro; no se deducen del seed ni se publican en documentación.
+
+La verificación del catálogo de 2026-10-07 utilizó `catalog-admin@example.test`, `catalog-trainer@example.test` y `catalog-student@example.test` en la base temporal `gym_catalog_test`. Su contenedor se retiró al terminar: esas cuentas ya no existen, no forman parte de `seed-test.sql` y no sirven para ingresar a la base local persistente o a Neon Test.
+
 ### Puertos reservados por Windows
 
 Si Docker no puede publicar `55432` y muestra `An attempt was made to access a socket in a way forbidden by its access permissions`, consultar `netsh interface ipv4 show excludedportrange protocol=tcp`. Elegir un puerto libre fuera de esos intervalos, por ejemplo `65432`, y configurar `LOCAL_DATABASE_PORT=65432` en `.env` del backend. Actualizar el puerto de `DATABASE_URL` tanto en backend como en `.env.local` de IA. Ejecutar nuevamente `docker compose -f compose.local.yaml up -d --wait` y reiniciar ambos servicios. Compose conserva el volumen existente; no se borran datos. El valor por defecto sigue siendo `55432`.
