@@ -39,7 +39,7 @@ Express/Vercel -> FastAPI/Vercel -> Vercel Queues -> worker Python
 
 ## Operación
 
-Vercel opera la API FastAPI, la cola y el consumidor. En el Polo, Ollama, el router y el agente ngrok deben arrancar con la m?quina y reiniciarse ante fallos. El servicio IA env?a `POLO_API_TOKEN` como Bearer a las rutas `/polo/api/tags` y `/polo/api/chat`.
+Vercel opera la API FastAPI, la cola y el consumidor. En el Polo, Ollama, el router y el agente ngrok deben arrancar con la máquina y reiniciarse ante fallos. El servicio IA envía `POLO_API_TOKEN` como Bearer a las rutas `/polo/api/tags` y `/polo/api/chat`.
 
 ## Invariantes
 

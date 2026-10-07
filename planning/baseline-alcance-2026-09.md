@@ -1,5 +1,7 @@
 # Baseline de alcance — Vivaz Adaptive · Etapa 1
 
+**Baseline histórica de septiembre. Actualización 2026-10-05:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) reemplaza en este documento la derivación catálogo ∩ inventario, filtros y validación determinista de entrenamiento. RF-018 entra por decisión posterior para curación propia, y RF-118 incorpora habilitaciones y avisos de baja; la sustitución automática de RF-101 sigue diferida. Las votaciones y estimaciones siguientes conservan su valor histórico, no describen la nueva implementación. Diseño vigente en [catálogo y disponibilidad](../architecture/exercise-catalog.md), D5 y D8.
+
 |                          |                                                                                                                                      |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | **Versión**              | 4.0                                                                                                                                  |

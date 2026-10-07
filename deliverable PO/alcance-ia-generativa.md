@@ -3,13 +3,15 @@
 |             |                                          |
 | ----------- | ---------------------------------------- |
 | **Para**    | Product Owner                            |
-| **Versión** | 2.1                                     |
-| **Fecha**   | 2026-08-28                              |
+| **Versión** | 2.2 |
+| **Fecha** | 2026-10-05 |
 | **Alcance** | Sólo la IA generativa. La parte predictiva (sugerir carga sesión a sesión, proyectar progreso a futuro) no entra en este entregable. |
 
 Este documento resume qué resuelve la IA del sistema, cómo funciona a grandes rasgos y qué nos comprometemos a entregar. **El alcance comprometido es un piso: puede ensancharse hacia el final del proyecto.**
 
 ---
+
+**Decisión incorporada:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). El catálogo se importa de RepDB y cada gimnasio habilita su disponibilidad; IA recibe toda esa lista y el contexto del alumno. Diseño pendiente de implementación.
 
 ## 1. Qué resuelve la IA
 
@@ -18,7 +20,7 @@ Toda la capacidad de decisión del sistema la resuelve un modelo de lenguaje (IA
 - **Entiende un pedido en lenguaje natural.** El entrenador o el alumno describen lo que necesitan con sus palabras y el sistema lo traduce a parámetros concretos, que se muestran para confirmar antes de usarlos.
 - **Determina el tipo de rutina** adecuado según el perfil y el objetivo.
 - **Arma la rutina completa** sobre los ejercicios que el gimnasio efectivamente tiene disponibles.
-- **Verifica la compatibilidad:** revisa que ningún ejercicio choque con una condición física del alumno, supere su nivel o requiera equipamiento que el gimnasio no tiene.
+- **Evalúa la adecuación:** considera condiciones, nivel, objetivos y equipamiento, explica su criterio y puede declarar que no hay una propuesta adecuada.
 - **Explica en lenguaje claro** los criterios con los que se armó o ajustó una rutina.
 - **Ofrece alternativas** cuando un ejercicio no se puede hacer, dentro de lo compatible con el alumno.
 
@@ -26,11 +28,11 @@ Toda la capacidad de decisión del sistema la resuelve un modelo de lenguaje (IA
 
 ## 2. Qué garantiza el sistema alrededor del modelo
 
-El modelo no decide solo. Cuatro garantías lo rodean, y ninguna depende de que el modelo se comporte bien:
+El modelo decide selección y entrenamiento; el sistema controla lo siguiente. Esos controles técnicos no garantizan que la prescripción sea adecuada:
 
 - **La revisión del entrenador.** Ninguna rutina llega vigente a un alumno sin que un entrenador con asignación vigente la haya aprobado. Sin excepciones, cualquiera sea el origen de la rutina.
-- **La compatibilidad se verifica en código, no en el modelo.** Que un ejercicio esté contraindicado por una condición física, exceda el nivel del alumno o requiera equipamiento que el gimnasio no tiene, lo determina una regla escrita y auditable, antes de construir la propuesta y otra vez antes de presentarla.
-- **Los textos no inventan números.** Un texto generado no puede contener un valor numérico que no esté en los datos que recibió. Es exigible al 100 % y se verifica de forma automática.
+- **Referencias y disponibilidad se verifican en código.** Sólo se admiten IDs enviados y habilitados en el gimnasio, con contexto vigente. La adecuación y los valores de entrenamiento se evalúan con IA y revisión del entrenador; no con filtros o tablas deterministas.
+- **Los textos narrativos no inventan números.** Citan datos recibidos; el generador sí decide nuevos valores de prescripción que quedan sujetos a revisión.
 - **Una salida inválida no se muestra.** Se reintenta una vez; si vuelve a fallar, la capacidad se declara no disponible y no se presenta nada.
 
 ---
@@ -60,7 +62,7 @@ El equipo votó el alcance de esta etapa y el resultado toca dos cosas de este d
 ## 4. Cómo funciona
 
 - **Un solo modelo de lenguaje**, alojado en la infraestructura de la Universidad/Polo de San Francisco o en la nube.
-- Corre **como parte del backend del sistema**.
+- El servicio IA recibe una solicitud persistida por backend, procesa en forma asíncrona y llama al LLM del Polo; el modelo no accede a las tablas de negocio.
 - El modelo se puede cambiar o actualizar sin tocar el resto del sistema.
 - Cada respuesta del modelo se **valida en formato** antes de usarse; si no cumple, se reintenta una vez.
 - **Ninguna rutina llega al alumno sin que el entrenador la revise y la apruebe.** Esa revisión humana es la garantía del sistema, cualquiera sea el origen de la rutina.
@@ -72,7 +74,7 @@ El equipo votó el alcance de esta etapa y el resultado toca dos cosas de este d
 ## 5. Cómo se verifica
 
 - Un conjunto fijo de casos de prueba que se corre antes de cambiar cualquier configuración del modelo.
-- Se mide: que los textos nunca mencionen un número que no esté en los datos de origen y que las respuestas tengan el formato esperado.
+- Se comprueban formato, referencias, contexto y capacidad. Se evalúan adecuación y cumplimiento del pedido con un entrenador, midiendo correcciones y rechazos por separado.
 
 ---
 

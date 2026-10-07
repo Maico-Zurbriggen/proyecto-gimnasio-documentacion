@@ -165,7 +165,7 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 | BLOQUEADA                         | Sin aprobador por falta de asignación vigente                                                                          |
 | ACEPTADA_TOTAL / ACEPTADA_PARCIAL | Resuelta favorablemente. Generó una versión nueva                                                                      |
 | RECHAZADA                         | Resuelta desfavorablemente, con motivo registrado                                                                      |
-| INVALIDADA                        | El contexto del alumno cambió y la propuesta dejó de ser compatible antes de resolverse. Se genera una propuesta nueva |
+| INVALIDADA | El contexto cambió antes de resolverse; no aplicar la propuesta antigua. Solicitar evaluación con contexto nuevo, sin recalcular compatibilidad ni generar automáticamente un sustituto |
 | CADUCADA                          | Venció sin resolución. El hecho se registra                                                                            |
 
 **Transiciones imposibles:** aplicarse sin resolución favorable (RN-86, el principio central del producto) · resolverla el propio alumno (RA-07) · reabrir una propuesta resuelta, caducada o invalidada, porque el historial de adaptaciones sería ininterpretable si las propuestas mutaran · generar dos versiones a partir de una misma propuesta.
@@ -173,7 +173,7 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 ## 6. Ejercicio del catálogo
 
 ```
-  carga inicial ─────────────────────────▶ APROBADO ⇄ DESACTIVADO
+  importación revisada ─────────────────▶ APROBADO ⇄ DESACTIVADO
   creación por entrenador ──▶ PROPUESTO ───┤
                                            └──▶ RECHAZADO (terminal)
 ```
@@ -181,11 +181,13 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 | Estado      | Visible en búsquedas           | Prescribible                                                       |
 | ----------- | ------------------------------ | ------------------------------------------------------------------ |
 | PROPUESTO   | Sólo para su autor             | No                                                                 |
-| APROBADO    | Sí                             | Sí, si su equipamiento está en el inventario del gimnasio (RN-116) |
+| APROBADO | Sí en consulta de fichas | Sólo con habilitación activa en el gimnasio (RN-116) |
 | RECHAZADO   | Sólo para su autor, con motivo | No                                                                 |
 | DESACTIVADO | No                             | No, pero permanece en rutinas y sesiones existentes (RN-29)        |
 
 **Transiciones imposibles:** borrado físico en cualquier estado (RN-27) · modificación de un ejercicio del catálogo base por cualquier usuario (RN-24) · desactivación que altere registros históricos que lo referencian.
+
+**Disponibilidad local:** sin habilitación → HABILITADO ⇄ DESHABILITADO. Es una relación separada del estado de la ficha; deshabilitar en un gimnasio no desactiva el catálogo base. Importaciones incompletas permanecen en preparación privada, no APROBADAS. Ver RN-138 a RN-142.
 
 ## 7. Estado de compatibilidad de un ejercicio dentro de una rutina
 
@@ -193,10 +195,10 @@ No es un ciclo de vida sino una **clasificación recalculada** en cada verificac
 
 | Valor                 | Se asigna cuando                                                                                                          | Efecto                                                           |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| COMPATIBLE            | Ninguna regla de D5/§6 lo objeta                                                                                          | Ninguno                                                          |
-| ADVERTIDO             | Contraindicado por una condición de severidad `LEVE`                                                                      | Se señala; no impide                                             |
-| INCOMPATIBLE          | Contraindicado con severidad `MODERADA` o `SEVERA`, o nivel superior al del alumno, o equipamiento ausente del inventario | Impide poner la rutina en vigencia; genera ajuste de sustitución |
-| EJERCICIO_DESACTIVADO | El ejercicio fue desactivado del catálogo                                                                                 | Se señala; puede ejecutarse; genera ajuste de sustitución        |
+| COMPATIBLE | Evaluación favorable de IA o del entrenador con el contexto actual | No equivale a una garantía automática del backend |
+| ADVERTIDO | IA o entrenador identifica una limitación que debe revisarse | Se muestra con motivo |
+| INCOMPATIBLE | IA o entrenador evalúa que el ejercicio no es adecuado | Requiere corrección y revisión del entrenador; backend no calcula esta clasificación |
+| EJERCICIO_DESACTIVADO | Ficha desactivada globalmente o deshabilitada en ese gimnasio | Conserva historial y sesiones iniciadas; impide nuevas incorporaciones |
 
 **Nunca se retira un ejercicio automáticamente por cambiar su estado de compatibilidad.** Retirarlo es decisión del entrenador (RN-92).
 

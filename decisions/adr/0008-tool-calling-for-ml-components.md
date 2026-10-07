@@ -1,5 +1,7 @@
 # ADR 0008: componentes clásicos expuestos como herramientas del LLM, no reimplementados en él
 
+**Estado al 2026-10-05: reemplazada para catálogo y selección/prescripción por [ADR 0013](0013-catalogo-repdb-y-seleccion-ia.md).** El texto siguiente conserva el razonamiento histórico; sus filtros y herramienta de compatibilidad no son requisitos vigentes.
+
 - Estado: **revisada** (2026-08-28) — ver la nota de revisión al final
 - Fecha: 2026-08-25
 

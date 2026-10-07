@@ -39,7 +39,7 @@
 | Término          | Definición                                                                                                                                                           | Sinónimos descartados                       |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | **Equipamiento** | Elemento de la enumeración cerrada de §4.1. Es el vocabulario común entre lo que un ejercicio requiere y lo que un gimnasio posee                                    | Material, aparato, máquina                  |
-| **Inventario**   | Conjunto de equipamiento que un gimnasio declara poseer. Lo mantiene el administrador y **determina qué ejercicios son prescribibles a los alumnos de ese gimnasio** | Equipamiento disponible, parque de máquinas |
+| **Inventario** | Equipamiento real declarado por el administrador del gimnasio. Es contexto para IA y para revisar habilitaciones; no determina automáticamente qué ejercicios se habilitan | Equipamiento disponible, parque de máquinas |
 
 **Decisión de dominio:** el equipamiento disponible para un alumno es el inventario de su gimnasio. El alumno no declara equipamiento propio. Ver D11/DD-26.
 
@@ -48,11 +48,11 @@
 | Término                  | Definición                                                                                                                                                                                       | Sinónimos descartados                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
 | **Perfil**               | Datos del alumno que condicionan la prescripción: edad, sexo, altura, nivel de experiencia y días semanales disponibles                                                                          | Ficha, datos personales                   |
-| **Nivel de experiencia** | Clasificación del alumno según §4.4. Limita qué ejercicios le son prescribibles                                                                                                                  | Nivel                                     |
+| **Nivel de experiencia** | Clasificación del alumno según §4.4, entregada a IA para evaluar dificultad y adecuación de la prescripción | Nivel |
 | **Objetivo**             | Propósito de entrenamiento declarado por el alumno, tomado de §4.5, vigente durante un período. Un alumno tiene como máximo un objetivo vigente, y ninguno antes de declararlo                   | Meta, finalidad                           |
 | **Condición física**     | Limitación declarada por el alumno que afecta una **zona corporal** (§4.3) con una **severidad** (§4.6). Tiene fecha de inicio y, cuando cesa, fecha de fin                                      | Lesión, restricción, patología            |
 | **Zona corporal**        | Elemento de la unión de las enumeraciones de grupos musculares (§4.2) y articulaciones (§4.3). Es el vocabulario que vincula una condición física con un ejercicio                               | Parte del cuerpo, área                    |
-| **Contraindicación**     | Relación calculada entre un ejercicio y una condición física vigente de un alumno, según la regla RN-44a. No es un dato que alguien cargue: es el resultado de una comparación                   | Restricción, incompatibilidad (ver abajo) |
+| **Contraindicación** | Evaluación de adecuación de un ejercicio ante las condiciones vigentes del alumno, a cargo de IA y de la revisión del entrenador (D5/§6) | Restricción, incompatibilidad |
 | **Aptitud**              | Constancia de aptitud para la práctica deportiva registrada para un alumno, con fecha de emisión y de vencimiento. Su ausencia o vencimiento se advierte de forma destacada; nunca impide operar | Apto físico, certificado médico           |
 | **Estado de membresía**  | Situación declarada del alumno respecto del gimnasio. Exclusivamente informativa                                                                                                                 | Cuota, suscripción                        |
 | **Medición corporal**    | Valor numérico fechado de una magnitud del cuerpo del alumno. Como máximo un registro por tipo y fecha                                                                                           | Medida, antropometría                     |
@@ -67,14 +67,17 @@
 | Término                      | Definición                                                                                                                                                                                                         | Sinónimos descartados   |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
 | **Ejercicio**                | Movimiento identificable del catálogo, con instrucciones, equipamiento requerido, patrón de movimiento (§4.7), nivel de dificultad (§4.4), articulaciones exigidas (§4.3), clasificación muscular y recurso visual | Movimiento, actividad   |
-| **Catálogo base**            | Conjunto de ejercicios común a todos los gimnasios, incorporado por carga inicial y no editable por ningún usuario                                                                                                 | Semilla, biblioteca     |
-| **Catálogo del gimnasio**    | Ejercicios creados por entrenadores de un gimnasio, visibles sólo dentro de él                                                                                                                                     | Ejercicios propios      |
-| **Catálogo prescribible**    | Subconjunto del catálogo accesible a un gimnasio cuyos ejercicios requieren únicamente equipamiento presente en su inventario. **Es el conjunto sobre el que operan la construcción y la validación de rutinas**   | —                       |
+| **Catálogo base** | Fichas globales importadas de RepDB, revisadas y no editables por usuarios. Su consulta no las habilita automáticamente en un gimnasio | Catálogo principal, biblioteca |
+| **Catálogo del gimnasio** | Ejercicios del catálogo base o propios aprobados que el administrador habilitó explícitamente en ese gimnasio | Disponibilidad de ejercicios |
+| **Catálogo prescribible** | Catálogo del gimnasio disponible para construir nuevas prescripciones. Se entrega completo a IA; no está prefiltrado por alumno | — |
 | **Grupo muscular**           | Elemento de la taxonomía canónica de §4.2                                                                                                                                                                          | Músculo, zona, región   |
 | **Articulación**             | Elemento de la enumeración de §4.3. Un ejercicio declara las articulaciones que exige                                                                                                                              | —                       |
 | **Participación muscular**   | Relación entre un ejercicio y un grupo muscular, primaria o secundaria                                                                                                                                             | Implicación, activación |
 | **Patrón de movimiento**     | Clasificación mecánica del ejercicio según §4.7. Base de la equivalencia entre ejercicios y de la estructura de los días de rutina                                                                                 | Tipo de movimiento      |
 | **Ejercicio no clasificado** | Ejercicio sin ninguna participación muscular declarada. No aporta volumen a ningún grupo, y esa ausencia se distingue de aportar cero                                                                              | Sin datos               |
+
+| **Habilitación de ejercicio** | Relación de disponibilidad entre gimnasio y ficha aprobada, mantenida por su administrador; no cambia la propiedad de la ficha | Asignación de ejercicio |
+| **Ejercicio propio del gimnasio** | Ficha creada por un entrenador, visible sólo dentro de su gimnasio; su aprobación y habilitación son decisiones distintas | — |
 
 ### 1.5 Prescripción
 
@@ -89,7 +92,7 @@
 | **Día de rutina**               | Agrupación ordenada de ejercicios dentro de una versión. No está asociado a un día del calendario                                                                                                | Jornada, día A/B/C      |
 | **Serie prescripta**            | Unidad de prescripción: rango de repeticiones objetivo, carga sugerida, descanso y carácter de calentamiento o de trabajo                                                                        | Set planificado         |
 | **Serie de trabajo**            | Serie prescripta que no es de calentamiento. Sólo las series de trabajo completadas cuentan para el volumen                                                                                      | Serie efectiva          |
-| **Tipo de rutina**              | Clasificación de §4.5 que determina, según la tabla RN-39a, la estructura de días admisible, los esquemas de series y repeticiones y los rangos de descanso                                      | Modalidad, enfoque      |
+| **Tipo de rutina** | Clasificación de §4.5 que orienta estructura y prescripción; RN-39a conserva referencias para IA y entrenador, sin validación determinista del entrenamiento | Modalidad, enfoque |
 | **Frecuencia semanal objetivo** | Cantidad de sesiones esperadas por semana declarada por una rutina. Referencia única para el cálculo de adherencia                                                                               | Sesiones objetivo       |
 | **Incompatibilidad**            | Condición que impide poner una rutina en vigencia: un ejercicio contraindicado con severidad moderada o severa, de nivel superior al del alumno, o que exige equipamiento ausente del inventario | Conflicto               |
 
@@ -228,7 +231,7 @@ Se aplica tanto al nivel de experiencia del alumno como al nivel de dificultad d
 
 `FUERZA` · `HIPERTROFIA` · `RESISTENCIA_MUSCULAR` · `ACONDICIONAMIENTO_GENERAL`
 
-Objetivo y tipo de rutina comparten enumeración deliberadamente: hace que la verificación de correspondencia de RN-40 sea una comparación y no un juicio. `ACONDICIONAMIENTO_GENERAL` como tipo de rutina es compatible con cualquier objetivo.
+Objetivo y tipo de rutina comparten enumeración; IA y entrenador evalúan su coherencia (RN-40), sin convertir igualdad de etiquetas en una decisión automática de entrenamiento.
 
 `READAPTACION` fue evaluado y excluido: no tiene objetivo de alumno equivalente y arrastra implicancias clínicas que el sistema declara fuera de alcance. Ver D11/DD-27.
 

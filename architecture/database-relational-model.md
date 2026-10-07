@@ -1,5 +1,7 @@
 # Modelo relacional de PostgreSQL
 
+**Extensión implementada localmente 2026-10-07:** catálogo RepDB, habilitación N:M y recursos múltiples según [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). La [referencia física](database-schema-reference.md) describe campos y migraciones; la curación y publicación real se operan según [catálogo](exercise-catalog.md).
+
 **Estado:** migración inicial aprobada; extensión de controles de medición diseñada para migración posterior · **Fecha:** 2026-09-28
 
 ## Alcance y autoridad
@@ -217,6 +219,8 @@ Restricciones principales:
 
 ## 3. Inventario y catálogo de ejercicios
 
+Separar propiedad de ficha (`exercises.gym_id`) de disponibilidad (`gym_exercises`). Los campos y tablas nuevos de esta sección requieren migración; no existen todavía en la referencia física.
+
 ```mermaid
 erDiagram
     GYMS {
@@ -254,8 +258,26 @@ erDiagram
         string difficulty_level
         boolean unilateral
         string visual_resource_url
+        string source
+        string source_id
+        string source_revision
         string origin
         string state
+    }
+    GYM_EXERCISES {
+        uuid gym_id PK,FK
+        uuid exercise_id PK,FK
+        boolean enabled
+        int revision
+        uuid updated_by_user_id FK
+        datetime updated_at
+    }
+    EXERCISE_MEDIA {
+        uuid id PK
+        uuid exercise_id FK
+        int position
+        string pose
+        string url
     }
     EXERCISE_EQUIPMENT {
         uuid exercise_id PK,FK
@@ -274,6 +296,9 @@ erDiagram
     GYMS ||--o{ GYM_EQUIPMENT : inventories
     EQUIPMENT ||--o{ GYM_EQUIPMENT : appears_in
     GYMS o|--o{ EXERCISES : owns_custom
+    GYMS ||--o{ GYM_EXERCISES : enables
+    EXERCISES ||--o{ GYM_EXERCISES : available_in
+    EXERCISES ||--o{ EXERCISE_MEDIA : illustrates
     EXERCISES ||--o{ EXERCISE_EQUIPMENT : requires
     EQUIPMENT ||--o{ EXERCISE_EQUIPMENT : required_by
     EXERCISES ||--o{ EXERCISE_MUSCLES : activates
@@ -285,10 +310,15 @@ erDiagram
 Restricciones principales:
 
 - `exercises.gym_id IS NULL` sólo cuando `origin = 'CATALOGO_BASE'`; un ejercicio propio siempre informa gimnasio y autor.
-- `UNIQUE (gym_id, lower(name))` para ejercicios propios; el catálogo base usa un índice equivalente con `gym_id IS NULL`.
-- Índice único parcial en `exercise_muscles (exercise_id) WHERE participation = 'PRIMARIA'`.
-- `PESO_CORPORAL` se carga como equipamiento de referencia y se considera siempre presente.
+- Identidad importada: `UNIQUE (source, source_id)` para pares no nulos; UUID estable al reimportar. El nombre no identifica ni fusiona fichas. Ejercicios propios pueden mantener unicidad por nombre dentro de su gimnasio.
+- `exercise_muscles`: clave `(exercise_id, muscle_code)`; permite múltiples primarios y secundarios sin duplicar el rol del mismo músculo. El antiguo índice de un único primario fue retirado (RI-21).
+- `PESO_CORPORAL` es equipamiento de referencia; su existencia no habilita ejercicios automáticamente.
 - Un ejercicio no se borra: pasa a `DESACTIVADO` y permanece referenciable por el historial.
+
+- `gym_exercises`: clave `(gym_id, exercise_id)` e índice de consulta por gimnasio/habilitación. Backend valida en la misma transacción que la ficha sea base aprobada o propia aprobada de ese gimnasio; actor pertenece al gimnasio y tiene permiso RA-12.
+- `exercise_media`: `UNIQUE (exercise_id, position)`, pose de inicio/final/principal y URL versionada; la ficha mantiene su recurso principal. Compartir recurso entre variantes no cambia identidad.
+- Las fichas incompletas se conservan en preparación privada, fuera del catálogo publicado. Alta o importación no crea `gym_exercises` automáticamente. Conservar estado deshabilitado y último actor/instante; historial de rutinas y snapshots no se elimina.
+- Publicación, habilitación y aprobación/finalización deben usar transacciones con control de concurrencia para que una baja simultánea no se incorpore a una nueva prescripción (RN-141).
 
 ## 4. Plantillas y rutinas
 
@@ -578,7 +608,7 @@ Estos estados se incorporan a D6 antes de implementar la migración.
 
 Los campos `jsonb` no admiten estructuras libres. Sus contratos se publican en el OpenAPI del servicio IA y se validan con Pydantic en Python y Zod en backend.
 
-- `minimized_context`: `schema_version`, objetivo, nivel de experiencia, frecuencia, condiciones físicas pertinentes sin texto identificatorio, equipamiento disponible y catálogo permitido. No contiene identificador de usuario, nombre, correo, teléfono, documento ni credenciales.
+- `minimized_context`: contrato versionado de [data-interface.md](data-interface.md), con perfil mínimo, inventario, todo el catálogo habilitado y versiones del contexto. Sin PII innecesaria, imágenes ni credenciales.
 - `preferences`: `schema_version`, ejercicios excluidos, patrones preferidos y observaciones sanitizadas que aporten a la generación.
 - `structured_output`: `schema_version`, tipo, frecuencia objetivo, días ordenados, ejercicios identificados por el catálogo, series, repeticiones, carga opcional, descanso, calentamiento y explicación.
 
@@ -743,6 +773,8 @@ Cada paso se crea como una migración Prisma revisada y comprobada sobre Postgre
 
 ## 10. Población inicial en Neon Test
 
+**Catálogo RepDB:** su paquete se importa mediante preparación privada, fuera de Git. `seed-reference.sql` conserva taxonomías y fixtures propios; no convertirlo en una redistribución del dataset. Habilitaciones de producción requieren revisión explícita por gimnasio, sin activar todo el catálogo base.
+
 El SQL Editor se utilizará para cargar datos generales después de que CI haya aplicado las migraciones. La estructura pertenece exclusivamente a Prisma: el SQL de carga no crea ni altera tablas, enums, índices o restricciones.
 
 Orden de carga:
@@ -754,7 +786,7 @@ Orden de carga:
 5. Usuarios ficticios, asignaciones y perfiles.
 6. Plantillas privadas de entrenadores. No se cargan presets en esta entrega.
 
-El backend versiona un script idempotente `seed-reference.sql` (`INSERT ... ON CONFLICT ...`) para equipamiento, grupos musculares, articulaciones, catálogo base y sus relaciones. Se ejecuta manualmente desde SQL Editor tanto en Test como en Producción después de cada migración que lo requiera. Los datos ficticios de gimnasio, usuarios y sesiones, si fueran necesarios, viven en otro script exclusivo de Test y nunca se ejecutan en Producción.
+El backend versiona `seed-reference.sql` para taxonomías y fixtures propios sintéticos. El catálogo RepDB sigue su importador privado idempotente; datos ficticios de gimnasio, usuarios y sesiones son exclusivos de Test. La carga no modifica estructuras ni se convierte en seed automático de Producción.
 
 ## 11. Decisiones cerradas para la primera entrega
 

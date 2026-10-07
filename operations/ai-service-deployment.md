@@ -58,7 +58,7 @@ Configurar valores diferentes en **Preview** y **Production** y volver a despleg
 | `LLM_API_URL` | `https://yen-entrench-grader.ngrok-free.dev/polo` | mismo endpoint del Polo |
 | `LLM_API_TOKEN` | secreto `POLO_API_TOKEN` | mismo token inicial del Polo |
 | `LLM_MODEL` | `qwen3.5:9b` | `qwen3.5:9b` |
-| `LLM_CONFIGURATION_VERSION` | `generative/generar-rutina@10` | igual, salvo promoción versionada |
+| `LLM_CONFIGURATION_VERSION` | `generative/generar-rutina@11` | igual, salvo promoción versionada |
 | `GENERATION_TIMEOUT_SECONDS` | `120` | `120` |
 | `GENERATION_MAX_RETRIES` | `1` | `1` |
 
@@ -85,7 +85,7 @@ En el proyecto Vercel del backend configurar y volver a desplegar:
 | `AI_SERVICE_API_KEY` | mismo secreto test configurado en IA | mismo secreto producción configurado en IA |
 | `AI_SERVICE_REQUEST_TIMEOUT_MS` | `10000` | `10000` |
 
-Backend crea primero la fila idempotente en `ai_integration.ai_generation_requests` con el contexto minimizado y el catálogo prefiltrado, y registra su ownership. Luego su adaptador envía exclusivamente el UUID a IA:
+Backend persiste primero la solicitud, contexto y catálogo según el contrato vigente, con su ownership. [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) diseña la migración al catálogo habilitado completo; mientras no se implemente, el código sigue con la lógica anterior. El transporte continúa enviando exclusivamente el UUID:
 
 ```text
 POST {AI_SERVICE_URL}/v1/generation-requests/{requestId}/dispatch

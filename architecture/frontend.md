@@ -42,5 +42,5 @@ proyecto-gimnasio-back (Express)
 2. Una plantilla se copia al solicitar una rutina; cambios posteriores no reescriben versiones existentes.
 3. El entrenador es la puerta de aprobación para poner una rutina en vigencia.
 4. La indisponibilidad de IA deshabilita la generación, no el resto del producto. ✎ Lo que permanece es la creación y asignación manual de plantillas por el entrenador (RF-019); los presets, sólo si se implementa RF-021 ([DD-35](../decisions/design-decisions.md)).
-5. Ninguna lógica de autorización o compatibilidad se confía sólo al cliente.
+5. Autorización, referencias y disponibilidad se verifican en backend; adecuación y prescripción con IA y revisión del entrenador según ADR 0013.
 6. El frontend no guarda tokens ni determina roles: la cookie es `httpOnly` y backend vuelve a autorizar cada petición.

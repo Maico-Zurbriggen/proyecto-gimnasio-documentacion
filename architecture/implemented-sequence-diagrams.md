@@ -1,13 +1,15 @@
 # Secuencias de la implementación actual
 
+**Referencia de implementación local, 2026-10-07:** incluye [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). No afirma despliegue ni publicación del dataset real; operación y pendientes en [catálogo](exercise-catalog.md).
+
 ```yaml
 document_id: ARCH-IMPLEMENTED-SEQUENCES
 status: as-built-reference
-snapshot_date: 2026-09-21
+snapshot_date: 2026-10-07
 branches_reviewed:
-  frontend: develop
-  backend: develop
-  ai: develop
+  frontend: feature/repdb-gym-catalog-20261005
+  backend: feature/repdb-gym-catalog-20261005
+  ai: feature/repdb-gym-catalog-20261005
 normative: false
 contains_future_design: false
 ```
@@ -61,6 +63,7 @@ La autenticación pública usa sesiones propias. El frontend nunca elige ni simu
 | SEQ-10 | Despachar y procesar generación dentro de IA | COMPONENTE | no accesible desde frontend |
 | SEQ-11 | Reintentar o agotar una generación IA | COMPONENTE | no accesible desde frontend |
 | SEQ-12 | Comprobar salud y dependencias | API/COMPONENTE | sin pantalla |
+| SEQ-13 | Catálogo, fichas propias e inventario | E2E local | `/admin/ejercicios`, `/entrenador/catalogo`, `/alumno/catalogo` |
 
 ## SEQ-00 — Inicio de sesión, recuperación y autorización de área
 
@@ -480,7 +483,7 @@ sequenceDiagram
     participant Auth as Sesión y autorización
     participant UC as GetRoutineGenerationUseCase
     participant Repo as PrismaRoutineGenerationsRepository
-    participant Validator as Validador determinístico
+    participant Validator as Validador técnico v2
     participant DB as PostgreSQL app + ai_integration
 
     Alumno->>FE: Abre su panel
@@ -504,7 +507,7 @@ sequenceDiagram
         API->>Auth: Exigir ALUMNO + studentId propio
         API->>Repo: finalize(owner)
         Repo->>DB: Leer output, alumno, condiciones,<br/>equipamiento y ejercicios
-        Repo->>Validator: Validar schema, RN-39a, catálogo,<br/>nivel, condiciones y equipamiento
+        Repo->>Validator: Validar schema y snapshot;<br/>revisiones, ámbito y disponibilidad;<br/>hash del perfil e inventario
         alt salida inválida
             Repo->>DB: Registrar ai_result_validation inválida
             API-->>FE: 422 invalid_generated_routine
@@ -537,13 +540,13 @@ sequenceDiagram
     API->>API: Exigir ALUMNO + studentId propio<br/>validar input
     API->>Context: getStudentContext(studentId)
     Context->>DB: Perfil, objetivos y condiciones
-    API->>Context: getPrefilteredCatalog(studentId, gymId, now)
-    Context->>DB: Ejercicios, nivel, condiciones<br/>y equipamiento presente
+    API->>Context: getEnabledCatalog(gymId)
+    Context->>DB: TODOS los ejercicios aprobados y habilitados<br/>sin filtros de entrenamiento
     alt alumno inexistente / input faltante / catálogo vacío
         API-->>Cliente: 404 o 422
     else contexto disponible
         API->>DB: Insert/upsert ai_generation_request + contexto minimizado y catálogo
-        API->>DB: Upsert app.routine_generation_ownership
+        API->>DB: Ownership creado atómicamente con solicitud
         Gateway->>AI: POST /v1/generation-requests/{requestId}/dispatch<br/>Authorization Bearer, sin cuerpo
         AI->>AI: Autenticar y verificar solicitud procesable
         AI->>AI: Publicar requestId en Vercel Queues
@@ -590,7 +593,7 @@ sequenceDiagram
     end
 ```
 
-La validación de negocio y la materialización pertenecen a backend y ocurren en
+La autorización, validación técnica y materialización pertenecen a backend y ocurren en
 SEQ-08, no dentro del worker IA.
 
 ## SEQ-11 — Falla y reintento del worker IA
@@ -702,3 +705,28 @@ missing_endpoints:
 - Dibujar la cookie sólo entre navegador y backend; el token nunca se expone al código React ni se persiste en PostgreSQL en claro.
 - No dibujar una rutina completa en SEQ-01: el endpoint actual sólo devuelve resumen y renovación.
 - Mantener SEQ-09 como falla hasta alinear ruta, autenticación, payload y persistencia backend–IA.
+
+## SEQ-13 — Catálogo y habilitación explícita
+
+```mermaid
+sequenceDiagram
+    actor Administrador
+    participant FE as Frontend
+    participant API as Backend
+    participant DB as PostgreSQL
+    Administrador->>FE: Consultar catálogo e inventario
+    FE->>API: GET /catalog/exercises + /catalog/inventory
+    API->>DB: Ámbito de sesión y revisiones
+    API-->>FE: Fichas paginadas y disponibilidad
+    Administrador->>FE: Seleccionar cambios y guardar
+    FE->>API: POST /catalog/availability con expectedRevision
+    API->>DB: Transacción, locks, validación de ámbito y estado
+    alt revisión obsoleta
+        API-->>FE: 409 availability_conflict
+    else escritura válida o repetida
+        API->>DB: Cambiar habilitaciones y auditar, conservar historial
+        API-->>FE: Cantidad de cambios
+    end
+```
+
+El entrenador propone/edita fichas propias, inicialmente `PROPUESTO`; el administrador revisa con revisión optimista y puede elegir habilitar al aprobar. El inventario devuelve las fichas habilitadas relacionadas para revisión manual. El listado paginado y sus filtros son de navegación; la generación lee el catálogo completo. Antes de aprobar una rutina, frontend envía su `reviewToken`; un contexto o ejercicio modificado exige volver a leerla. Capacidad insuficiente e imposibilidad decidida por IA aparecen como indisponibilidad, sin rutina de reemplazo.

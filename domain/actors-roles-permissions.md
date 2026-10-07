@@ -66,7 +66,7 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 |                                              |                                                                                                                                                                                     |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Objetivo**                                 | Que el gimnasio tenga las personas, los roles, las asignaciones y el **inventario** correctos, y entender la salud agregada del gimnasio                                            |
-| **Función con efecto sobre la prescripción** | Mantiene el inventario de equipamiento, que determina el catálogo prescribible de todo el gimnasio. No es un rol administrativo puro                                                |
+| **Función con efecto sobre la prescripción** | Mantiene inventario y habilitaciones de ejercicios de su gimnasio; la IA decide la prescripción con esos datos |
 | **Consulta**                                 | Usuarios, roles e invitaciones de su gimnasio, asignaciones vigentes e históricas, inventario, panel analítico agregado, registro de auditoría, catálogo del gimnasio               |
 | **Modifica**                                 | Invitaciones; roles; suspensión y reactivación de cuentas; asignaciones; inventario; estado de membresía; aptitud; curación del catálogo. Solicita el recálculo de las estimaciones |
 | **Nunca ve**                                 | El detalle de sesiones, mediciones corporales ni condiciones físicas de un alumno individual. Ver §4                                                                                |
@@ -88,8 +88,9 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Medición corporal                                | `L/E` P                      | `L` A                       | —                       |
 | Control y bloqueo por mediciones                 | `L` P; `E` regularización    | `L` A; `E` aprobación       | Sólo estado operativo G |
 | Estado de membresía                              | `L` P                        | `L` A                       | `L/E` G                 |
-| Catálogo base                                    | `L`                          | `L`                         | `L`                     |
-| Catálogo del gimnasio                            | `L`                          | `L` + `E` propios           | `L` + curar G           |
+| Catálogo base | `L` | `L` | `L`; fichas mantenidas por el proveedor del sistema |
+| Habilitaciones de ejercicios | `L` G | `L` G | `L/E` G |
+| Catálogo del gimnasio | `L` | `L` + `E` fichas propias | `L` + curar fichas propias G |
 | Plantilla                                        | —; `L` presets si existe RF-021 | `L/E` propias; `L` presets si existe RF-021 | `L` G      |
 | Rutina propuesta y rutina vigente                | `L` P                        | `L/E` A                     | —                       |
 | ~~**Candidato** de rutina~~ ⏸ diferido (RF-119)  | —                            | —                           | —                       |
@@ -143,6 +144,8 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 
 **RA-11 — Restricción funcional por rol.** Un bloqueo por mediciones restringe únicamente las operaciones del rol ALUMNO. Mientras está `PENDIENTE_MEDICION`, ese rol sólo puede consultar su identidad y el bloqueo, cerrar la sesión de usuario y cargar la regularización; mientras está `PENDIENTE_APROBACION`, sólo puede consultar identidad y estado o cerrar sesión. No puede iniciar ni registrar sesiones de entrenamiento. Los permisos de otros roles del mismo usuario se evalúan con normalidad. `[F: RF-123, RF-124]`
 
+**RA-12 — Habilitaciones.** Sólo un administrador activo modifica la disponibilidad de ejercicios de su propio gimnasio. Puede referenciar fichas base aprobadas o propias aprobadas de ese gimnasio; nunca fichas propias ajenas. Los otros roles tienen consulta. `[F: decisión 2026-10-05, RF-118]`
+
 ## 4. Evolución de los permisos cuando cambia una relación
 
 | Evento                                          | Efecto inmediato                                                                                                                                                                                                                                                                                                                                |
@@ -157,6 +160,6 @@ Un entrenador que quiera entrenar necesita **otro** entrenador asignado: no hay 
 | Se suspende una cuenta                          | No puede autenticarse. Sus datos y sus asignaciones permanecen: la suspensión es reversible y no destruye relaciones                                                                                                                                                                                                                            |
 | Se crea un bloqueo por mediciones               | La cuenta continúa ACTIVA; sólo el rol ALUMNO queda limitado conforme RA-11. El entrenador vigente gana la acción de aprobación cuando la regularización esté completa                                                                                                                                            |
 | Se da de baja una cuenta                        | Anonimización, no borrado. Ver D5/RN-106 y D10/CB-38                                                                                                                                                                                                                                                                                            |
-| Cambia el inventario del gimnasio               | No altera permisos, pero recalcula el catálogo prescribible y dispara la reevaluación de las rutinas vigentes afectadas (RN-117)                                                                                                                                                                                                                |
+| Cambia el inventario o las habilitaciones del gimnasio | No altera permisos. Señala disponibilidad afectada y revisión pendiente según RN-117 y RN-138 a RN-142 |
 
 **Sobre la pérdida de acceso al histórico.** Que el entrenador pierda el acceso a los datos de un alumno que sí supervisó es incómodo y correcto: el fundamento del acceso es la relación vigente, no el mérito histórico. La consecuencia asumida es que el indicador de carga por entrenador del panel del gimnasio se calcula sobre información agregada y no requiere que el entrenador conserve visibilidad individual. Ver D11/DD-23.
