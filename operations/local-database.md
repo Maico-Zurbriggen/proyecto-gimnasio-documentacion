@@ -42,7 +42,22 @@ try {
 }
 ```
 
-`GymLocal2026!` es una clave ficticia de ejemplo: permite ingresar como `alumno.martin@gimnasio.test` sólo después de ejecutar correctamente el comando. El script configura únicamente esa cuenta y rechaza bases distintas de `gym_local`, hosts externos o un puerto diferente de `LOCAL_DATABASE_PORT` (por defecto `55432`). No configura al administrador ni a los entrenadores.
+`GymLocal2026!` es una clave ficticia de ejemplo: permite ingresar como `alumno.martin@gimnasio.test` sólo después de ejecutar correctamente el comando. Sin argumentos, el script configura únicamente a Martín. Para configurar al administrador o a un entrenador, pasar su correo:
+
+```powershell
+$env:LOCAL_TEST_PASSWORD = 'GymLocal2026!'
+try {
+    npm run db:seed:local-login -- admin.test@gimnasio.test
+    npm run db:seed:local-login -- entrenador.lucia@gimnasio.test
+    npm run db:seed:local-login -- entrenador.marco@gimnasio.test
+} finally {
+    Remove-Item Env:LOCAL_TEST_PASSWORD
+}
+```
+
+El comando establece la clave indicada únicamente en la cuenta seleccionada; puede repetirse para cualquiera de los siete correos de la tabla. Comprueba además su UUID y el gimnasio ficticio del seed. Rechaza correos ajenos al seed, argumentos adicionales, bases distintas de `gym_local`, hosts externos o un puerto diferente de `LOCAL_DATABASE_PORT` (por defecto `55432`).
+
+En la base local de esta verificación se configuró `GymLocal2026!` para Martín, administrador, Lucía y Marco. Esta configuración local no se replica en Neon Test ni en producción; las contraseñas de Sofía, Diego y Valen no se modificaron.
 
 En Neon Test, las claves que ya haya configurado el equipo las entrega la persona responsable por un canal seguro; no se deducen del seed ni se publican en documentación.
 
