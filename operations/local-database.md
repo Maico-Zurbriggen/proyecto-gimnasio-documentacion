@@ -63,6 +63,17 @@ En Neon Test, las claves que ya haya configurado el equipo las entrega la person
 
 La verificación del catálogo de 2026-10-07 utilizó `catalog-admin@example.test`, `catalog-trainer@example.test` y `catalog-student@example.test` en la base temporal `gym_catalog_test`. Su contenedor se retiró al terminar: esas cuentas ya no existen, no forman parte de `seed-test.sql` y no sirven para ingresar a la base local persistente o a Neon Test.
 
+### Actualizar una base local existente
+
+Después de actualizar el código, ejecutar desde backend con `DATABASE_URL` apuntando a `gym_local` y al puerto local configurado:
+
+```bash
+npm run db:deploy
+npm run db:status
+```
+
+El estado debe indicar que el esquema está actualizado. El login y `GET /ready` pueden funcionar aunque falten migraciones de una funcionalidad nueva: una conexión disponible no garantiza que existan todas las tablas y columnas. Un `500` del catálogo con Prisma `P2021` o `P2022` —por ejemplo, columna `exercises.state` ausente— requiere comprobar y aplicar sus migraciones pendientes. `db:deploy` conserva los datos existentes y no sustituye la habilitación explícita de ejercicios por el administrador; ver [el recorrido del catálogo](../architecture/exercise-catalog.md).
+
 ### Puertos reservados por Windows
 
 Si Docker no puede publicar `55432` y muestra `An attempt was made to access a socket in a way forbidden by its access permissions`, consultar `netsh interface ipv4 show excludedportrange protocol=tcp`. Elegir un puerto libre fuera de esos intervalos, por ejemplo `65432`, y configurar `LOCAL_DATABASE_PORT=65432` en `.env` del backend. Actualizar el puerto de `DATABASE_URL` tanto en backend como en `.env.local` de IA. Ejecutar nuevamente `docker compose -f compose.local.yaml up -d --wait` y reiniciar ambos servicios. Compose conserva el volumen existente; no se borran datos. El valor por defecto sigue siendo `55432`.
