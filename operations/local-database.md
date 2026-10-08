@@ -140,6 +140,14 @@ El catálogo de prueba puede ampliarse con `npm run db:seed:local-generation-cat
 
 Estos 132 ejercicios son fixtures propios de desarrollo, no el catálogo RepDB. La elegibilidad por reglas describe la implementación anterior; [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) requiere migrar a habilitación explícita y decisiones de IA. Las referencias de [ACE](https://www.acefitness.org/resources/everyone/exercise-library/) y [NASM](https://www.nasm.org/resource-center/exercise-library) y sus mapeos requieren revisión del entrenador; no fusionar estos fixtures con importados por nombre.
 
+### Ilustraciones de los fixtures
+
+Las referencias bibliográficas de ACE son páginas HTML y no deben enviarse a un `<img>`. Los fixtures nuevos dejan vacío el recurso visual hasta contar con una imagen válida. El frontend muestra el mapa muscular y distingue la ausencia de imagen de un fallo de carga; [presentación y acceso a recursos](../architecture/exercise-catalog.md).
+
+Tras descargar RepDB con `npm run catalog:import -- download`, se pueden vincular ilustraciones a los fixtures mediante un manifiesto **privado**: `sourceRevision` con el hash del paquete y `entries` con `exerciseId`, `sourceId` y `reviewed: true`. Revisar correspondencia de variante, postura y equipamiento; no usar una foto parecida como sustituto. Ejecutar `npm run db:seed:local-catalog-media -- <ruta-privada-del-manifiesto.json>` en backend. Valida hash, referencias y archivos WebP antes de escribir; sólo modifica IDs ficticios conocidos del gimnasio de prueba en `gym_local` y el puerto local configurado. Es transaccional e idempotente, conserva historial y habilitaciones, incrementa revisiones materiales y respeta imágenes propias ya cargadas. No aprueba la clasificación ni publica ejercicios del catálogo base.
+
+La corrección local del 2026-10-07 conserva 138 fichas: 63 fixtures con ilustraciones RepDB, 14 imágenes del seed de referencia y 61 fichas aún sin imagen equivalente. El manifiesto y los archivos permanecen en `.catalog-private/`, excluidos de Git. Esa cobertura parcial no equivale a la importación completa de los 609 ejercicios. Para verificar, abrir «Abducción de cadera acostado de lado»: deben cargar inicio/final y resaltarse `GLUTEO` en la vista posterior. Las imágenes del endpoint local requieren sesión; reiniciar backend tras recompilar cambios de rutas.
+
 ## Aplicación manual excepcional desde pgAdmin
 
 La migración `20260928190000_student_measurement_blocking` se entrega como SQL revisable porque el responsable de la base decidió aplicarla desde pgAdmin. Este procedimiento no reemplaza el flujo normal de CI:
