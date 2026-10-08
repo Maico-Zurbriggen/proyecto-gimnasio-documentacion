@@ -1,6 +1,6 @@
 # ADR 0011: Cloudflare Tunnel para acceder al LLM del Polo
 
-- Estado: aceptada
+- Estado: reemplazada parcialmente por [ADR 0012](0012-api-polo-ngrok.md) el 2026-09-29
 - Fecha: 2026-09-15
 - Reemplaza parcialmente: [ADR 0010](0010-servicio-ia-en-vercel-y-llm-en-el-polo.md)
 

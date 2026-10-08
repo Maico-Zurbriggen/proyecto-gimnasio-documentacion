@@ -1,13 +1,15 @@
 # Secuencias de la implementación actual
 
+**Referencia de implementación local, 2026-10-07:** incluye [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). No afirma despliegue ni publicación del dataset real; operación y pendientes en [catálogo](exercise-catalog.md).
+
 ```yaml
 document_id: ARCH-IMPLEMENTED-SEQUENCES
 status: as-built-reference
-snapshot_date: 2026-09-21
+snapshot_date: 2026-10-07
 branches_reviewed:
-  frontend: develop
-  backend: develop
-  ai: develop
+  frontend: feature/repdb-gym-catalog-20261005
+  backend: feature/repdb-gym-catalog-20261005
+  ai: feature/repdb-gym-catalog-20261005
 normative: false
 contains_future_design: false
 ```
@@ -37,7 +39,7 @@ DB             Neon PostgreSQL; schemas app y ai_integration
 AI API         FastAPI desplegada en Vercel
 Queue          Vercel Queues
 Worker         consumidor Python de generación
-LLM            Ollama en el Polo mediante Cloudflare Tunnel
+LLM            Polo API/ngrok con Ollama
 LocalStorage   estado local del navegador; no es fuente de verdad de negocio
 ```
 
@@ -61,6 +63,7 @@ La autenticación pública usa sesiones propias. El frontend nunca elige ni simu
 | SEQ-10 | Despachar y procesar generación dentro de IA | COMPONENTE | no accesible desde frontend |
 | SEQ-11 | Reintentar o agotar una generación IA | COMPONENTE | no accesible desde frontend |
 | SEQ-12 | Comprobar salud y dependencias | API/COMPONENTE | sin pantalla |
+| SEQ-13 | Catálogo, fichas propias e inventario | E2E local | `/admin/ejercicios`, `/entrenador/catalogo`, `/alumno/catalogo` |
 
 ## SEQ-00 — Inicio de sesión, recuperación y autorización de área
 
@@ -110,7 +113,7 @@ El cierre ejecuta `POST /auth/logout`, revoca el hash de sesión, elimina la coo
 
 ## SEQ-01 — Rutina vigente y aviso de renovación
 
-Alcance real: devuelve metadatos y renovación. No devuelve días, ejercicios ni series; por eso `/alumno/rutina` no puede mostrar la prescripción completa.
+Alcance de `GET /routines/active`: devuelve metadatos y renovación. Los días, ejercicios y series se consultan mediante los endpoints de prescripción descritos debajo.
 
 ```mermaid
 sequenceDiagram
@@ -157,6 +160,16 @@ sequenceDiagram
 ```
 
 Variante entrenador/administrador: `GET /students/:studentId/routines/active` agrega validación de propiedad y, para entrenador, asignación vigente. Frontend la utiliza en la tarjeta resumida de la ficha del alumno.
+
+En `/alumno/rutina`, `StudentRoutinePage` consume `GET /students/:studentId/routines` y pide el contenido completo mediante `GET /students/:studentId/routines/:routineId` para la rutina `VIGENTE` y para la `PROPUESTA` o `BLOQUEADA`. Cada una se muestra en su sección. La propuesta informa que espera revisión; si está bloqueada, informa que falta asignar un entrenador. Ver una propuesta no la pone en vigencia ni ofrece al alumno aprobarla o entrenar bajo ella.
+
+El resumen del alumno también consulta ese listado y el contenido de la propuesta actual, o de la vigente si no existe propuesta, para mostrar los nombres reales de días y ejercicios. Ya no muestra ejercicios, cargas, adherencia ni rachas de ejemplo. El panel generativo está disponible tanto en el resumen como en `/alumno/rutina`: conserva el seguimiento al cambiar de pantalla y finaliza el resultado recuperado antes de actualizar la propuesta mostrada.
+
+El contenido de prescripción agrega `generationPrompt`, nullable. Backend lo obtiene de `sourceGenerationResult.attempt.request.preferences.free_text` de esa rutina concreta; no usa el texto actual del formulario. Resumen y Mi rutina muestran **Prompt solicitado** cuando existe. Las rutinas de plantilla o sin texto generativo devuelven `null`.
+
+La generación comprueba también las cantidades literales de ejercicios por músculo y por día: el catálogo incluye músculos primarios y las preferencias guardan `muscle_counts_per_day`. Se rechaza antes de llamar a IA un pedido que no puede cumplir el catálogo compatible; IA y backend descartan una salida que ignore la cantidad exacta por día. Ver el contrato y el límite de esta extracción en [data-interface.md](data-interface.md).
+
+La finalización de una generación invalida las consultas de rutinas del alumno y ofrece **Ver rutina**, que abre esa pantalla. Si backend responde `proposed_routine_already_exists` al solicitar o finalizar una generación, el panel ofrece **Ver rutina pendiente de revisión**. El conflicto al finalizar también actualiza las consultas del alumno y conserva el seguimiento de la generación anterior.
 
 ## SEQ-02 — Cartera priorizada del entrenador
 
@@ -470,7 +483,7 @@ sequenceDiagram
     participant Auth as Sesión y autorización
     participant UC as GetRoutineGenerationUseCase
     participant Repo as PrismaRoutineGenerationsRepository
-    participant Validator as Validador determinístico
+    participant Validator as Validador técnico v2
     participant DB as PostgreSQL app + ai_integration
 
     Alumno->>FE: Abre su panel
@@ -494,7 +507,7 @@ sequenceDiagram
         API->>Auth: Exigir ALUMNO + studentId propio
         API->>Repo: finalize(owner)
         Repo->>DB: Leer output, alumno, condiciones,<br/>equipamiento y ejercicios
-        Repo->>Validator: Validar schema, RN-39a, catálogo,<br/>nivel, condiciones y equipamiento
+        Repo->>Validator: Validar schema y snapshot;<br/>revisiones, ámbito y disponibilidad;<br/>hash del perfil e inventario
         alt salida inválida
             Repo->>DB: Registrar ai_result_validation inválida
             API-->>FE: 422 invalid_generated_routine
@@ -527,26 +540,25 @@ sequenceDiagram
     API->>API: Exigir ALUMNO + studentId propio<br/>validar input
     API->>Context: getStudentContext(studentId)
     Context->>DB: Perfil, objetivos y condiciones
-    API->>Context: getPrefilteredCatalog(studentId, gymId, now)
-    Context->>DB: Ejercicios, nivel, condiciones<br/>y equipamiento presente
+    API->>Context: getEnabledCatalog(gymId)
+    Context->>DB: TODOS los ejercicios aprobados y habilitados<br/>sin filtros de entrenamiento
     alt alumno inexistente / input faltante / catálogo vacío
         API-->>Cliente: 404 o 422
     else contexto disponible
-        API->>Gateway: requestGeneration(contexto + catálogo)
-        Gateway->>AI: POST /v1/routine-generations<br/>X-API-Key + body completo
-        AI->>AI: Autenticar e idempotencia
-        AI->>DB: Insert ai_generation_request + contexto minimizado
+        API->>DB: Insert/upsert ai_generation_request + contexto minimizado y catálogo
+        API->>DB: Ownership creado atómicamente con solicitud
+        Gateway->>AI: POST /v1/generation-requests/{requestId}/dispatch<br/>Authorization Bearer, sin cuerpo
+        AI->>AI: Autenticar y verificar solicitud procesable
         AI->>AI: Publicar requestId en Vercel Queues
-        AI-->>Gateway: 202 pending o 200 existente
-        API->>DB: Upsert app.routine_generation_ownership
+        AI-->>Gateway: 202 queued
         API-->>Cliente: 202/200 {requestId, status}
     end
 ```
 
 ## SEQ-10 — Despacho y procesamiento implementados dentro de IA
 
-Estado `COMPONENTE`: FastAPI acepta la solicitud, persiste el contexto minimizado,
-publica el identificador y responde sin esperar al LLM.
+Estado `COMPONENTE`: Backend persiste la solicitud y el contexto minimizado.
+FastAPI verifica el identificador, publica el trabajo y responde sin esperar al LLM.
 
 ```mermaid
 sequenceDiagram
@@ -556,37 +568,32 @@ sequenceDiagram
     participant DB as PostgreSQL ai_integration
     participant Q as Vercel Queues
     participant W as Worker Python
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
-    Caller->>AI: POST /v1/routine-generations<br/>X-API-Key + contexto y catálogo
+    Caller->>AI: POST /v1/generation-requests/{requestId}/dispatch<br/>Authorization Bearer, sin cuerpo
     AI->>AI: Comparación segura de AI_SERVICE_API_KEY
     alt credencial inválida
         AI-->>Caller: 401 unauthorized
     else autorizada
-        AI->>DB: Buscar idempotency_key
-        alt solicitud existente
-            AI-->>Caller: 200 {requestId, status}
-        else nueva
-            AI->>DB: INSERT request + COMMIT
-            AI->>Q: send UUID con idempotency_key=requestId
-            AI-->>Caller: 202 pending
-            Q->>W: GenerationMessage(requestId)
-            W->>DB: SELECT ... FOR UPDATE SKIP LOCKED
-            W->>DB: state=PROCESANDO + lease<br/>crear attempt PROCESANDO
-            W->>LLM: POST /api/generate con stream<br/>Bearer LLM_API_TOKEN<br/>schema JSON compatible + contexto minimizado
-            LLM-->>W: Chunks NDJSON de salida estructurada
-            W->>W: Pydantic valida RutinaEstructurada
-            W->>W: Hash canónico de salida
-            W->>DB: BEGIN
-            W->>DB: Insert ai_generation_results<br/>contrato routine-generation@1.1
-            W->>DB: attempt=COMPLETADO
-            W->>DB: request=COMPLETADA y liberar lease
-            W->>DB: COMMIT
-        end
+        AI->>DB: Verificar requestId y estado procesable
+        AI->>Q: send UUID con idempotency_key=requestId
+        AI-->>Caller: 202 queued
+        Q->>W: GenerationMessage(requestId)
+        W->>DB: SELECT ... FOR UPDATE SKIP LOCKED
+        W->>DB: state=PROCESANDO + lease<br/>crear attempt PROCESANDO
+        W->>LLM: POST /polo/api/chat<br/>Bearer LLM_API_TOKEN + ngrok-skip-browser-warning: 1<br/>schema JSON + contexto minimizado y catálogo
+        LLM-->>W: Salida estructurada
+        W->>W: Pydantic valida RutinaEstructurada
+        W->>W: Hash canónico de salida
+        W->>DB: BEGIN
+        W->>DB: Insert ai_generation_results
+        W->>DB: attempt=COMPLETADO
+        W->>DB: request=COMPLETADA y liberar lease
+        W->>DB: COMMIT
     end
 ```
 
-La validación de negocio y la materialización pertenecen a backend y ocurren en
+La autorización, validación técnica y materialización pertenecen a backend y ocurren en
 SEQ-08, no dentro del worker IA.
 
 ## SEQ-11 — Falla y reintento del worker IA
@@ -597,7 +604,7 @@ sequenceDiagram
     participant Q as Vercel Queues
     participant W as Worker Python
     participant DB as PostgreSQL ai_integration
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
     Q->>W: Entregar GenerationMessage
     W->>DB: Reclamar solicitud y crear intento N
@@ -630,7 +637,7 @@ sequenceDiagram
     participant Back as Backend Express
     participant AI as FastAPI IA
     participant DB as PostgreSQL
-    participant LLM as Ollama / Cloudflare Tunnel
+    participant LLM as Polo API/ngrok (Ollama)
 
     Monitor->>Back: GET /health
     Back-->>Monitor: 200 {status: ok}
@@ -698,3 +705,28 @@ missing_endpoints:
 - Dibujar la cookie sólo entre navegador y backend; el token nunca se expone al código React ni se persiste en PostgreSQL en claro.
 - No dibujar una rutina completa en SEQ-01: el endpoint actual sólo devuelve resumen y renovación.
 - Mantener SEQ-09 como falla hasta alinear ruta, autenticación, payload y persistencia backend–IA.
+
+## SEQ-13 — Catálogo y habilitación explícita
+
+```mermaid
+sequenceDiagram
+    actor Administrador
+    participant FE as Frontend
+    participant API as Backend
+    participant DB as PostgreSQL
+    Administrador->>FE: Consultar catálogo e inventario
+    FE->>API: GET /catalog/exercises + /catalog/inventory
+    API->>DB: Ámbito de sesión y revisiones
+    API-->>FE: Fichas paginadas y disponibilidad
+    Administrador->>FE: Seleccionar cambios y guardar
+    FE->>API: POST /catalog/availability con expectedRevision
+    API->>DB: Transacción, locks, validación de ámbito y estado
+    alt revisión obsoleta
+        API-->>FE: 409 availability_conflict
+    else escritura válida o repetida
+        API->>DB: Cambiar habilitaciones y auditar, conservar historial
+        API-->>FE: Cantidad de cambios
+    end
+```
+
+El entrenador propone/edita fichas propias, inicialmente `PROPUESTO`; el administrador revisa con revisión optimista y puede elegir habilitar al aprobar. El inventario devuelve las fichas habilitadas relacionadas para revisión manual. El listado paginado y sus filtros son de navegación; la generación lee el catálogo completo. Antes de aprobar una rutina, frontend envía su `reviewToken`; un contexto o ejercicio modificado exige volver a leerla. Capacidad insuficiente e imposibilidad decidida por IA aparecen como indisponibilidad, sin rutina de reemplazo.

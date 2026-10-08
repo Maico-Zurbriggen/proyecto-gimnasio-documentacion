@@ -11,7 +11,7 @@ Este documento cubre los **objetivos, features, evaluación y ciclo de vida** de
 
 ## 1. Qué es predictivo y qué no
 
-Por [D11/DD-31](../decisions/design-decisions.md), el diagnóstico (RN-79a), los ajustes (RN-89a), la compatibilidad (RN-44a-d) y la derivación del tipo de rutina (RN-39a) son **tablas deterministas**, no modelos aprendidos — están escritas, son auditables y no entran en este documento. Lo que sigue son **dos componentes** donde sí hay aprendizaje automático, ambos sobre series temporales, ninguno generativo, ninguno con respaldo directo del cliente (son propuestas de esta ronda de diseño — RF-121 y RF-122, ver el aviso en cada uno):
+Diagnóstico (RN-79a) y adaptación batch (RN-89a) mantienen su alcance. La selección, adecuación y prescripción de generación y alternativas pasan a IA con catálogo habilitado completo según [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md); no son componentes aprendidos de este documento. Aquí permanecen dos propuestas futuras sobre series temporales:
 
 | Objetivo | Requerimiento | Tipo de tarea |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Hasta el replanteo de IA del 2026-08-28 este documento describía cinco componen
 
 | Antes | Ahora |
 | --- | --- |
-| **Ranking de alternativas de sustitución (RF-059, RF-060)** — modelo clásico de similitud sobre atributos estructurados | Lo produce la **capa generativa** al pedírsele ejercicios parecidos, sobre el subconjunto del catálogo prescribible ya prefiltrado de forma determinista por patrón de movimiento y compatibilidad (RN-44a-d). Ver [generative-ai.md §7](generative-ai.md). El orden alfabético por participación muscular de RN-49a queda como **fallback determinista** cuando el LLM no responde. |
+| **Ranking de alternativas de sustitución (RF-059, RF-060)** — modelo clásico de similitud sobre atributos estructurados | Capa generativa con todo el catálogo habilitado y contexto del alumno, sin prefiltrado ni ranking de respaldo en código. Ver [generative-ai.md](generative-ai.md) y ADR 0013 |
 | **Riesgo de abandono (RF-061 a RF-063)** — clasificación binaria / score de riesgo | **Descartado.** RF-061 a RF-063 pasan a WON'T por costo y esfuerzo relativos al valor esperado con los datos disponibles (S-03 `NO VERIFICADO`). No se degrada a una regla simple: se retira. El criterio de urgencia de la cartera (RF-107) deja de incluir el riesgo de abandono. Ver [D12/§4](../planning/risks-and-assumptions.md). |
 | **Segmentación de perfiles (RF-064)** — clustering no supervisado sobre la base del gimnasio | La **descripción de perfil** la produce la capa generativa a partir de los indicadores ya calculados (frecuencia, volumen, intensidad relativos) y el objetivo del alumno, sin clustering. Es **efímera** — se genera al abrir la vista, no se persiste. Ver [generative-ai.md §1](generative-ai.md). |
 

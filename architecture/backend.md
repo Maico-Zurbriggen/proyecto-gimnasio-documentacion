@@ -1,5 +1,7 @@
 # Arquitectura del backend
 
+**Catálogo objetivo:** [habilitaciones por gimnasio](exercise-catalog.md) y [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md), pendientes de implementación.
+
 ## Distribución
 
 ```text
@@ -10,7 +12,7 @@ React SPA -> Express + TypeScript -> Neon PostgreSQL
              FastAPI / Vercel -> Vercel Queues -> worker Python
                                                     |
                                                     v
-                              Cloudflare Tunnel -> Ollama / Polo
+                              Polo API (ngrok) -> Ollama / Polo
 ```
 
 El backend es un monolito modular desplegado en Vercel y dueño del OpenAPI público, las invariantes transaccionales, la autorización, Prisma y las migraciones.
@@ -49,7 +51,7 @@ Los módulos previstos son identidad, catálogo, rutinas, entrenamiento, métric
 3. Historial e indicadores derivados no son fuentes de verdad editables.
 4. El entrenador es la puerta de aprobación para poner una rutina en vigencia.
 5. La autorización combina rol y propiedad o asignación del recurso.
-6. Ningún resultado IA evita las validaciones de catálogo, compatibilidad, rangos y permisos.
+6. Ningún resultado IA evita permisos, schema, referencias a la instantánea ni disponibilidad vigente. La selección y prescripción son decisiones de IA; el entrenador evalúa y aprueba (ADR 0013).
 
 ## Contrato objetivo: bloqueo por mediciones
 

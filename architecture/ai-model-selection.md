@@ -26,7 +26,7 @@ No se asumió de antemano que Llama o Qwen fueran la mejor opción. Se evaluaron
 
 1. **Licencia**: Apache 2.0 sin tope de uso ni política de contenido restringido — es la única de las cuatro sin una zona de riesgo legal identificada para este dominio específico (salud/condición física).
 2. **Español/multilingüe**: mejor evidencia relativa a tamaño equivalente que Llama 3.1, que es el candidato con el que más se lo compara por defecto.
-3. **Structured output / tool calling**: maduro, necesario para RF-053/RF-054/RF-113 (validación de JSON Schema, reintento).
+3. **Structured output:** necesario para el contrato JSON. Desde [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md), tool calling no es requisito de la generación: recibe todo el catálogo habilitado, sin herramienta de compatibilidad. Medir contexto completo y latencia antes de confirmar modelo/ventana.
 4. **Ecosistema de despliegue**: soporte GGUF amplio, compatible con Ollama de forma directa.
 
 **Llama 3.1-8B-Instruct** queda documentado como alternativa de segunda preferencia: si la evaluación empírica sobre el conjunto de casos de [generative-ai.md §9](generative-ai.md) muestra que Llama supera a Qwen en el dominio real del proyecto, o si el ecosistema de soporte comunitario resulta determinante para el equipo, se promueve sin cambiar nada fuera del AI Gateway (ver §15 de [generative-ai.md](generative-ai.md)).

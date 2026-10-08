@@ -18,7 +18,7 @@ proyecto-gimnasio-ia (FastAPI / Vercel)              |
                               |
                               | HTTPS + Bearer token
                               v
-                    Cloudflare Tunnel
+                    Polo API (ngrok)
                               |
                               v
                          Ollama / Polo

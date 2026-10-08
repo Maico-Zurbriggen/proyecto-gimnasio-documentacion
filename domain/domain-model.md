@@ -82,6 +82,7 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
  │   SesionEntrenamiento ──< RegistroSerie   [prescripto + ejecutado en la misma fila]
  │
  └─< Ejercicio (del gimnasio)          CATÁLOGO BASE (global, gimnasio = null)
+Gimnasio ──< EjercicioHabilitadoGimnasio >── Ejercicio
             └────────────── Ejercicio ──< EjercicioMusculo   >── GrupoMuscular
                                       ──< EjercicioArticulacion >── Articulacion
                                       ──< EjercicioEquipamiento
@@ -98,7 +99,7 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 | Entidad                | Atributos relevantes                                                                                          | Notas                                                                                                                                      |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Gimnasio**           | nombre, zona horaria, estado de afiliación, activo                                                            | Creado por aprovisionamiento (RF-115), no por ningún rol de la aplicación. Su zona horaria define el día y la semana de todos sus usuarios |
-| **InventarioGimnasio** | gimnasio, equipamiento (§4.1 de D2), presente                                                                 | N:M contra la enumeración cerrada. **Determina el catálogo prescribible del gimnasio.** Ver PD-07                                          |
+| **InventarioGimnasio** | gimnasio, equipamiento (§4.1 de D2), presente | N:M contra la enumeración cerrada; contexto de equipamiento real. La disponibilidad se mantiene mediante EjercicioHabilitadoGimnasio |
 | **Invitacion**         | gimnasio, correo destinatario, roles ofrecidos, emitida por, emitida en, vence en, estado, usuario resultante | Única vía de alta. Ver PD-08                                                                                                               |
 | **Usuario**            | gimnasio, correo, nombre, estado, fecha de alta, invitación de origen                                         | El correo es único **dentro del gimnasio**: una misma persona puede ser alumna de dos gimnasios. Ver DD-24                                 |
 | **RolUsuario**         | usuario, rol ∈ {ALUMNO, ENTRENADOR, ADMINISTRADOR}                                                            | Conjunto, no valor único. Un usuario tiene ≥1                                                                                              |
@@ -126,11 +127,14 @@ Gimnasio ──< InventarioGimnasio >── (equipamiento, §4.1 de D2)
 
 | Entidad                             | Atributos relevantes                                                                                                                                                | Notas                                                                                                                                      |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Ejercicio**                       | gimnasio (nulo si es del catálogo base), nombre, instrucciones, patrón de movimiento (§4.7), nivel de dificultad (§4.4), unilateral, recurso visual, estado, origen | `gimnasio = null` identifica el catálogo base                                                                                              |
+| **Ejercicio** | gimnasio propietario (nulo para base), nombre, instrucciones, patrón, dificultad, unilateral, estado, origen, recurso visual principal; fuente, ID externo y revisión para importados | UUID interno estable. Los datos pendientes no se publican como ficha aprobada; detalle de importación en architecture/exercise-catalog.md |
 | **EjercicioEquipamiento**           | ejercicio, equipamiento (§4.1)                                                                                                                                      | N:M. Un ejercicio requiere **todo** el equipamiento que declara. Un ejercicio sin filas requiere sólo `PESO_CORPORAL`                      |
 | **EjercicioMusculo**                | ejercicio, grupo muscular (§4.2), participación ∈ {PRIMARIA, SECUNDARIA}                                                                                            | N:M. Sin filas, el ejercicio está **no clasificado**: no aporta volumen, y esa ausencia se distingue de aportar cero. Ver D10/CB-12        |
-| **EjercicioArticulacion**           | ejercicio, articulación (§4.3)                                                                                                                                      | N:M. Articulaciones que el movimiento exige. **Sin esta tabla la contraindicación no es calculable**; era el hueco central del modelo v1.0 |
+| **EjercicioArticulacion** | ejercicio, articulación (§4.3) | N:M. Describe el movimiento para contexto de IA; un dato faltante requiere revisión, no una contraindicación calculada por backend |
 | **GrupoMuscular**, **Articulacion** | código, nombre, región                                                                                                                                              | Tablas de referencia pobladas con §4.2 y §4.3. Cerradas                                                                                    |
+
+| **EjercicioHabilitadoGimnasio** | gimnasio, ejercicio, habilitado, revisión, actualizado por, actualizado en | N:M única por gimnasio y ejercicio. Sólo referencia base o propios del mismo gimnasio; conservar filas al deshabilitar |
+| **RecursoVisualEjercicio** | ejercicio, orden, pose, URL propia versionada | Uno o varios recursos por ficha; referencia principal conservada para presentación |
 
 ### 2.4 Prescripción
 
@@ -220,6 +224,7 @@ Cada sesión copia su prescripción al iniciarse, en sus propios registros de se
 ### PD-04 — Ámbito del catálogo
 
 Un ejercicio con `gimnasio = null` pertenece al catálogo base y es visible para todos; uno con gimnasio informado sólo dentro de él. Reconcilia RF-013 con RF-069 sin duplicar la carga inicial.
+**Disponibilidad.** Consultar una ficha base no la hace prescribible: EjercicioHabilitadoGimnasio determina su incorporación a cada gimnasio. El campo gimnasio de Ejercicio conserva propiedad, no habilitación.
 **Qué se sacrifica.** Un entrenador no puede promover su ejercicio al catálogo base.
 
 ### PD-05 — Un solo entrenador vigente sobre una relación con historial
@@ -232,21 +237,7 @@ El modelo soporta el historial completo; RN-18 impone la unicidad. Sin el histor
 
 ### PD-07 — El equipamiento es del gimnasio, no del alumno
 
-**Problema.** ¿Contra qué conjunto de equipamiento se valida una prescripción?
-
-| Alternativa               | Consecuencia                                                                                                                                                                                                |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lo declara el alumno      | La falta de equipamiento sólo puede advertir, porque el alumno podría tener acceso circunstancial a algo que no declaró. La validación se vuelve blanda y el generador puede proponer ejercicios imposibles |
-| Lo declara el gimnasio ✅ | La falta de equipamiento **impide**: si la máquina no está en el gimnasio, el ejercicio no se puede hacer. La validación se vuelve dura y verificable                                                       |
-| Ambos, con intersección   | Duplica el mantenimiento y reintroduce la ambigüedad del primer caso                                                                                                                                        |
-
-**Elegida:** el inventario del gimnasio es la única fuente. El alumno no declara equipamiento `[F: decisión del cliente, 2026-08-18]`.
-
-**Qué se gana.** El catálogo prescribible queda determinado por gimnasio, la incompatibilidad por equipamiento pasa de advertencia a impedimento (RN-47), la incorporación del alumno pierde un paso, y el administrador adquiere una función con efecto real sobre la prescripción en lugar de un rol puramente administrativo.
-
-**Qué se sacrifica.** Un alumno que además entrena en su casa no puede recibir una rutina que use su propio equipamiento. Es una limitación aceptada: el sistema prescribe para el gimnasio que lo mantiene.
-
-**Consecuencia operativa que hay que asumir.** Si el administrador declara mal el inventario, todo el catálogo prescribible del gimnasio es incorrecto y ninguna rutina generada sirve. El inventario es un dato crítico, no una configuración cosmética.
+El inventario describe equipamiento real y lo mantiene el administrador. La disponibilidad de ejercicios se declara por separado mediante habilitaciones (RN-116); un cambio de inventario requiere revisarlas, sin selección automática. La IA recibe ambos datos y el contexto del alumno para decidir adecuación. El alumno no declara equipamiento propio. La declaración incorrecta o desactualizada queda registrada como riesgo R-15.
 
 ### PD-08 — El alta es por invitación
 
@@ -291,9 +282,11 @@ La suspensión administrativa continúa en `Usuario.estado`. El bloqueo por medi
 | RI-18  | Una sesión simulada sólo contiene registros de serie simulados                                                                                          |
 | RI-19  | Una invitación pertenece a un gimnasio y produce como máximo un usuario                                                                                 |
 | RI-20  | Todo usuario referencia la invitación que lo originó, salvo el primer administrador de cada gimnasio, que referencia el aprovisionamiento               |
-| RI-21  | Un ejercicio tiene como máximo una participación PRIMARIA                                                                                               |
+| RI-21 | Un ejercicio admite varias participaciones PRIMARIAS y SECUNDARIAS; cada grupo aparece una sola vez por ejercicio y no ocupa ambos roles |
 | RI-22  | Un récord personal vigente es único por (alumno, ejercicio, tipo)                                                                                       |
 | RI-23  | Un gimnasio tiene al menos un usuario con rol ADMINISTRADOR en estado activo                                                                            |
 | RI-24  | Un control de mediciones es único por (alumno, vencimiento), referencia una rutina y versión del mismo alumno y no cambia después de cerrarse             |
 | RI-25  | Un alumno tiene como máximo un bloqueo de mediciones cuyo estado no sea RESUELTO                                                                          |
 | RI-26  | Un bloqueo sólo pasa a PENDIENTE_APROBACION con peso y confirmación de altura posteriores a `bloqueado en`, y sólo se resuelve por su entrenador vigente   |
+| RI-27 | Una habilitación es única por (gimnasio, ejercicio) y sólo referencia base o una ficha propia del mismo gimnasio |
+| RI-28 | La clave (fuente, identificador externo) es única; las reimportaciones conservan el UUID interno y las referencias históricas |

@@ -32,7 +32,9 @@ def main() -> int:
     }
     registered = set(paths)
     unregistered = markdown_paths - registered - ENTRYPOINTS
-    missing = registered - markdown_paths
+    missing = {
+        path for path in registered if not (ROOT / path).is_file()
+    }
     for path in sorted(unregistered):
         fail(errors, f"unregistered Markdown document: {path}")
     for path in sorted(missing):

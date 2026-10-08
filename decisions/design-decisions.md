@@ -1,5 +1,7 @@
 # D11 — Registro de decisiones
 
+**Actualización 2026-10-05:** DD-36 registra el catálogo RepDB y las decisiones de entrenamiento con IA. Reemplaza DD-31 y las partes de DD-26/DD-34 que derivaban disponibilidad o validaban entrenamiento mediante código. El resto de sus decisiones mantiene su alcance.
+
 |                |            |
 | -------------- | ---------- |
 | **Versión**    | 2.2        |
@@ -110,7 +112,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 **Contexto.** El cliente definió la inteligencia como centro del producto; la redacción heredada de RF-057 prohibía que los componentes generativos produjeran valores o prescribieran cargas.
 **Elegida.** Se distingue **componente de decisión** (produce valores y estructuras; validado y sujeto a revisión humana) de **componente narrativo** (sólo redacta sobre hechos calculados; no introduce ningún valor ausente de su entrada).
 **Fundamento.** Prohibirle al sistema producir valores es incompatible con que decida. Mantener la prohibición sobre lo narrado conserva la única métrica de calidad barata, objetiva y contundente del proyecto: cero valores inventados en los textos.
-**Consecuencia asumida.** El riesgo se traslada del texto a la prescripción, y se contiene con dos barreras: la validación automática de compatibilidad y de rangos, y la revisión del entrenador.
+**Consecuencia asumida.** La prescripción requiere evaluación de IA y revisión del entrenador. Desde DD-36 la validación automática es técnica; no garantiza adecuación de entrenamiento.
 
 ### DD-15 · Las estimaciones se calculan de forma diferida
 
@@ -174,6 +176,8 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 
 ### DD-26 · El equipamiento es del gimnasio, no del alumno
 
+**Actualización:** el equipamiento sigue siendo declarado por el gimnasio. DD-36 reemplaza su derivación automática de disponibilidad: el administrador habilita fichas explícitamente y el inventario se entrega como contexto.
+
 **Contexto.** ¿Contra qué conjunto de equipamiento se valida una prescripción? `[F: cliente, 2026-08-18: "el foco está en el usuario, pero lo mantiene el gimnasio porque está asociado al mismo — depende de qué máquinas tiene el gimnasio"]`
 **Opciones.** (a) Lo declara el alumno. (b) **Lo declara el gimnasio.** (c) Ambos, con intersección.
 **Elegida.** (b). El inventario del gimnasio es la única fuente; el alumno no declara equipamiento.
@@ -214,6 +218,8 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 
 ### DD-31 · La generación y las reglas tienen autoridades distintas
 
+**Estado:** reemplazada por DD-36 y [ADR 0013](adr/0013-catalogo-repdb-y-seleccion-ia.md). El texto de esta sección es histórico; sus barreras de compatibilidad y rangos no se implementan en el diseño nuevo.
+
 **Contexto.** El alcance generativo v2.1 asigna al LLM la interpretación, el tipo y la construcción completa de la rutina. A la vez, compatibilidad, estructura y adaptación necesitan criterios verificables que impidan publicar una salida insegura o imposible.
 **Elegida.** El LLM interpreta el pedido, selecciona el tipo y construye el candidato inicial. RN-39a y RN-44a a RN-44d no generan esa rutina: son barreras determinísticas y auditables que toda salida debe superar. El diagnóstico RN-79a y los ajustes RN-89a permanecen determinísticos. Los componentes aprendidos actúan en alternativas, riesgo y segmentación.
 **Fundamento.** Esta división cumple el alcance sin transferir autoridad de seguridad al modelo. El candidato puede variar; catálogo, compatibilidad, rangos y puerta del entrenador no.
@@ -247,7 +253,7 @@ La estructura soporta el historial; RN-18 impone la unicidad. Sin el historial n
 
 | Componente                                   | Antes | Ahora                                                                                                                                                                                                                                    |
 | -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| RF-059, RF-060 · alternativas de sustitución | ML    | **AI.** El orden lo produce la capa generativa sobre el subconjunto del catálogo ya prefiltrado de forma determinista por patrón, compatibilidad y equipamiento, con revalidación determinista posterior (RF-113). Siguen MUST            |
+| RF-059, RF-060 · alternativas de sustitución | ML | **AI.** Selección y orden con todo el catálogo habilitado y contexto del alumno, sin prefiltrado, según DD-36/ADR 0013. Siguen MUST |
 | RF-064 · segmentación de perfiles            | ML    | **AI.** Descripción del perfil de comportamiento redactada por la capa generativa a partir de los indicadores ya calculados, **sin clustering y sin persistirse**. Sigue SHOULD                                                           |
 | RF-061 a RF-063 · riesgo de abandono         | ML    | **WON'T.** Se retiran del alcance por costo y esfuerzo frente al valor esperado con los datos disponibles (S-03). **No se degradan a una regla simple: se retiran**                                                                       |
 | RF-121 · sugerencia de carga                 | ML    | Se conserva como componente aprendido. SHOULD                                                                                                                                                                                            |
@@ -260,7 +266,7 @@ El riesgo de abandono se retira **y no se sustituye por una regla**, porque una 
 **Consecuencias asumidas.**
 
 - **Se pierde la reproducibilidad exacta del orden de alternativas.** RF-059 pasa al estándar de «validez repetida» del resto de la capa generativa. RF-072 y RNF-27 se cumplen **persistiendo la lista producida**, no reejecutándola.
-- **Se amplía la superficie de dependencia del servidor de modelos.** FL-06 —sustitución durante una sesión en curso, sin lenguaje natural de por medio— pasa a invocar el modelo, con el orden determinista de RN-49a como alternativa cuando no responde (RN-99). Es una dependencia que antes no existía y hay que medirla.
+- **FL-06 depende del modelo para sugerir alternativas.** Desde DD-36 no hay ranking determinista alternativo; se informa indisponibilidad y continúa la vía manual.
 - **Se derogan `ScoreRiesgo` y `SegmentoPerfil`** en D4. `EvaluacionComponente` se conserva para RF-121 y RF-122.
 - **FL-16 queda derogado** y RF-107 pierde «riesgo de abandono alto» de su orden de urgencia.
 - **DD-17 queda sin efecto**: no hay estimación de riesgo que ocultarle al alumno.
@@ -278,3 +284,7 @@ El riesgo de abandono se retira **y no se sustituye por una regla**, porque una 
 **Fundamento.** (a) deja al producto sin ninguna forma de cumplir su propia capacidad C1 cuando falla un servicio externo. (c) contradice una decisión explícita del equipo y una votación inequívoca. (d) es exactamente el fallback determinístico que [ADR 0010](adr/0010-servicio-ia-en-vercel-y-llm-en-el-polo.md) descarta de forma deliberada, y reconstruirlo duplicaría la lógica de prescripción en dos implementaciones que divergirían.
 
 **Consecuencia asumida, y hay que decirla con todas las letras.** RF-019 deja de ser una comodidad del entrenador y pasa a ser un requisito de disponibilidad: **si un gimnasio no tiene ninguna plantilla cargada y el servicio generativo no responde, un alumno nuevo no obtiene ninguna rutina.** No hay mitigación técnica para ese caso dentro del alcance recortado; la mitigación es operativa —cargar plantillas de arranque al aprovisionar el gimnasio— y hay que ejecutarla, no suponerla. Ver [D12/R-17](../planning/risks-and-assumptions.md) y la decisión PD-03 del [baseline de alcance](../planning/baseline-alcance-2026-09.md).
+
+### DD-36 · Catálogo RepDB, habilitación explícita y prescripción con IA
+
+**Elegida el 2026-10-05:** [ADR 0013](adr/0013-catalogo-repdb-y-seleccion-ia.md). [Catálogo y disponibilidad](../architecture/exercise-catalog.md) define importación y operación; D5/RN-138 a RN-142, D3/RA-12 y D4/RI-27 a RI-28 son las reglas canónicas. Reemplaza filtros y validadores de entrenamiento sin cambiar la aprobación obligatoria del entrenador. Pendiente de implementación coordinada.

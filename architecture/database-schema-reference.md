@@ -1,9 +1,11 @@
 # Referencia física de la base de datos
 
+**Referencia de implementación local, 2026-10-07:** incluye [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). No afirma despliegue ni publicación del dataset real; operación y pendientes en [catálogo](exercise-catalog.md).
+
 ```yaml
 document_id: ARCH-DATABASE-SCHEMA
 status: implementation-reference
-snapshot_date: 2026-09-28
+snapshot_date: 2026-10-07
 source_of_structure: proyecto-gimnasio-back/prisma/schema.prisma
 database: PostgreSQL
 schemas: [app, ai_integration]
@@ -43,11 +45,13 @@ app.MeasurementBlockState: [PENDIENTE_MEDICION, PENDIENTE_APROBACION, RESUELTO]
 app.MeasurementBlockReason: [TRES_FALTAS_CONSECUTIVAS]
 app.MovementPattern: [EMPUJE_HORIZONTAL, EMPUJE_VERTICAL, TRACCION_HORIZONTAL, TRACCION_VERTICAL, DOMINANTE_RODILLA, DOMINANTE_CADERA, CORE, AISLAMIENTO_SUPERIOR, AISLAMIENTO_INFERIOR]
 app.ExerciseOrigin: [CATALOGO_BASE, GIMNASIO]
+app.ExerciseState: [PROPUESTO, APROBADO, RECHAZADO, DESACTIVADO]
+app.ExerciseMediaPose: [INICIO, FINAL, PRINCIPAL]
 app.MuscleParticipation: [PRIMARIA, SECUNDARIA]
 app.RoutineOrigin: [PLANTILLA_ENTRENADOR, GENERADA]
 app.RoutineState: [PROPUESTA, BLOQUEADA, VIGENTE, RECHAZADA, DESCARTADA, ARCHIVADA]
 app.RoutineReviewResult: [APROBADA, APROBADA_CON_CAMBIOS, RECHAZADA]
-app.CompatibilityState: [COMPATIBLE, ADVERTIDO, INCOMPATIBLE]
+app.CompatibilityState: [COMPATIBLE, ADVERTIDO, INCOMPATIBLE, EJERCICIO_DESACTIVADO]
 app.TrainingSessionState: [EN_CURSO, COMPLETADA, ABANDONADA, BLOQUEADA]
 app.NoticeType: [RUTINA_PROPUESTA_PENDIENTE, RUTINA_EN_VIGENCIA, RUTINA_RECHAZADA, RUTINA_AJUSTADA, PROPUESTA_PENDIENTE, RECORD_ALCANZADO, SENAL_DETECTADA, INCOMPATIBILIDAD_SOBREVENIDA, APTITUD_POR_VENCER]
 app.EvolutionSituation: [DATOS_INSUFICIENTES, SOBREEXIGENCIA, PROGRESION_ADECUADA, ESTIMULO_INSUFICIENTE, ESTANCAMIENTO]
@@ -73,6 +77,7 @@ Propósito: organización que aísla usuarios, inventario, ejercicios propios y 
 | `name` | `text` | nombre del gimnasio |
 | `timezone` | `text` | zona horaria IANA usada por reglas temporales |
 | `affiliation_status` | `GymAffiliationStatus` | DEFAULT `AFFILIATED` |
+| `inventory_revision` | `integer` | DEFAULT `0`; no negativa; cambia con el inventario |
 | `active` | `boolean` | DEFAULT `true` |
 
 #### `app.invitations`
@@ -384,8 +389,42 @@ Propósito: catálogo base compartido y catálogo propio de cada gimnasio.
 | `unilateral` | `boolean` | DEFAULT `false` |
 | `visual_resource_url` | `text` | referencia al recurso visual |
 | `origin` | `ExerciseOrigin` | catálogo base o gimnasio |
+| `state` | `ExerciseState` | DEFAULT `APROBADO` para filas existentes; las altas propias usan `PROPUESTO` |
+| `revision` | `integer` | DEFAULT `1`; positiva |
+| `source`, `source_id` | `text` | NULL; ambos presentes o ambos ausentes; UQ del par |
+| `source_revision` | `text` | NULL; hash material de la ficha importada |
+| `description` | `text` | NULL; descripción |
+| `tips` | `text[]` | DEFAULT `[]` |
+| `reviewed_by_user_id` | `uuid` | NULL, FK `app.users.id`, ON DELETE RESTRICT |
+| `reviewed_at` | `timestamptz(6)` | NULL; instante de revisión |
+| `review_observation` | `text` | NULL; decisión o procedencia de revisión |
+| `created_at`, `updated_at` | `timestamptz(6)` | creación y actualización |
 
-Índices: `(gym_id)`, `(movement_pattern, difficulty_level)`. La base aplica unicidad de nombre normalizado separada para catálogo base y gimnasio.
+Índices: `(gym_id)`, `(movement_pattern, difficulty_level)`, `(state, origin)`. La base conserva unicidad de nombre normalizado sólo para ejercicios propios del mismo gimnasio. El catálogo importado usa identidad `(source, source_id)`.
+
+#### `app.gym_exercises`
+
+Propósito: disponibilidad explícita por gimnasio; no implica compatibilidad con un alumno.
+
+| Atributo | Tipo | Restricciones / relación |
+| --- | --- | --- |
+| `gym_id`, `exercise_id` | `uuid` | PK compuesta; FK a `app.gyms.id` y `app.exercises.id`, ON DELETE RESTRICT |
+| `enabled` | `boolean` | DEFAULT `false` |
+| `revision` | `integer` | DEFAULT `1`; positiva |
+| `updated_by_user_id` | `uuid` | FK `app.users.id`, ON DELETE RESTRICT |
+| `updated_at` | `timestamptz(6)` | actualización |
+
+Índice `(gym_id, enabled)`. Triggers validan actor del gimnasio, ámbito de la ficha y estado aprobado al habilitar. Las revisiones se incrementan sin eliminar la fila al deshabilitar.
+
+#### `app.exercise_media`
+
+| Atributo | Tipo | Restricciones / relación |
+| --- | --- | --- |
+| `id` | `uuid` | PK, generado |
+| `exercise_id` | `uuid` | FK `app.exercises.id`, ON DELETE CASCADE |
+| `position` | `integer` | positiva; UQ `(exercise_id, position)` |
+| `pose` | `ExerciseMediaPose` | inicio, final o principal |
+| `url` | `text` | ubicación propia versionada o HTTPS de ficha propia |
 
 #### `app.exercise_equipment`
 
@@ -408,7 +447,7 @@ Propósito: participación muscular primaria o secundaria de un ejercicio.
 | `muscle_code` | `text` | PK parcial, FK `app.muscle_groups.code`, ON DELETE RESTRICT |
 | `participation` | `MuscleParticipation` | clasificación |
 
-PK compuesta: `(exercise_id, muscle_code)`. La base restringe a una participación primaria por ejercicio mediante índice parcial.
+PK compuesta: `(exercise_id, muscle_code)`. Admite varios músculos primarios; un mismo músculo sólo tiene una participación por ficha.
 
 #### `app.exercise_joints`
 
@@ -476,7 +515,7 @@ Propósito: series prescriptas dentro de un ejercicio de plantilla.
 | `position` | `integer` | UQ junto con `template_exercise_id` |
 | `min_repetitions` | `integer` | límite inferior |
 | `max_repetitions` | `integer` | límite superior |
-| `suggested_load` | `decimal(10,2)` | carga sugerida |
+| `suggested_load` | `decimal(10,2)` | NULL; carga sugerida opcional (RN-43) |
 | `rest_seconds` | `integer` | descanso |
 | `warmup` | `boolean` | DEFAULT `false` |
 
@@ -574,7 +613,7 @@ Propósito: series prescriptas de un ejercicio en una versión de rutina.
 | `position` | `integer` | posición dentro del ejercicio |
 | `min_repetitions` | `integer` | límite inferior |
 | `max_repetitions` | `integer` | límite superior |
-| `suggested_load` | `decimal(10,2)` | carga sugerida |
+| `suggested_load` | `decimal(10,2)` | NULL; carga sugerida opcional (RN-43) |
 | `rest_seconds` | `integer` | descanso |
 | `warmup` | `boolean` | DEFAULT `false` |
 
@@ -614,7 +653,7 @@ Propósito: prescripción congelada y ejecución real de cada serie de una sesi�
 | `performed_exercise_id` | `uuid` | NULL, FK `app.exercises.id`, ON DELETE RESTRICT; sustitución efectiva |
 | `prescribed_min_repetitions` | `integer` | snapshot del mínimo |
 | `prescribed_max_repetitions` | `integer` | snapshot del máximo |
-| `prescribed_load` | `decimal(10,2)` | snapshot de carga |
+| `prescribed_load` | `decimal(10,2)` | NULL; snapshot de carga; no especificada es diferente de cero |
 | `warmup` | `boolean` | DEFAULT `false` |
 | `performed_load` | `decimal(10,2)` | NULL; carga ejecutada |
 | `performed_repetitions` | `integer` | NULL; repeticiones ejecutadas |
@@ -876,3 +915,9 @@ ai_integration.ai_generation_results -> app.routines (opcional 1:1 de procedenci
 - `password_hash`, `token_hash`, datos personales, datos de salud y JSON de auditoría nunca se incluyen automáticamente en DTO.
 - Relaciones polimórficas (`notices.reference_*`, `audit_logs.entity_*`) requieren validación de aplicación porque no poseen FK física.
 - Toda consulta de dominio debe aplicar aislamiento por gimnasio mediante la relación con `users.gym_id` o `gyms.id`, aunque una tabla hija no repita `gym_id`.
+
+## Migraciones del catálogo, 2026-10-07
+
+`20261006010000_exercise_catalog_availability` agrega campos, habilitaciones, media y validación de ámbito; retira unicidad de nombre base y el índice de un único primario. `20261006010100_catalog_optimistic_revisions` agrega revisiones de inventario y habilitaciones. `20261006010200_ai_prescription_storage_constraints` retira frecuencia dependiente del tipo, máximo de carga 1.000 y máximo de repeticiones ejecutadas 100. Conserva frecuencia de calendario 1–7, valores no negativos/positivos, intervalos ordenados y capacidad física de `integer`/`numeric(10,2)`. No se modificaron migraciones anteriores ni se habilitaron filas automáticamente.
+
+`20261007010000_optional_session_prescribed_load` conserva la carga prescripta no especificada al copiarla a `session_set_records.prescribed_load`: columna nullable, sin transformar valores históricos.

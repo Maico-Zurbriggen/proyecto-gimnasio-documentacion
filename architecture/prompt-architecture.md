@@ -1,5 +1,7 @@
 # Arquitectura de prompts y orquestación
 
+**Actualización 2026-10-05:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) sustituye filtros, restricciones de prescripción y herramienta de compatibilidad. Diseño pendiente de implementación; contrato en [data-interface.md](data-interface.md).
+
 |                |                                                     |
 | -------------- | --------------------------------------------------- |
 | **Estado**     | Propuesto                                           |
@@ -17,7 +19,7 @@ No hay clasificador LLM de intenciones ni subagentes autónomos que se llamen en
 
 - El sistema no es un chatbot abierto: son 7 tareas cerradas con entrada/salida JSON y validación determinista posterior (RF-113).
 - Un router LLM agrega latencia sobre un presupuesto ya ajustado (RNF-04: 120 s por intento), un punto de fallo más (contra RNF-11) y variabilidad donde se exige validez repetida (RNF-25, RNF-27, RF-072).
-- El único texto libre del sistema vive confinado en `interpretarPedido` (RNF-41). El resto recibe parámetros tipados; ninguna regla de negocio depende de que el modelo "quiera" respetarla (RN-39a, RN-44a-d).
+- Texto libre y preferencias son datos para IA; la aplicación elige la capacidad por acción de interfaz. Esa orquestación no decide ejercicios ni entrenamiento.
 
 **Reapertura:** si aparece conversación abierta multi-turno real (hoy fuera de alcance), reevaluar un clasificador LLM solo para esa rama. No antes.
 
@@ -25,10 +27,10 @@ No hay clasificador LLM de intenciones ni subagentes autónomos que se llamen en
 
 Ningún megaprompt único y ningún prompt por botón. Cada llamada compone 5 secciones, en este orden:
 
-1. **Base system (común):** rol, idioma, "respondé solo en el schema dado", "no inventes números ausentes de la entrada", "nada médico" (RF-057).
+1. **Base system (común):** idioma, schema y ausencia de consejo médico. El overlay narrativo exige cifras respaldadas; el de generación permite decidir valores de prescripción.
 2. **Overlay por capacidad:** lo específico de esa tarea y nada más.
 3. **Schema de salida literal** (más `response_format`/`format` cuando el runtime lo soporta).
-4. **Contexto dinámico como JSON**, mínimo para esa tarea (nunca prosa a reinterpretar, nunca catálogo completo sin prefiltrar).
+4. **Contexto dinámico como JSON:** datos pertinentes del alumno y, para generación/alternativas, todo el catálogo habilitado, sin URLs de imágenes ni recorte por alumno.
 5. **Instrucción concreta** de una línea.
 
 La base cambia poco; cada overlay se versiona por separado como `generative/<capacidad>@<n>` con su changelog. Un cambio de schema exige versión nueva de ambos. Detalle del versionado y de lo que se registra por resultado en [generative-ai.md §15](generative-ai.md) y [generative-ai-integration.md](generative-ai-integration.md).
@@ -38,20 +40,20 @@ La base cambia poco; cada overlay se versiona por separado como `generative/<cap
 | Plantilla | Disparo (código, no LLM) | Entrada | Salida | Validación |
 | --- | --- | --- | --- | --- |
 | `interpretarPedido` (RF-053) | FL-04 paso 1, solo si hay texto libre | texto + contexto mínimo | objetivo, frecuencia 1-7, restricciones, duración, confianza | schema + enumeraciones de [D2](../product/glossary.md) + confirmación humana antes de propagarse |
-| `generarRutina` (RF-054) | FL-01, FL-04 paso 3, FL-04/A5 (regeneración) | parámetros confirmados + perfil, nivel, objetivo, condiciones, inventario, catálogo prescribible | días → ejercicios por id → series/cargas/descansos + `patrones_no_cubiertos` | RN-39a y D5/§6 en código (RF-113); 1 reintento, luego indisponibilidad |
-| `sugerirAlternativas` (RF-059, absorbe RF-060) | FL-04/A4, FL-06 | ejercicio + subconjunto prefiltrado en código (mismo patrón, compatibles, con equipamiento) | hasta 5 ids de esa lista + motivo corto | descarte de ids fuera de la lista + RN-44a-d (RF-113); fallback a RN-49a |
+| `generarRutina` (RF-054) | FL-01, FL-04 | Pedido + contexto del alumno + inventario + catálogo habilitado completo | Prescripción justificada o imposibilidad explicada | Schema, IDs, disponibilidad y contexto vigente; evaluación de entrenamiento por IA y entrenador |
+| `sugerirAlternativas` (RF-059, absorbe RF-060) | FL-06; RF-119 si se incorpora | Ejercicio original + catálogo habilitado completo + contexto del alumno | Hasta 5 IDs con motivo, o insuficiencia | IDs y disponibilidad; sin filtro ni ranking en código |
 | `justificarRutina` (RF-055) | FL-04 paso 5, vista de revisión FL-02 | estructura validada | texto + `valores_citados` | cada valor citado debe existir en la entrada (RNF-24); si no, descarte + reintento/fallback |
 | `resumirProgreso` (RF-056, diferido) | panel de progreso | indicadores ya calculados | texto + `valores_citados` | igual que arriba |
 | `describirPerfil` (RF-064, banda N3) | vista entrenador/administrador | frecuencia, volumen e intensidad relativos + objetivo | etiqueta + texto efímero, no persistido | igual que arriba; sin clustering |
 | `generarPautaNutricional` (RF-075/RF-108, diferido) | nutrición | energía/proteína ya calculadas | texto por comida, sin alimentos | igual que arriba + declaración orientativa/no profesional + revisión humana |
 
-**Regeneración (FL-04/A5) no es una plantilla nueva:** es `generarRutina` con dos campos extra (`intento_previo`, `que_corregir`), mismo schema y misma validación, con tope RN-127. Dos prompts casi idénticos divergen; un modo explícito no.
+Una nueva solicitud usa `generarRutina` y una instantánea nueva. La edición/regeneración de un candidato ajustable conserva diferidos RF-119/RF-120; no agrega otra plantilla.
 
 ## 4. Reglas
 
-- **Cambiar un ejercicio no reescribe la rutina con el LLM.** El usuario elige de `sugerirAlternativas` y el código sustituye y revalida en el acto (RN-126). Un candidato inválido nunca se confirma.
-- **No son prompts:** compatibilidad (RN-44a-d), diagnóstico (RN-79a), ajustes (RN-89a), derivación del tipo (RN-39a), ajuste a mano del candidato (FL-04/A3). La adaptación quincenal (FL-09/FL-10) es tabla determinista; si necesita texto, reusa `justificarRutina` sobre ajustes + criterios (RF-090), no crea plantilla nueva.
-- **Única tool del modelo:** `verificarCompatibilidad` (determinista, para autocorrección dentro de `generarRutina`); no reemplaza la validación final. Fundamento en [ADR-0008](../decisions/adr/0008-tool-calling-for-ml-components.md).
+- Elegir una alternativa conserva la decisión del usuario y registra el ejercicio ejecutado; el adaptador no modifica selecciones ni prescribe valores. El candidato ajustable continúa diferido.
+- Indicadores, diagnóstico batch y su tabla de adaptación quedan fuera de este cambio. Adecuación, selección, tipo y prescripción de la generación corresponden al LLM; RN-39a es referencia, no validación en código.
+- No se requiere `verificarCompatibilidad` ni otra herramienta de filtrado; esta entrega incluye todos los candidatos en el contexto (ADR 0013).
 - **Crear una plantilla nueva solo si** cambian a la vez schema de salida, validación y set de datos de entrada. Si solo cambia la frase de la tarea, es nueva **versión** de la misma plantilla.
 
 ## 5. Evaluación y operación (remisión)

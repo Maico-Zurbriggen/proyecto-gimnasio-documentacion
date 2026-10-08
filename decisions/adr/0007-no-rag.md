@@ -1,5 +1,7 @@
 # ADR 0007: sin RAG semántico, con prefiltrado determinista del catálogo
 
+**Estado al 2026-10-05: reemplazada para catálogo y selección/prescripción por [ADR 0013](0013-catalogo-repdb-y-seleccion-ia.md).** El texto siguiente conserva el razonamiento histórico; sus filtros y herramienta de compatibilidad no son requisitos vigentes.
+
 - Estado: aceptada, revisada
 - Fecha: 2026-08-25 (revisión: mismo día, tras objeción sobre el tamaño del catálogo)
 

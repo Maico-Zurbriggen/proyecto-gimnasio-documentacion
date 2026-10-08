@@ -1,5 +1,7 @@
 # D7 — Flujos funcionales
 
+**Diseño vigente 2026-10-05:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). FL-04 crea directamente PROPUESTA; los candidatos ajustables siguen diferidos. El catálogo se habilita manualmente mediante FL-23. Adecuación y prescripción corresponden a IA y entrenador; los controles del sistema son técnicos.
+
 |                |                    |
 | -------------- | ------------------ |
 | **Versión**    | 2.4                |
@@ -118,7 +120,7 @@ Los cursos alternativos y de excepción no son un apéndice: son la mayor parte 
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | E1 · Contexto insuficiente                                           | No se genera rutina. Se declara exactamente qué falta (RN-97b). Ver CB-10                                                                                               |
 | E2 · La generación no produce salida válida                          | Ver CB-20: la tarea pasa al entrenador; nunca se presenta una rutina inválida                                                                                           |
-| E3 · El catálogo prescribible no permite cubrir los patrones mínimos | Ver CB-22 y RN-118: se genera la rutina posible y se declara qué patrones quedaron sin cubrir, señalándolo también al administrador porque es un problema de inventario |
+| E3 · No hay ejercicios habilitados o IA declara que no puede proponer una rutina adecuada | No se inventa una rutina; se indica el motivo y se deriva a configuración del gimnasio o revisión del entrenador (CB-22, CB-83) |
 
 ---
 
@@ -135,9 +137,9 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 **Curso normal**
 
-1. El entrenador abre la rutina propuesta desde su cartera y ve, junto a la estructura: el origen de la rutina, el contexto del alumno con el que se construyó, el estado de compatibilidad de cada ejercicio, y **qué difiere de la salida original del componente o de la plantilla de origen** (RN-129, RF-120).
+1. El entrenador abre la propuesta y ve prescripción, justificación y contexto utilizado, con su vigencia. Revisa la evaluación de IA; la comparación de cambios de RF-120 continúa diferida.
 2. Revisa día por día. Puede modificar cualquier ejercicio, serie, repetición, carga o descanso antes de aprobar.
-3. Aprueba. El sistema revalida compatibilidad y rangos de RN-39a sobre la versión final.
+3. Evalúa la adecuación al alumno y aprueba. El sistema comprueba permisos, estructura y disponibilidad actual de los ejercicios; RN-39a es una referencia de revisión, no una barrera en código.
 4. La rutina pasa a VIGENTE con su versión 1, la anterior queda ARCHIVADA, se registra la revisión en auditoría y se avisa al alumno.
 
 **Cursos alternativos**
@@ -146,7 +148,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | A1 · Aprueba con cambios                          | Idéntico. La revisión registra que hubo modificación y cuál                                                                                |
 | A2 · Rechaza                                      | La rutina pasa a RECHAZADA con motivo. Se avisa al alumno, que puede solicitar otra. Su rutina vigente anterior, si existía, sigue vigente |
-| A3 · El tipo de rutina no corresponde al objetivo | Advertencia y confirmación obligatoria (RN-40). No se impide                                                                               |
+| A3 · El entrenador considera que tipo y objetivo no son coherentes | Revisa el criterio de IA y corrige o rechaza; no decide por comparación automática de etiquetas (RN-40) |
 | A4 · Falta la aptitud o está vencida              | Advertencia destacada. No impide aprobar (RN-13)                                                                                           |
 | A5 · Hay ejercicios ADVERTIDOS por condición leve | Se señalan. No impiden                                                                                                                     |
 
@@ -154,11 +156,11 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 |                                                                    |                                                                                                                                        |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| E1 · Hay un ejercicio INCOMPATIBLE                                 | La aprobación se impide. El sistema ofrece las alternativas admisibles de RN-49a. El entrenador sustituye o retira, y vuelve al paso 3 |
+| E1 · La evaluación de IA o del entrenador considera un ejercicio inadecuado | El entrenador revisa, pide alternativas a IA, sustituye o retira antes de aprobar. El sistema no calcula compatibilidad por tabla |
 | E2 · No hay alternativa admisible                                  | Ver CB-21 y RN-49: se declara explícitamente; el entrenador retira el ejercicio o deja la rutina propuesta                             |
 | E3 · La asignación termina mientras revisa                         | Ver CB-31: la confirmación se rechaza; la rutina queda BLOQUEADA                                                                       |
-| E4 · Un ejercicio fue desactivado entre la propuesta y la revisión | Ver CB-13: se marca y se propone sustituto                                                                                             |
-| E5 · El inventario cambió entre la propuesta y la revisión         | Los ejercicios afectados pasan a INCOMPATIBLE y se aplica E1                                                                           |
+| E4 · Un ejercicio se deshabilitó o desactivó antes de aprobar | No se permite incorporarlo; el entrenador lo retira o solicita alternativas a IA. No se crea un sustituto en código (RN-141) |
+| E5 · Cambió el contexto utilizado para generar | Se indica revisión pendiente; el entrenador evalúa el nuevo contexto. No se recalcula compatibilidad por tabla (RN-141) |
 
 ---
 
@@ -181,48 +183,22 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ## FL-04 · Generación asistida de rutina
 
-|                     |                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| **Actor**           | Entrenador · Alumno · Sistema                                                               |
-| **Precondiciones**  | Contexto suficiente                                                                         |
-| **Postcondiciones** | Rutina PROPUESTA con justificación asociada, o ningún efecto si el candidato no se confirma |
-| **Reglas**          | RN-39a, RN-95, RN-95b, RN-96, RN-97, RN-97b, RN-98, RN-99, RN-124 a RN-129, D5/§5.2         |
+| Campo | Definición |
+| --- | --- |
+| Actor | Alumno · Sistema; entrenador revisa en FL-02 |
+| Precondiciones | Contexto suficiente y catálogo habilitado no vacío |
+| Postcondiciones | PROPUESTA para revisión, o solicitud fallida sin alterar la rutina anterior |
+| Reglas | RN-95, RN-95b, RN-97b, RN-99, RN-140, RN-141 |
 
-**Curso normal**
+1. El alumno solicita para sí con parámetros y preferencias; IA interpreta el texto. La confirmación completa de RF-053 conserva su alcance propio, sin extracción de cantidades mediante regex.
+2. Backend persiste una instantánea completa del catálogo habilitado y contexto del alumno; despacha sólo el UUID técnico al servicio IA.
+3. IA evalúa adecuación, elige ejercicios y prescribe estructura, series, repeticiones y descansos, con justificación. Puede declarar que no hay propuesta adecuada.
+4. Se verifican formato, referencias de la instantánea, disponibilidad actual y ausencia de cambios materiales del contexto. No se validan reglas de entrenamiento en código.
+5. Al finalizar, una salida técnicamente válida se convierte directamente en PROPUESTA y se avisa al entrenador. El alumno no edita un candidato intermedio.
 
-1. El solicitante describe la necesidad en lenguaje natural, o completa el formulario estructurado equivalente.
-2. Si la entrada fue en lenguaje natural, el sistema la traduce a parámetros estructurados —objetivo, frecuencia semanal, restricciones y duración de sesión— y **los presenta para confirmación antes de usarlos**. El equipamiento no es un parámetro: sale del inventario.
-3. El componente de decisión construye la rutina a partir de esos parámetros y del contexto completo, usando exclusivamente el catálogo prescribible.
-4. El sistema valida la salida contra RN-39a (estructura de días, series, repeticiones, descansos, cobertura mínima de patrones) y contra D5/§6.
-5. Se produce la justificación en lenguaje natural de los criterios aplicados.
-6. La rutina se presenta como **candidato**: la estructura completa, día por día, con el estado de compatibilidad de cada ejercicio y la justificación al lado. Todavía no existe como rutina y nadie fue avisado (RN-124).
-7. El solicitante ajusta el candidato si quiere, por cualquiera de las tres vías de A3, A4 y A5. Cada ajuste revalida en el acto contra RN-39a y D5/§6 (RN-126).
-8. Confirma. La rutina queda PROPUESTA, se registra qué difiere de la salida original del componente y se avisa a su entrenador (RN-129).
+Una salida técnicamente inválida admite un reintento, con 120 s por intento; tras el segundo fallo se informa indisponibilidad. Catálogo vacío, capacidad insuficiente o contexto desactualizado se informan sin reintentos idénticos inútiles. Una nueva solicitud toma una instantánea nueva. La alternativa es la creación manual del entrenador; su rutina vigente anterior permanece intacta.
 
-**Por qué existe el paso 7.** Si el alumno no puede moldear lo que pidió, que la solicite él o que se la genere el sistema por su cuenta son la misma funcionalidad. El paso 7 es lo que hace que la solicitud sea suya — y está acotado por D5/§5.2 para que moldear no se convierta en prescribir. Ver D11/DD-33.
-
-**Cursos alternativos**
-
-|                                                           |                                                                                                                                                                                                                         |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1 · Generación no disponible ✎                           | Se deshabilita temporalmente la generación y se informa sin detalles técnicos. **La vía que queda es que un entrenador cree y asigne una plantilla propia** (RF-019, RN-99, [DD-35](../decisions/design-decisions.md)); el preset sólo existe si se implementa RF-021                                                       |
-| A2 · La interpretación del lenguaje natural es incorrecta | El solicitante corrige los parámetros en el paso 2. Por eso el paso 2 existe                                                                                                                                            |
-| ~~A3 · Ajusta el candidato **a mano**~~ ⏸ diferido        | Sustituye, agrega, quita o reordena ejercicios dentro de lo que admite D5/§5.2, sin volver a llamar al componente. No consume el tope de RN-127 ni cambia el origen de la rutina                                        |
-| A4 · Pide **alternativas** para un ejercicio puntual      | El sistema ofrece las admisibles del mismo patrón dominante, del catálogo prescribible y compatibles con el alumno (RN-49a), ordenadas por la capa generativa sobre ese subconjunto ya prefiltrado (RF-059) y revalidadas por RN-44a-d (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a. El solicitante elige de esa lista; no escribe valores |
-| A5 · Vuelve a **describirla en lenguaje natural**         | Regenera desde el paso 2, con los parámetros corregidos y las preferencias ya declaradas como entrada (RN-128). Consume el tope de RN-127                                                                               |
-| A6 · Abandona el candidato sin confirmar                  | No queda rutina, no se avisa a nadie y la propuesta anterior, si existía, sigue intacta: RN-36a se aplica al confirmar, no al generar. Ver CB-73                                                                        |
-| A7 · El solicitante es el entrenador                      | El ajuste del paso 7 no tiene las restricciones de D5/§5.2, porque ya tiene escritura sobre la rutina. Al confirmar, la rutina entra en FL-02 con él mismo como revisor                                                 |
-
-**Cursos de excepción**
-
-|                                                                                |                                                                                                                                                                       |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| E1 · La salida no supera la validación o vence el límite                       | Un reintento; si vuelve a fallar o supera 120 segundos, la solicitud queda no disponible y se aplica A1. Nunca se presenta una propuesta inválida (RN-95b)             |
-| E2 · Contexto insuficiente                                                     | No se genera. Se declara qué falta (RN-97b)                                                                                                                           |
-| E3 · El catálogo prescribible no cubre los patrones mínimos de RN-39a          | Se genera la rutina posible, se declara qué patrones faltan y se avisa al administrador (RN-118)                                                                      |
-| E4 · Un ajuste del paso 7 deja el candidato inválido                           | Se rechaza ese ajuste enunciando el rango o el mínimo incumplido, y el candidato queda como estaba. Un candidato inválido no se confirma nunca (RN-126)               |
-| E5 · Agota el tope de regeneraciones sin quedar conforme                       | Ver CB-72: confirma el último candidato, o deriva la construcción a su entrenador adjuntando como comentario lo que no lo convence. No se le muestra un error (RN-99) |
-| E6 · El inventario o una condición del alumno cambian con el candidato abierto | Los ejercicios afectados se remarcan en la revalidación del paso 7. Un candidato con un ejercicio INCOMPATIBLE no se confirma hasta sustituirlo o quitarlo            |
+La configuración, concurrencia y pruebas se detallan en [catálogo y disponibilidad](../architecture/exercise-catalog.md). RF-119/RF-120 y sus ajustes de candidato permanecen diferidos.
 
 ---
 
@@ -275,7 +251,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 | --------- | ------------------------------------------------------------------------------ |
 | **Actor** | Alumno · **Precondiciones** Sesión EN_CURSO · **Reglas** RN-56, RN-102, RN-49a, RN-99 |
 
-**Curso normal.** El alumno indica que no puede hacer un ejercicio. El sistema arma el subconjunto de alternativas admisibles (RN-49a: mismo patrón dominante, compatibles, con equipamiento presente en el inventario) y pide su orden a la capa generativa (RF-059), que devuelve hasta cinco, revalidadas por RN-44a-d antes de mostrarse (RF-113). Si el LLM no responde, se usa el orden determinista de RN-49a sobre el mismo subconjunto, sin interrumpir la sesión (RN-99). Elige una; las series restantes se registran contra el ejercicio ejecutado, marcadas como sustituidas, y cuentan como cumplidas.
+**Curso normal.** El alumno indica qué ejercicio desea sustituir. IA recibe ese ejercicio, todo el catálogo habilitado y su contexto; propone hasta cinco alternativas justificadas. Backend verifica IDs y disponibilidad. Si IA no responde, se informa y el alumno puede continuar la sesión u omitir el ejercicio; no se aplica un ranking determinista. Al elegir una alternativa, las series restantes se imputan al ejercicio ejecutado y se marcan como sustituidas.
 
 **Alternativos.** A1: elige un ejercicio del catálogo prescribible por su cuenta → se admite y se registra igual. A2: declara el motivo → se conserva y alimenta el diagnóstico.
 
@@ -343,26 +319,17 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ## FL-11 · Intervención directa del entrenador sobre la rutina
 
-**Curso normal.** El entrenador modifica ejercicios, series, repeticiones, cargas o descansos de la rutina vigente de un alumno asignado. El sistema verifica compatibilidad y rangos de RN-39a, genera una versión nueva, registra autor e instante, y avisa al alumno.
+**Curso normal.** El entrenador modifica la prescripción de un alumno asignado y evalúa su adecuación. El sistema comprueba estructura, referencias y disponibilidad de las incorporaciones, crea una versión, registra autor e instante y avisa al alumno. Las sesiones iniciadas conservan su prescripción congelada.
 
 **Reglas.** RN-45, RN-46, RN-88, RN-89, RN-108. Las sesiones ya ejecutadas no cambian.
 
-**Excepción.** E1: la modificación introduce una incompatibilidad → se impide y se ofrecen alternativas (RN-46). E2: la modificación deja la rutina fuera de los rangos de su tipo → se advierte y se exige confirmación; el entrenador puede apartarse de la referencia, el componente automático no. E3: hay una sesión EN_CURSO → la versión se crea igual; la sesión conserva su prescripción congelada (CB-14).
+**Excepción.** Una incorporación deshabilitada se rechaza técnicamente. Una adecuación pendiente exige revisión del entrenador; no se comprueban rangos o compatibilidad de entrenamiento en código (RN-46, RN-141).
 
 ---
 
 ## FL-12 · Reevaluación por cambio de contexto
 
-|                |                                                                                                                                     |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Disparador** | Cambio de objetivo, alta o cierre de una condición física, cambio de estado de la aptitud, **o cambio del inventario del gimnasio** |
-| **Reglas**     | RN-91, RN-92, RN-93, RN-11, RN-117                                                                                                  |
-
-**Curso normal.** El sistema reevalúa la compatibilidad de la rutina vigente. Si aparece una incompatibilidad, marca los ejercicios afectados **sin retirarlos**, avisa al entrenador y al alumno, y genera la propuesta correspondiente.
-
-**Alternativos.** A1: no aparece incompatibilidad → se registra la reevaluación y no ocurre nada más. A2: la condición se cierra → los ejercicios dejan de estar marcados desde esa fecha, sin efecto retroactivo (RN-11). A3: cambia el objetivo → se propone el cambio de tipo de rutina con el reajuste de esquemas de RN-89a. A4: el administrador retira equipamiento del inventario → todos los alumnos del gimnasio con ese ejercicio en su rutina reciben la marca y la propuesta (RN-117).
-
-**Excepción.** E1: la condición nueva invalida la mayor parte de la rutina → la propuesta puede implicar una rutina sustancialmente nueva. E2: no hay entrenador vigente → la propuesta queda BLOQUEADA y el alumno sigue recibiendo la advertencia en cada sesión (CB-32).
+Un cambio de objetivo, condiciones, aptitud, inventario o habilitaciones señala revisión pendiente. Las bajas de disponibilidad marcan referencias afectadas sin borrar ejercicios, alterar la rutina vigente ni interrumpir sesiones. IA y entrenador evalúan la adecuación con el contexto nuevo; habilitar de nuevo no cierra advertencias de entrenamiento automáticamente. El diagnóstico periódico de FL-09/FL-10 conserva su alcance independiente.
 
 ---
 
@@ -414,11 +381,11 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ## FL-17 · Carga y curación del catálogo
 
-**Carga inicial (sistema).** Un proceso repetible incorpora el catálogo base desde la fuente externa con su clasificación muscular, sus articulaciones exigidas, su equipamiento requerido y sus recursos visuales, y **declara qué ejercicios quedaron sin clasificación muscular**. Ejecutarlo dos veces no duplica registros.
+**Carga base (proveedor del sistema).** Importar RepDB en preparación privada, validar el paquete y completar mapeos; publicar fichas revisadas con identidad externa estable. Una reimportación no duplica ni habilita ejercicios. Un fallo conserva la versión publicada anterior.
 
-**Curación (administrador).** Revisa los ejercicios propuestos por entrenadores, los aprueba o rechaza, y desactiva ejercicios del catálogo del gimnasio. Completa a mano la clasificación de los ejercicios no clasificados de mayor uso (RF-099).
+**Curación propia (administrador).** Revisar fichas creadas por entrenadores del gimnasio y aprobar o retirar. La habilitación es una operación distinta (FL-23). Las fichas pendientes no entran al catálogo prescribible.
 
-**Excepción.** E1: la fuente cambió de estructura o no responde → la carga falla de forma completa y verificable, sin dejar un catálogo a medias. E2: un ejercicio llega sin clasificación muscular → se incorpora marcado como no clasificado, no aporta volumen y no se presenta como cero (RN-30). E3: se desactiva un ejercicio presente en rutinas vigentes → RN-29 y CB-13.
+Mapeos, recursos, licencia e historial: [catálogo y disponibilidad](../architecture/exercise-catalog.md), RN-27 a RN-31 y RN-139.
 
 ---
 
@@ -434,17 +401,7 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 
 ## FL-20 · Mantenimiento del inventario del gimnasio
 
-|                     |                                                                  |
-| ------------------- | ---------------------------------------------------------------- |
-| **Actor**           | Administrador                                                    |
-| **Postcondiciones** | Catálogo prescribible actualizado; rutinas afectadas reevaluadas |
-| **Reglas**          | RN-115 a RN-118, RN-45, RN-117, RN-108                           |
-
-**Curso normal.** El administrador marca qué equipamiento de la enumeración cerrada posee el gimnasio. El sistema recalcula el catálogo prescribible.
-
-**Alternativos.** A1: **incorpora** equipamiento → el catálogo prescribible crece; los ejercicios antes marcados por equipamiento vuelven a COMPATIBLE y las propuestas abiertas por ese motivo se invalidan. A2: **retira** equipamiento → todo ejercicio de rutina vigente que lo requiera pasa a INCOMPATIBLE y se genera propuesta de sustitución (RN-117), sin interrumpir ninguna sesión ni rutina.
-
-**Excepción.** E1: tras el cambio, el catálogo prescribible no cubre los patrones mínimos de RN-39a → se declara al administrador qué patrones quedan sin cubrir y qué equipamiento los resolvería (RN-118). Es la advertencia que evita descubrirlo alumno por alumno. E2: el inventario queda vacío → sólo quedan prescribibles los ejercicios de `PESO_CORPORAL`; se advierte explícitamente.
+El administrador mantiene el equipamiento real de su gimnasio. El sistema muestra habilitaciones relacionadas para revisión y señala el contexto cambiado; no modifica la lista habilitada ni recalcula compatibilidad. También es válido un inventario vacío: los ejercicios de peso corporal requieren habilitación explícita. RN-116 a RN-118; disponibilidad en FL-23.
 
 ---
 
@@ -484,3 +441,9 @@ Es la puerta del sistema. Todo lo que llega al alumno pasa por acá.
 **Alternativos.** A1: el job se ejecuta nuevamente → no duplica controles ni bloqueos. A2: un ciclo fue cumplido entre dos faltas → la racha vuelve a cero. A3: el alumno no tiene entrenador → puede regularizar y queda `PENDIENTE_APROBACION`; se avisa al administrador hasta que haya asignación vigente. A4: el usuario también es entrenador o administrador → sólo queda restringida su actuación como alumno.
 
 **Excepciones.** E1: falta peso o altura, o alguno no es posterior al bloqueo → se rechaza la regularización completa. E2: quien aprueba no es el entrenador vigente → rechazo sin cambios. E3: la asignación termina durante la confirmación → la revalidación transaccional rechaza toda la operación. E4: dos aprobaciones compiten → una resuelve; la segunda recibe el estado ya resuelto y no produce efectos.
+
+## FL-23 · Habilitación de ejercicios del gimnasio
+
+El administrador consulta y busca fichas base aprobadas o propias aprobadas de su gimnasio. Habilita o deshabilita una o varias; el lote es atómico e idempotente y se registra actor e instante. La operación referencia fichas originales y no modifica su propiedad. Se rechazan fichas pendientes, retiradas o propias ajenas.
+
+Una baja quita el ejercicio de futuras incorporaciones y señala referencias existentes para revisión; no borra historial. Un gimnasio nuevo comienza vacío. Sólo el administrador modifica disponibilidad; alumnos y entrenadores consultan. RN-138 a RN-142, RA-12, RI-27.
