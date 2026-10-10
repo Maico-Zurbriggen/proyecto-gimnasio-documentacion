@@ -198,8 +198,22 @@ Del paso 12 en adelante, lo que se entrega deja de responder a la condición de 
 | ~~I-05~~ | Taxonomía muscular canónica                                                     | **Cerrada** en D2/§4.2 y §4.3. Queda el supuesto S-10 sobre su suficiencia        |
 | ~~I-13~~ | ~~Contrato backend–IA ambiguo~~ | Cerrada el 2026-09-28: backend persiste y IA recibe el UUID. ADR 0013 cambia el contenido a catálogo habilitado completo, manteniendo ese transporte |
 
+## Resolución de HU03, 2026-10-09
+
+La descripción pide «3 meses» y sus dos criterios fechados exigen **60 días**. Se conserva la duración fija de 60 días ya implementada en HU01 y RN-130; no se cambia a 90 días ni a meses calendario. Es una interpretación explícita para satisfacer los criterios verificables del pedido. Una decisión posterior de usar tres meses requiere coordinar avisos, renovación y controles de faltas.
+
+La renovación automática de [D5/§9.3](../domain/business-rules.md#93-renovación-automática-de-ciclo--hu03) es un disparador distinto del diagnóstico quincenal. No cambia RN-89a ni transforma falta de mediciones en un diagnóstico de entrenamiento. Su propuesta puede originarse sin datos nuevos, pero sigue dependiendo de una salida generativa válida y de aprobación del entrenador.
+
+En el código inspeccionado no existe todavía el productor quincenal de diagnósticos RF-088: existen consulta y resolución de propuestas, y el control periódico de mediciones. HU03 agrega el job de renovación independiente y reutiliza el motor generativo durable existente; no acredita la implementación del diagnóstico quincenal. La programación y las pruebas se describen en [el contrato backend](../architecture/backend.md#renovación-automática-de-rutina-hu03).
+
 ## Verificación de catálogo, 2026-10-07
 
 La implementación de ADR 0013 está preparada en los tres repositorios. La descarga real tiene 14 fichas con recursos ausentes y necesita curación de taxonomías antes de publicar; no se habilitaron gimnasios automáticamente. El runtime requiere capacidad para todo el catálogo habilitado, almacenamiento persistente de media y evaluación de prescripciones por entrenador antes de promoción. Ver [operación del catálogo](../architecture/exercise-catalog.md).
 
 La auditoría npm aplicó parches compatibles, incluida la corrección del ZIP. Queda una alerta transitiva del CLI Prisma (`deepmerge-ts <8`): [GHSA-ggr8-5vv4-36mx](https://github.com/advisories/GHSA-ggr8-5vv4-36mx). Requiere grafos de objetos cíclicos, no JSON ordinario; el CLI usa configuración local controlada. No se forzó un cambio de versión mayor del ORM para silenciarla. Revisar la actualización compatible cuando Prisma incorpore la corrección.
+
+## Generación solicitada por el entrenador, 2026-10-10
+
+RF-025 reserva la solicitud de generación al alumno para sí. Por decisión explícita del responsable del producto (2026-10-10), el entrenador con asignación vigente también puede solicitar, seguir y finalizar una generación para su alumno: el botón faltante en la ficha del alumno bloqueaba al entrenador cuando el gimnasio no tiene plantillas cargadas. Es un desvío registrado, no una reinterpretación: RF-025 conserva su enunciado hasta que el corpus se actualice.
+
+La autorización sigue en dos pasos (rol y asignación vigente, RA-01): el alumno sólo opera sobre sí mismo y el entrenador sólo sobre su cartera; la medición de bloqueo restringe únicamente la actuación como alumno. La titularidad de cada solicitud (`requestedByUserId`) distingue quién la inició para el seguimiento y la finalización. Toda salida válida sigue creando una rutina PROPUESTA que no rige sin revisión favorable (RN-35). La vía manual del entrenador (HU16) permanece como alternativa sin IA.
