@@ -1,17 +1,57 @@
 # Referencia física de la base de datos
 
-**Referencia de implementación local, 2026-10-07:** incluye [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). No afirma despliegue ni publicación del dataset real; operación y pendientes en [catálogo](exercise-catalog.md).
+**Referencia de implementación local, 2026-10-10:** incluye [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md). No afirma despliegue ni publicación del dataset real; operación y pendientes en [catálogo](exercise-catalog.md).
 
 ```yaml
 document_id: ARCH-DATABASE-SCHEMA
 status: implementation-reference
-snapshot_date: 2026-10-07
+snapshot_date: 2026-10-10
 source_of_structure: proyecto-gimnasio-back/prisma/schema.prisma
 database: PostgreSQL
 schemas: [app, ai_integration]
 contains_row_values: false
 contains_credentials: false
 ```
+
+## Extensión física de renovación automática, 2026-10-09
+
+La migración `20261009180000_automatic_routine_renewal` agrega `app.routine_renewal_cycles`. Contrato de comportamiento: [D5/§9.3](../domain/business-rules.md#93-renovación-automática-de-ciclo--hu03).
+
+| Columna | Tipo y restricciones |
+| --- | --- |
+| id | uuid PK, DEFAULT gen_random_uuid() |
+| routine_version_id | uuid, FK app.routine_versions.id, ON DELETE RESTRICT |
+| cycle_starts_on / due_on | date; due_on > cycle_starts_on; UQ (routine_version_id, due_on) |
+| evaluation | jsonb; evidencia capturada al cerrar el ciclo |
+| request_id | uuid NULL UQ, FK ai_integration.ai_generation_requests.id, ON DELETE RESTRICT |
+| proposal_id | uuid NULL UQ, FK app.adaptation_proposals.id, ON DELETE RESTRICT |
+| state | text DEFAULT PENDIENTE; CHECK PENDIENTE, GENERADA, NO_DISPONIBLE, OMITIDA |
+| lease_until | timestamptz NULL; expiración del lease y orden de atención de ciclos pendientes |
+| alerted_at | timestamptz NULL; evita repetir la alerta |
+| last_error | text NULL |
+| created_at | timestamptz DEFAULT CURRENT_TIMESTAMP |
+
+Índice adicional: (state, lease_until). La tabla pertenece al backend: el rol IA no recibe acceso a `app`. El contexto y los resultados generativos siguen en las tablas de integración existentes.
+
+## Extensión física de parámetros y regeneración, 2026-10-10
+
+Las migraciones `20261010120000_generation_settings_and_trainer_regeneration` y `20261010121000_regeneration_sequence` agregan `app.gyms.generation_settings` (jsonb NULL) y `generation_settings_revision` (integer NOT NULL DEFAULT 0), y la tabla `app.routine_proposal_regenerations`. Comportamiento: [D5/§9.4](../domain/business-rules.md#94-parámetros-del-gimnasio-y-regeneración-por-entrenador).
+
+| Columna | Tipo y restricciones |
+| --- | --- |
+| id | uuid PK, DEFAULT gen_random_uuid() |
+| proposal_id | uuid, FK app.adaptation_proposals.id |
+| trainer_id | uuid, FK app.users.id |
+| sequence | integer DEFAULT 1; UQ (proposal_id, sequence) |
+| idempotency_key | text UQ |
+| feedback | text |
+| candidate_request_id | uuid, FK ai_integration.ai_generation_requests.id |
+| request_id | uuid NULL UQ, FK ai_integration.ai_generation_requests.id |
+| state | text DEFAULT PENDIENTE; estados usados: PENDIENTE, COMPLETADA, NO_DISPONIBLE |
+| error | text NULL |
+| created_at / finished_at | timestamptz; created_at DEFAULT now(), finished_at NULL |
+
+Las cuatro FK usan `NO ACTION` para borrado y actualización. Índice (proposal_id, created_at) e índice único parcial sobre proposal_id cuando state = PENDIENTE. La secuencia se asigna al reservar bajo bloqueo de la propuesta y define el orden aun si coinciden los instantes de creación. La tabla pertenece al backend y no concede acceso al rol IA.
 
 ## Uso por agentes
 

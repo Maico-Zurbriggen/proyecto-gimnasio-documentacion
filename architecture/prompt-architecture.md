@@ -1,6 +1,6 @@
 # Arquitectura de prompts y orquestación
 
-**Actualización 2026-10-05:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) sustituye filtros, restricciones de prescripción y herramienta de compatibilidad. Diseño pendiente de implementación; contrato en [data-interface.md](data-interface.md).
+**Actualización 2026-10-10:** [ADR 0013](../decisions/adr/0013-catalogo-repdb-y-seleccion-ia.md) sustituye filtros, restricciones de prescripción y herramienta de compatibilidad. La organización de `generarRutina` está implementada localmente con variantes por tarea; las demás capacidades conservan su alcance indicado en el inventario. Contrato en [data-interface.md](data-interface.md).
 
 |                |                                                     |
 | -------------- | --------------------------------------------------- |
@@ -28,12 +28,36 @@ No hay clasificador LLM de intenciones ni subagentes autónomos que se llamen en
 Ningún megaprompt único y ningún prompt por botón. Cada llamada compone 5 secciones, en este orden:
 
 1. **Base system (común):** idioma, schema y ausencia de consejo médico. El overlay narrativo exige cifras respaldadas; el de generación permite decidir valores de prescripción.
-2. **Overlay por capacidad:** lo específico de esa tarea y nada más.
+2. **Overlay por capacidad y tarea:** lo específico de esa acción, seleccionado en código.
 3. **Schema de salida literal** (más `response_format`/`format` cuando el runtime lo soporta).
 4. **Contexto dinámico como JSON:** datos pertinentes del alumno y, para generación/alternativas, todo el catálogo habilitado, sin URLs de imágenes ni recorte por alumno.
 5. **Instrucción concreta** de una línea.
 
-La base cambia poco; cada overlay se versiona por separado como `generative/<capacidad>@<n>` con su changelog. Un cambio de schema exige versión nueva de ambos. Detalle del versionado y de lo que se registra por resultado en [generative-ai.md §15](generative-ai.md) y [generative-ai-integration.md](generative-ai-integration.md).
+La base cambia poco; cada capacidad se versiona como `generative/<capacidad>@<n>`. Las variantes de tarea de una misma capacidad participan de su firma y configuración; un cambio de base, overlay o schema exige versión nueva. Detalle del versionado y de lo que se registra por resultado en [generative-ai.md §15](generative-ai.md) y [generative-ai-integration.md](generative-ai-integration.md).
+
+### 2.1 Generación de rutinas implementada
+
+El módulo `generation_prompts.py` del servicio IA compone una base compartida y tres overlays de la misma capacidad `generarRutina`: `INITIAL`, `AUTOMATIC_RENEWAL` y `TRAINER_REGENERATION`. Backend elige `preferences.generation_task.kind` desde el flujo; el texto del alumno o entrenador no selecciona la tarea. La configuración `generative/generar-rutina@26` registra la firma de la base, overlays, schemas y parámetros técnicos. El transporte adjunta el schema literal y la instrucción concreta a la entrada JSON.
+
+La base define autoridad, catálogo, adecuación, alcance de parámetros, interpretación de preferencias, comprobaciones y salida. El foco en un músculo es una prioridad dentro de una rutina completa, sin inferir exclusividad ni mínimos por músculo. `minExercisesPerDay` cuenta todos los ejercicios del día. La selección, organización y volumen siguen siendo decisiones de IA revisadas por el entrenador.
+
+El contexto separa parámetros actuales del gimnasio, versión vigente, evidencia congelada del ciclo, comentario del entrenador y candidato anterior. Este último contiene sólo la planilla y sus referencias mapeadas al catálogo actual; no lleva su configuración administrativa vieja ni instrucciones concatenadas. Una proyección de nombres, patrones y músculos de **todos** los ejercicios facilita consultar el catálogo sin filtrar, ordenar por preferencia ni reemplazar las fichas completas.
+
+Las variantes de renovación declaran el vencimiento como motivo suficiente y conservan RN-89a. La regeneración atiende el comentario y permite conservar partes adecuadas del candidato, sin devolverlo idéntico. Solicitudes históricas sin `generation_task` se enrutan por sus flags persistidos; la distribución restringida al origen se mantiene exclusivamente para solicitudes anteriores sin `routine_renewal_full_catalog`.
+
+El schema separa grupos de trabajo y calentamiento mediante flags y límites tomados exclusivamente de la configuración vigente. La expansión comprueba las cantidades totales por ejercicio. Si esa validación falla, el intento registra un código técnico específico; el siguiente worker lo recupera y agrega la corrección pertinente al prompt. Se conserva el máximo de dos intentos y la ausencia de fallback.
+
+En regeneración, IA compara la prescripción expandida con `previous_candidate` antes de completar el intento. La misma selección, orden por día y valores de series se rechazan con `routine_regeneration_candidate_unchanged`, aunque cambien nombres, notas, explicación o agrupación compacta de series. El segundo intento recibe ese motivo para corregir la planilla; backend mantiene la misma comprobación al finalizar como defensa adicional. Mientras se reintenta se conserva el candidato anterior, y al agotar intentos se alerta una vez sin exigir otro comentario del entrenador. La comparación no decide ejercicios ni evalúa automáticamente la calidad del énfasis muscular.
+
+La verificación de capacidad usa primero una cota conservadora por bytes. Si esa cota no entra, para GGUF BPE `qwen35` reconstruye el tokenizador con el vocabulario y las fusiones del modelo instalado, obtenidos por `/api/show` privado. La dependencia `tokenizers` permite contar sin estimaciones por caracteres ni recortar fichas; no descarga modelos de Hugging Face. La caché en memoria está limitada a dos revisiones, identificadas por servidor, modelo y digest; no interviene en la cola durable. Un tokenizador desconocido o una entrada que realmente supera la ventana se rechazan antes de inferencia. Se reservan tokens para schema, plantilla, encapsulado y respuesta, y se verifican capacidad nativa, ventana asignada y digest al completar. La ventana configurada debe admitir todo el catálogo: la prueba local con 425 ejercicios requiere una cota de entrada de aproximadamente 146.000 tokens más la reserva de salida (16.384 en la prueba local con razonamiento) y usa 196.608, dentro de los 262.144 del modelo instalado. El valor por defecto sigue en 131.072 y requiere ajuste explícito para catálogos de ese tamaño.
+
+La regeneración repite el comentario original como dato estructurado `task_reminder` después del contexto largo, sin cambiar su autoridad ni clasificar texto libre. El prompt exige que el cambio responda a la prioridad solicitada frente al candidato y que la explicación nombre una diferencia comprobable; pide agrupar las series del mismo ejercicio en una sola entrada diaria y elegir complementos en lugar de repetirlo para alcanzar el mínimo. Estas instrucciones orientan a IA y revisión humana; no agregan cuotas por músculo, selección determinista ni una garantía automática de calidad.
+
+Changelog local: `@21` separa base, variantes y datos estructurados, aclara el énfasis muscular y agrega el directorio completo; `@22` explicita los grupos de calentamiento/trabajo y transmite al reintento el error de parámetros que quedó persistido; `@23` rechaza copias de candidato dentro del flujo durable de IA, habilita su corrección automática y aclara que una explicación distinta no modifica la prescripción; `@24` cuenta tokens con el vocabulario GGUF verificado cuando la cota por bytes resulta excesiva, sin filtrar el catálogo; `@25` recuerda el comentario al final de entradas largas y explicita el cambio de prioridad y la presentación sin duplicados innecesarios dentro del día; `@26` habilita razonamiento del modelo para generación con catálogo completo y repite al cierre la corrección técnica persistida del reintento.
+
+En generación con catálogo completo se solicita `think=true` para permitir planificación y comprobación interna antes del JSON. El servicio consume únicamente `message.content`; no presenta ni persiste `message.thinking`. Razonamiento y respuesta comparten la reserva de tokens de salida, y un agotamiento o stream incompleto se rechaza. El flujo histórico de distribución por índices mantiene `think=false`. No se agregan llamadas LLM ni etapas fuera del máximo de dos intentos. En el reintento, `validation_feedback` repite al cierre del contexto el código persistido y su corrección estática, conservando el mismo mensaje en el sistema.
+
+Prueba manual local de `@26` (2026-10-10): desde la UI del entrenador, con 425 ejercicios habilitados y el mismo comentario «Genera una rutina con enfoque en gluteos», la generación terminó en el primer intento en aproximadamente 220 segundos. La revisión confirmó 3 días de 5 ejercicios, 3 series de trabajo y 2 de calentamiento por ejercicio, sin duplicados dentro del día; el trabajo directo de glúteos pasó de 6 a 12 series semanales y el día correspondiente comenzó con hip thrust. Todos los IDs pertenecían al snapshot y se mantuvieron los parámetros administrativos. Esta muestra acredita el caso observado, sin garantizar calidad de todas las salidas. La demora supera el límite por defecto de 120 segundos de producción; la prueba local usó 600, por lo que capacidad y presupuesto de ejecución deben evaluarse antes de desplegar ese catálogo.
 
 ## 3. Inventario
 
@@ -47,7 +71,7 @@ La base cambia poco; cada overlay se versiona por separado como `generative/<cap
 | `describirPerfil` (RF-064, banda N3) | vista entrenador/administrador | frecuencia, volumen e intensidad relativos + objetivo | etiqueta + texto efímero, no persistido | igual que arriba; sin clustering |
 | `generarPautaNutricional` (RF-075/RF-108, diferido) | nutrición | energía/proteína ya calculadas | texto por comida, sin alimentos | igual que arriba + declaración orientativa/no profesional + revisión humana |
 
-Una nueva solicitud usa `generarRutina` y una instantánea nueva. La edición/regeneración de un candidato ajustable conserva diferidos RF-119/RF-120; no agrega otra plantilla.
+Una nueva solicitud usa `generarRutina` y una instantánea nueva. La regeneración por entrenador de una propuesta automática `ESTRUCTURA` usa el overlay de §2.1; no agrega otra capacidad. La edición del candidato por alumno de RF-119/RF-120 conserva su alcance diferido.
 
 ## 4. Reglas
 

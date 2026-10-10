@@ -234,7 +234,7 @@ Esta tabla conserva referencias de entrenamiento para IA y entrenador. No se uti
 | **RN-78** | El diagnóstico se produce sobre la rutina vigente, con periodicidad de **2 semanas**, y también a solicitud del entrenador                                                                                                                                        | `[S]` periodicidad     |
 | **RN-79** | El diagnóstico asigna a cada ejercicio y al conjunto una situación de D2/§4.9                                                                                                                                                                                     | `[F]` RF-088           |
 | **RN-81** | El esfuerzo percibido es opcional. Si no está registrado, el diagnóstico se produce igual sin ese criterio y **declara qué no pudo evaluar**                                                                                                                      | `[F]` RF-088           |
-| **RN-82** | Un diagnóstico con situación global `DATOS_INSUFICIENTES` no genera propuesta de adaptación                                                                                                                                                                       | `[I]`                  |
+| **RN-82** | Un diagnóstico quincenal con situación global `DATOS_INSUFICIENTES` no genera propuesta de adaptación por evolución; la renovación de ciclo de §9.3 tiene su propio disparador                                                                                                                                                                       | `[I]`                  |
 | **RN-83** | Toda propuesta deriva de exactamente un diagnóstico y conserva la referencia                                                                                                                                                                                      | `[I]` de RI-14         |
 | **RN-84** | Cada ajuste registra su tipo, el valor anterior, el valor propuesto, el criterio que lo motiva y los datos de evolución que lo sustentan                                                                                                                          | `[F]` RF-090           |
 | **RN-85** | Una propuesta necesita evaluación de adecuación según §6 y revisión del entrenador; los controles automáticos verifican estructura y referencias, sin garantía determinista de entrenamiento | `[F]` decisión 2026-10-05, ADR 0013 |
@@ -303,6 +303,28 @@ Es el núcleo del producto: convierte un diagnóstico en una propuesta concreta.
 2. Ningún ajuste puede introducir una incompatibilidad (RN-85).
 3. Una propuesta no puede contener dos ajustes sobre el mismo ejercicio de rutina con tipos contradictorios.
 4. Si tras aplicar las reglas no queda ningún ajuste, no se genera propuesta; el diagnóstico se registra igual.
+
+### 9.3 Renovación automática de ciclo · HU03
+
+Pedido del cliente de 2026-10-09, complementario al diagnóstico quincenal. La duración usada es **60 días calendario**, por los criterios de aceptación; la contradicción con «3 meses» se registra en [D12](../planning/risks-and-assumptions.md#resolución-de-hu03-2026-10-09).
+
+Al cerrar el ciclo de una versión revisada y vigente, el sistema solicita una propuesta `ESTRUCTURA` aunque no haya mediciones nuevas. La evaluación usa mediciones con fecha estrictamente posterior al inicio y no posterior al cierre, en la zona del gimnasio. Persiste criterio, valores y referencias de las mediciones, dato faltante y racha de controles como evidencia inmutable; una medición posterior no cambia cómo se generó la propuesta.
+
+RN-89a conserva sus condiciones y magnitudes. Se incluye como referencia de los ajustes globales en la solicitud generativa, sin inventar adherencia, desbalance o cambio de objetivo. El vencimiento es un motivo propio de renovación: no demuestra estancamiento ni sobreexigencia. Un diagnóstico técnico que acompaña esta propuesta declara que no reemplaza RN-79a.
+
+Las faltas y el bloqueo se calculan con RN-130 a RN-137 antes de despachar a IA y avanzan aunque IA falle. Con un bloqueo activo o tres faltas se omite la generación. La propuesta con menos faltas se genera sin esperar que el alumno complete datos; si faltan mediciones, se marca «generada sin datos actualizados».
+
+El resultado asíncrono se valida y convierte automáticamente en propuesta de adaptación; no necesita polling ni finalización del alumno. Una estructura sin cambios, inválida o declarada `UNABLE` no se presenta. Si IA falla, no se fabrica una rutina: se conserva la vigente y se registra una alerta para el entrenador asignado o, en su ausencia, los administradores del gimnasio. El despacho fallido puede recuperarse con la misma solicitud; los límites de intentos de RN-95b siguen vigentes. La aprobación del entrenador crea una versión nueva y reinicia el ciclo.
+
+### 9.4 Parámetros del gimnasio y regeneración por entrenador
+
+Extensión solicitada el 2026-10-10: el administrador puede definir por gimnasio rangos de ejercicios por día, series de trabajo por ejercicio, repeticiones y descanso, y una cantidad exacta de series de calentamiento adicional. Sin configuración explícita, la IA decide la prescripción. Estos parámetros son entrada declarada del gimnasio y no convierten RN-39a en una tabla fija de validación. IA recibe el catálogo habilitado completo y decide selección y adecuación dentro de los parámetros; backend verifica su cumplimiento antes de presentar el resultado. No se aplica un parche sobre la salida.
+
+El formulario admite valores enteros: 1–20 ejercicios por día, 1–10 series de trabajo por ejercicio, 1–100 repeticiones, 0–1800 segundos de descanso y 0–5 series de calentamiento. Cada mínimo debe ser menor o igual al máximo. La configuración debe caber en el límite técnico de 500 series aun para siete días: `7 × máximoEjercicios × (máximoSeriesTrabajo + calentamiento) ≤ 500`. Los rangos de repeticiones y descanso se aplican también al calentamiento. Los cambios incrementan una revisión y se auditan; una solicitud que ya capturó otra revisión debe regenerarse antes de su finalización o aprobación.
+
+El entrenador con asignación vigente puede regenerar una propuesta automática `ESTRUCTURA` pendiente indicando qué quiere mejorar. La solicitud captura catálogo, parámetros vigentes, comentario y propuesta anterior. La propuesta anterior se conserva hasta obtener una planilla distinta y válida; el reemplazo queda auditado con ambas planillas y sus solicitudes. La evidencia del ciclo no cambia y la versión vigente no se modifica hasta la revisión favorable.
+
+Sólo se permite una regeneración pendiente por propuesta. Durante ella se impide resolver la propuesta. Antes del reemplazo se comprueban asignación, versión de origen, bloqueo del alumno, contexto, catálogo y revisión de los parámetros. Una pantalla que intenta resolver una planilla reemplazada debe recargar. Caída de IA, `UNABLE`, resultado repetido, referencias inválidas o incumplimiento de parámetros conservan la planilla anterior y producen una alerta. El tope de RN-127 corresponde al candidato ajustable del alumno de RF-119, aún diferido; no establece un tope para esta revisión del entrenador.
 
 ## 10. Componentes inteligentes
 

@@ -17,6 +17,8 @@ La instantánea versionada contiene:
 | Perfil mínimo | Experiencia, disponibilidad, objetivo vigente, condiciones activas por zona y severidad, estado de aptitud; edad u otros datos sólo si aportan a la tarea |
 | Historial disponible | Rutina vigente e indicadores recientes, con período e instante: volumen, frecuencia, adherencia y esfuerzo registrado. Si no hay datos, declararlo; no convertir ausencia en cero |
 | Pedido y preferencias | Texto original y parámetros declarados; IA interpreta prioridades y cantidades, sin extracción mediante regex ni selección del backend |
+| Tarea de generación | `generation_task.kind`: `INITIAL`, `AUTOMATIC_RENEWAL` o `TRAINER_REGENERATION`, elegido por backend. Renovaciones capturan `cycle` con período, criterio, mediciones y dato faltante; regeneraciones agregan `trainer_feedback` y `previous_candidate` con sólo su estructura y prescripción mapeadas al catálogo actual |
+| Parámetros administrativos | `gym_generation_settings` con revisión y configuración actual, o `settings: null` para decisión de IA. La configuración vieja de un candidato no se propaga como restricción |
 | Equipamiento | Inventario real del gimnasio como contexto; no intersección automática de candidatos |
 | `allowed_catalog` completo | Todos los ejercicios aprobados y habilitados del gimnasio: UUID, revisión, nombre, instrucciones completas, descripción, consejos, patrón, dificultad, unilateralidad, músculos primarios/secundarios, equipamiento y articulaciones |
 | Trazabilidad | Versión de contrato, instante de captura y versiones o hashes del contexto y las fichas; prompt, modelo e intento en el resultado |
@@ -24,6 +26,8 @@ La instantánea versionada contiene:
 Comparar por separado versiones del perfil/inventario y revisiones de las fichas seleccionadas. El hash de toda la instantánea sirve para trazabilidad; una habilitación nueva, por sí sola, no vuelve desactualizado un resultado (RN-141).
 
 No enviar imágenes, URLs de media, nombres de personas, correo, credenciales o descripciones médicas libres. Orden y alias por índice sólo compactan el transporte; IA puede expandir índices y grupos de series sin cambiar selecciones o cantidades.
+
+`free_text` conserva preferencias del solicitante en generación inicial. Las solicitudes internas de renovación y regeneración usan los campos de tarea; no concatenan instrucciones del sistema, comentarios y JSON de planillas en ese texto. El servicio IA mantiene compatibilidad con instantáneas anteriores sin `generation_task`, usando sus flags persistidos. La llamada HTTP continúa enviando únicamente el UUID; no cambia el schema de salida `2.0`.
 
 La salida estructurada conserva tipo, frecuencia, días ordenados, UUID de ejercicios, series, repeticiones, carga opcional, descanso, calentamiento y justificación. El contrato distingue `PROPOSED` con `explanation`/`warnings` y `UNABLE` con `reason`/`missing_information`; esta última no crea una rutina vacía. `suggested_load: null` significa sin especificar; cero mantiene su significado propio (RN-43). Las versiones creadas siguen con `current: false` hasta aprobación.
 

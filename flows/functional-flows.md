@@ -300,7 +300,15 @@ La configuración, concurrencia y pruebas se detallan en [catálogo y disponibil
 
 ---
 
+### Renovación automática al cierre de ciclo · HU03
+
+El scheduler ejecuta un job independiente del diagnóstico quincenal. Crea una única evaluación por versión y vencimiento, controla faltas y bloqueo, y solicita a IA el cambio de estructura con el contexto disponible. Cuando el resultado durable está listo, el propio job registra la propuesta y avisa al entrenador para FL-10; el alumno no inicia ni finaliza este proceso.
+
+Sin medición nueva se conserva la propuesta con advertencia y dato faltante. Con tres faltas se bloquea mediante FL-22 y no se genera. Ante caída de IA, no se genera una propuesta y se registra una alerta, conservando la rutina vigente. La evidencia no se recalcula si llegan mediciones después. Repeticiones o ejecuciones concurrentes no duplican ciclos, propuestas ni alertas. Reglas y duración: [D5/§9.3](../domain/business-rules.md#93-renovación-automática-de-ciclo--hu03).
+
 ## FL-10 · Resolución de una propuesta de adaptación ⭐
+
+Para una propuesta automática `ESTRUCTURA` pendiente, el entrenador puede indicar un comentario y solicitar otra planilla con IA. El circuito asíncrono, los parámetros del administrador y la conservación de la propuesta anterior siguen [D5/§9.4](../domain/business-rules.md#94-parámetros-del-gimnasio-y-regeneración-por-entrenador). La pantalla permite recuperar el estado al volver y muestra la planilla nueva antes de decidir.
 
 |                     |                                                                             |
 | ------------------- | --------------------------------------------------------------------------- |

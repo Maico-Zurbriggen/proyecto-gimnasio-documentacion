@@ -101,3 +101,31 @@ Este contrato implementa RF-123, RF-124 y FL-22. El bloqueo funcional es indepen
 ### Restricción transversal
 
 Después de autenticar y resolver el rol activo, un middleware consulta el bloqueo vigente. Para operaciones como `ALUMNO`, sólo permite identidad propia, cierre de sesión, consulta del bloqueo y, en `PENDIENTE_MEDICION`, la carga de mediciones. No impide operar con roles `ENTRENADOR` o `ADMINISTRADOR` del mismo usuario.
+
+## Renovación automática de rutina HU03
+
+`GET /internal/jobs/routine-renewals` usa el mismo `CRON_SECRET` que el control de mediciones. Su OpenAPI está en `Backend/openapi/renewals.openapi.json`. El cron configurado corre cada hora, detecta cierres de ciclo y finaliza resultados ya completados; Preview/Test necesita un scheduler externo o invocación autenticada, igual que el control de mediciones. La generación asíncrona no requiere una petición abierta al LLM ni una acción del alumno.
+
+Primero evalúa los controles de mediciones. Si otro proceso los está evaluando, omite esta ejecución para no capturar una racha incompleta. Después captura evidencia y crea ciclos únicos en `app.routine_renewal_cycles`. Un lote de hasta cinco ciclos obtiene leases de cinco minutos; las ejecuciones siguientes priorizan ciclos nuevos o menos recientemente procesados, para que fallos repetidos no impidan atender a otros alumnos.
+
+El job usa la creación de solicitudes IA 2.0 existente, registra el vínculo durable antes del despacho y consulta estados/resultados en base. Comparte la validación técnica de generación y disponibilidad del catálogo. Compara el contexto material vigente y conserva la historia y evidencia del instante capturado; no recalcula el diagnóstico RN-79a. Las solicitudes de renovación no pueden finalizarse mediante el endpoint del alumno para crear una rutina inicial.
+
+La finalización crea diagnóstico técnico, propuesta `ESTRUCTURA`, ajuste con evidencia y aviso en una transacción. La consulta de propuestas lee la evaluación persistida en el ciclo. La aprobación vuelve a comprobar asignación, versión de origen y catálogo, crea una versión de la rutina existente, conserva la anterior y reinicia el ciclo. Los fallos crean una alerta persistida e idempotente para el entrenador o administradores; no producen una rutina alternativa.
+
+La generación de una planilla nueva usa el contrato generativo 2.0 con selección del catálogo completo y grupos de series. El transporte valida hasta 500 series y la política explícita capturada del gimnasio, sin decidir entrenamiento mediante tablas fijas. La IA conserva objetivo, tipo y frecuencia salvo evidencia aplicable de RN-89a, y debe cambiar la estructura. Las solicitudes históricas sin `routine_renewal_full_catalog` conservan el schema de redistribución de apariciones de origen.
+
+Las solicitudes nuevas de renovación y regeneración entregan al modelo todo el catálogo habilitado, con sus fichas completas y una referencia por índice. La estructura vigente se conserva como contexto: la IA puede seleccionar otros ejercicios habilitados y prescribir según los parámetros explícitos del gimnasio. Las solicitudes históricas mantienen su esquema de redistribución de origen. Los nombres que muestra la propuesta proceden del catálogo capturado.
+
+La ficha del alumno enlaza las propuestas de adaptación pendientes. Su revisión presenta la planilla completa, la distribución anterior y propuesta calculada desde los datos estructurados, el criterio y las mediciones capturadas. No utiliza el relato del modelo para reconstruir cambios: el resultado bruto permanece registrado para auditoría.
+
+### QA reproducible
+
+`GET/PUT /gyms/me/generation-settings` usa el gimnasio de la sesión: administrador escribe y entrenador puede consultar. `app.gyms` conserva JSON de parámetros y revisión. Las solicitudes 2.0 capturan ambos y la finalización/aprobación vuelve a verificar la revisión. El contrato se publica en `Backend/openapi/generation-management.openapi.json`; `npm run generation:openapi` lo actualiza y `npm run generation:contract` en Frontend genera sus schemas.
+
+`POST/GET /proposals/:proposalId/regeneration` exige rol ENTRENADOR y asignación vigente. `app.routine_proposal_regenerations` conserva comentario, clave idempotente, solicitud y secuencia creciente; una restricción parcial permite una sola regeneración pendiente. El polling finaliza el reemplazo, guarda ambas planillas en auditoría y mantiene la evidencia del ciclo. Un rechazo técnico crea una alerta única por regeneración sin borrar la planilla anterior. La resolución verifica que no haya regeneración pendiente y que `candidateRequestId` coincida con la planilla revisada.
+
+La suite `Backend/test/integration/automatic-routine-renewal.test.ts` requiere `RENEWAL_TEST_DATABASE_URL` y sólo acepta la base desechable `gym_renewal_qa`, host `127.0.0.1` y puerto `65433`. Aplica todas las migraciones con `DATABASE_URL` apuntando a esa base y ejecuta `npm run check` desde Backend con la variable de QA definida. Nunca apuntar esa suite a `gym_local`, Neon Test ni producción.
+
+La verificación de 2026-10-09 utiliza PostgreSQL 17 en un contenedor con almacenamiento temporal. Prueba ciclos de 60 días y zona horaria, evidencia nueva/ausente/tardía, concurrencia, recuperación de leases, caída de despacho y worker, bloqueo en tercera falta, salida inválida, permisos del cron y aprobación de estructura. El transporte y los resultados de IA son dobles internos de prueba; no acreditan la disponibilidad del Polo.
+
+La extensión de 2026-10-10 agrega pruebas de regeneración simultánea, recuperación del estado, conservación de evidencia y versión vigente, resultados repetidos/`UNABLE`, catálogo deshabilitado o externo, parámetros capturados y revisiones obsoletas. También se verificó el recorrido local con IA real: el administrador guardó los parámetros y Lucía regeneró la propuesta de Martín, sin aprobarla. La revisión muestra incorporaciones, ejercicios quitados y los parámetros con los que se produjo la planilla.

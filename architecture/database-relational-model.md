@@ -25,7 +25,7 @@ El backend es dueño de Prisma, del esquema y de todas las migraciones. El servi
 
 ### Distribución física por esquema
 
-- `app` contiene las 37 tablas transaccionales de las secciones 1 a 6 y las cinco tablas de adaptación y evidencia de la sección 8: 42 tablas en total.
+- `app` contiene las tablas transaccionales de las secciones 1 a 6, las de adaptación y evidencia de la sección 8 y las extensiones posteriores. HU03 agrega `routine_renewal_cycles`; su estructura está en la [referencia física](database-schema-reference.md#extensión-física-de-renovación-automática-2026-10-09).
 - `ai_integration` contiene únicamente `ai_generation_requests`, `ai_generation_attempts`, `ai_generation_results` y `ai_result_validations`.
 - Backend y el rol de migraciones operan sobre ambos esquemas. El servicio IA recibe permisos mínimos sólo sobre las tablas necesarias de `ai_integration` y ningún permiso sobre `app`.
 

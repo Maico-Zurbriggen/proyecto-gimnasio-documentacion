@@ -275,6 +275,12 @@ Núcleo del producto. Pedido directo del cliente.
 
 ---
 
+### HU03 · Renovación automática de ciclos cumplidos
+
+Extensión solicitada el 2026-10-10: la revisión permite regenerar con comentario del entrenador y el administrador configura los parámetros de generación de su gimnasio, según [D5/§9.4](../domain/business-rules.md#94-parámetros-del-gimnasio-y-regeneración-por-entrenador). No depende de plantillas ni del candidato ajustable RF-119.
+
+Extiende el circuito RF-088 a RF-092 con un job independiente del diagnóstico quincenal. La renovación por vencimiento, con o sin mediciones nuevas, su evidencia, el bloqueo y la alerta por indisponibilidad siguen [D5/§9.3](../domain/business-rules.md#93-renovación-automática-de-ciclo--hu03). La propuesta usa `ESTRUCTURA` y requiere la misma revisión del entrenador de RF-091.
+
 ## Distribución
 
 ### Por prioridad y tipo — el producto completo

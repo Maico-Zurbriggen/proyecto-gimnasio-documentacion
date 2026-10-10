@@ -265,6 +265,8 @@ PENDIENTE → PROCESANDO ─┬→ COMPLETADO
 
 Cada solicitud admite como máximo dos intentos. Los cuatro estados de salida son terminales para el intento; tras el primer fallo la solicitud vuelve a `PENDIENTE`, y tras el segundo pasa a `NO_DISPONIBLE`. Una salida completada que supera la validación del backend origina directamente una rutina `PROPUESTA`; no existe un candidato persistido intermedio.
 
+La renovación automática de HU03 utiliza el mismo motor de solicitudes e intentos. Su salida validada se convierte en una **propuesta de adaptación**, con ajuste `ESTRUCTURA`, mediante el job; no se finaliza como una rutina inicial por el alumno. El estado de orquestación del ciclo es `PENDIENTE → GENERADA | NO_DISPONIBLE | OMITIDA`. `OMITIDA` corresponde a bloqueo activo o versión que dejó de estar vigente; un lease vencido permite recuperar `PENDIENTE`. La evidencia inicial permanece inmutable. Ver [D5/§9.3](business-rules.md#93-renovación-automática-de-ciclo--hu03).
+
 ## 12. Bloqueo por mediciones del alumno
 
 La ausencia de un registro activo equivale a operación normal. Cuando se alcanzan tres faltas consecutivas se crea un bloqueo:

@@ -156,6 +156,18 @@ Este documento **no reescribe** reglas ni flujos: los referencia. Si un comporta
 
 ---
 
+### Renovación automática · HU03
+
+- IA no disponible al despachar: conservar solicitud y evidencia; alerta una sola vez; sin propuesta ni cambio de la versión vigente. Una ejecución posterior puede recuperar ese despacho.
+- IA agota sus intentos, devuelve una salida inválida, `UNABLE` o una estructura idéntica: declarar indisponibilidad y alertar; no producir un fallback.
+- Una medición del día inicial, posterior al cierre o llegada después de generar la propuesta no reescribe la evidencia guardada.
+- La tercera falta se alcanza mientras había un ciclo pendiente de generación: el control bloquea y se omite ese ciclo; no se despacha nuevamente.
+- Dos jobs concurrentes o un proceso interrumpido: unicidad en base y lease recuperable; sólo una propuesta por ciclo y una alerta de fallo.
+- Cambia la versión vigente o se deshabilita un ejercicio durante generación/aprobación: no aplicar el candidato antiguo.
+- No hay entrenador vigente: la propuesta queda `BLOQUEADA` y el aviso o alerta se dirige a los administradores del gimnasio.
+
+Regla canónica: [D5/§9.3](business-rules.md#93-renovación-automática-de-ciclo--hu03).
+
 ## L · Catálogo habilitado y contexto de IA
 
 | ID | Situación | Respuesta | Regla |

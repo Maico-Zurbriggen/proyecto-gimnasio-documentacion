@@ -290,3 +290,4 @@ La suspensión administrativa continúa en `Usuario.estado`. El bloqueo por medi
 | RI-26  | Un bloqueo sólo pasa a PENDIENTE_APROBACION con peso y confirmación de altura posteriores a `bloqueado en`, y sólo se resuelve por su entrenador vigente   |
 | RI-27 | Una habilitación es única por (gimnasio, ejercicio) y sólo referencia base o una ficha propia del mismo gimnasio |
 | RI-28 | La clave (fuente, identificador externo) es única; las reimportaciones conservan el UUID interno y las referencias históricas |
+| RI-29 | Una renovación automática es única por versión de rutina y vencimiento; referencia como máximo una solicitud IA y una propuesta, y conserva su evaluación de datos al generarse |
