@@ -178,6 +178,10 @@ Del paso 12 en adelante, lo que se entrega deja de responder a la condición de 
 
 ## 5. Inconsistencias no resueltas
 
+### Revisión de implementación del 19 de octubre de 2026
+
+El [informe de estado](application-status-2026-10-19.md) registra divergencias que requieren conciliación normativa: ciclo de 60 días y aviso de siete implementados como supuesto en backend; solicitud generativa por entrenador asignado y pedido de cambios sobre propuestas frente a descripciones anteriores; coexistencia de inventario derivado por equipamiento e inventario con habilitación explícita. El [manual](../operations/user-manual.md) describe el comportamiento observado sin convertirlo en una nueva regla. Estos puntos permanecen abiertos hasta su resolución coordinada en los documentos y repositorios afectados; esta auditoría no cambia el dominio.
+
 | #        | Inconsistencia                                                                  | Estado                                                                            |
 | -------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | **I-09** 🆕 | **La capacidad de construcción está calculada sobre un supuesto que otra fuente contradice.** §3 descuenta a tres personas y llega a ~504 h; el Documento de Planificación e Inicio §1.3 dice que las nueve construyen y les asigna alcance funcional en equipos verticales | **Abierta y de alto impacto.** Es el denominador de R-01 y de PD-01. Ninguna de las dos fuentes es evidentemente correcta: hay que **medir la disponibilidad real que declara cada integrante**, no elegir el documento que convenga. Resolver antes de la conversación de alcance |

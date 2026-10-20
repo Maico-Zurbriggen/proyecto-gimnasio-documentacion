@@ -1,5 +1,7 @@
 # Corpus documental — Plataforma de entrenamiento asistido
 
+**Referencia de implementación al 19 de octubre de 2026:** consultar el [informe de estado de la aplicación](planning/application-status-2026-10-19.md) y el [manual de uso por rol](operations/user-manual.md). Las afirmaciones históricas de este documento sobre ausencia de implementación describen la baseline original; no representan el estado actual del código. Las reglas normativas conservan su autoridad en sus documentos canónicos.
+
 **Versión del corpus** 3.6 · **Fecha** 2026-09-22 · **Estado** baseline v4.0 aprobada para implementación, alineada con el [modelo relacional](architecture/database-relational-model.md), ADR 0010 y ADR 0011. Puntos abiertos no vinculados al esquema permanecen en D12/§5.
 
 La v2.0 incorpora las 42 correcciones de la auditoría y las dos definiciones del cliente que las hicieron posibles: **el sistema no es abierto** (el gimnasio afilia e invita) y **el equipamiento es del gimnasio** (la prescripción depende de qué máquinas tiene).

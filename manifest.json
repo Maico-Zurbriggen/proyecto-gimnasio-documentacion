@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "corpus_version": "3.7",
-  "updated_at": "2026-09-28",
+  "updated_at": "2026-10-19",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
@@ -10,6 +10,8 @@
     "documentation": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio-documentacion"
   },
   "documents": [
+    {"id":"OPS-USER-MANUAL","path":"operations/user-manual.md","scope":"product","authoritative_for":[],"load_when":["learning to use the application","operating the application by role","preparing a product demonstration"],"note":"Descriptive user manual for the implementation reviewed on 2026-10-19; does not replace normative flows or permissions."},
+    {"id":"AUDIT-APPLICATION-2026-10-19","path":"planning/application-status-2026-10-19.md","scope":"system","authoritative_for":["implementation audit snapshot 2026-10-19"],"load_when":["reviewing implemented functionality","auditing coverage","reviewing application readiness"],"note":"Commit-pinned implementation evidence, verification results and limitations; not a production certification."},
     {"id":"INDEX-CORPUS","path":"corpus-guide.md","scope":"system","authoritative_for":["reading order","corpus status"],"load_when":["starting project work","planning documentation changes"]},
     {"id":"D1","path":"product/vision-and-objectives.md","scope":"product","authoritative_for":["vision","scope","success criteria"],"load_when":["starting any feature","prioritizing scope"]},
     {"id":"D2","path":"product/glossary.md","scope":"system","authoritative_for":["terminology","closed enumerations"],"load_when":["writing code","writing documentation","designing contracts"]},
