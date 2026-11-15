@@ -41,7 +41,13 @@ Si la invitación venció, fue revocada o ya se usó, solicitar ayuda a quien la
 
 Una cuenta sin roles asignados verá una pantalla de falta de acceso. Una suspensión de cuenta o de gimnasio puede impedir ingresar. Pedir al responsable que revise el estado; cambiar de pantalla no otorga permisos.
 
-### 2.3 Recuperar o cambiar contraseña
+### 2.3 Consultar el perfil de acceso
+
+Abrir **Cuenta** en el menú lateral o pulsar la identidad del encabezado. La ruta `/cuenta/perfil` muestra el nombre, correo, gimnasio y roles habilitados para la sesión actual. El correo y los roles son informativos: no se modifican desde esa pantalla.
+
+El perfil de acceso está disponible para todos los roles y no reemplaza el perfil de entrenamiento del alumno ni el perfil profesional del entrenador.
+
+### 2.4 Recuperar o cambiar contraseña
 
 **Sin sesión:** entrar en recuperación desde el acceso, indicar el correo y enviar la solicitud. La respuesta es la misma exista o no una cuenta. Si corresponde, se recibe un enlace de un solo uso, con duración de dos horas. La pantalla informa un máximo de dos pedidos diarios. Abrir el último enlace, ingresar y confirmar la nueva contraseña, y volver a iniciar sesión. El restablecimiento cierra las sesiones anteriores.
 
