@@ -99,6 +99,8 @@ Las transiciones prohibidas importan tanto como las permitidas: cada una evita u
 
 **Una adaptación aceptada no transiciona la rutina.** Genera una versión nueva (§3) y la rutina sigue VIGENTE. La resolución de la propuesta por el entrenador **es** la revisión exigida por RN-35, y no se pide una segunda (RN-35a).
 
+**Excepción operativa de demostración (2026-11-15).** La prohibición general `ARCHIVADA → VIGENTE` admite exclusivamente restaurar la rutina original enlazada a una preparación activa; antes se archiva la rutina de origen `DEMOSTRACION`. La preparación pasa de activa (`restored_at` nulo) a restaurada (fecha persistida), de forma idempotente. Las propuestas preparadas pendientes o bloqueadas pasan a `INVALIDADA`; las resueltas conservan su resolución. Diagnósticos y auditorías permanecen inmutables. No habilita reactivar otras rutinas archivadas. Ver [operación y conflictos](../operations/adaptation-demo.md#restauración-y-trazabilidad).
+
 ## 3. Versión de rutina
 
 ```

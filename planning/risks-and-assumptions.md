@@ -1,5 +1,7 @@
 # D12 — Riesgos y supuestos
 
+**Decisión operativa cerrada 2026-11-15.** El solicitante autorizó preparar el historial y generar propuestas sobre alumnos existentes de la muestra desplegada, con restauración. Se resuelve mediante una rutina temporal de procedencia explícita, datos de entrenamiento simulados, motor de diagnóstico real y punto de retorno durable; véase el [procedimiento](../operations/adaptation-demo.md). La autorización aplica a esta extensión y no habilita seeds destructivos. Cerrar la ventana no restaura automáticamente y cada repetición resuelta retiene evidencia: restaurar antes de deshabilitar el panel y usarlo para una exposición acotada.
+
 |                |                 |
 | -------------- | --------------- |
 | **Versión**    | 3.1             |

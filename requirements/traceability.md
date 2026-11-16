@@ -1,5 +1,7 @@
 # D13 — Trazabilidad
 
+**Extensión operativa de demostración (2026-11-15).** El [panel reversible](../operations/adaptation-demo.md) permite demostrar RF-088 a RF-091 mediante el motor vigente. Su procedencia explícita y la exclusión de analítica real conservan RN-107/RF-071; el origen temporal se define en D2/§4.13 y su restauración excepcional en D5/§12.1 y D6/§2. La prueba recorre los seis casos, permisos, repetición concurrente, aprobación/rechazo y restauración. Es una herramienta operativa autorizada para la exposición sobre la misma base desplegada; no cambia la prioridad ni declara completo el resto del alcance de esos requisitos.
+
 |                |                                              |
 | -------------- | -------------------------------------------- |
 | **Versión**    | 3.1                                          |

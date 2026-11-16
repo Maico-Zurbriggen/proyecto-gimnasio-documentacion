@@ -44,7 +44,7 @@ app.MeasurementBlockReason: [TRES_FALTAS_CONSECUTIVAS]
 app.MovementPattern: [EMPUJE_HORIZONTAL, EMPUJE_VERTICAL, TRACCION_HORIZONTAL, TRACCION_VERTICAL, DOMINANTE_RODILLA, DOMINANTE_CADERA, CORE, AISLAMIENTO_SUPERIOR, AISLAMIENTO_INFERIOR]
 app.ExerciseOrigin: [CATALOGO_BASE, GIMNASIO]
 app.MuscleParticipation: [PRIMARIA, SECUNDARIA]
-app.RoutineOrigin: [PLANTILLA_ENTRENADOR, GENERADA]
+app.RoutineOrigin: [PLANTILLA_ENTRENADOR, GENERADA, DEMOSTRACION]
 app.RoutineState: [PROPUESTA, BLOQUEADA, VIGENTE, RECHAZADA, DESCARTADA, ARCHIVADA]
 app.RoutineReviewResult: [APROBADA, APROBADA_CON_CAMBIOS, RECHAZADA]
 app.CompatibilityState: [COMPATIBLE, ADVERTIDO, INCOMPATIBLE]
@@ -498,6 +498,7 @@ Propósito: prescripción asociada a un alumno, con procedencia y estado de apro
 | `origin` | `RoutineOrigin` | determina qué fuente debe existir |
 | `requested_by_user_id` | `uuid` | NULL, FK `app.users.id`, ON DELETE RESTRICT |
 | `requested_at` | `timestamptz(6)` | DEFAULT `now()` |
+| `demo_run_id` | `uuid` | NULL, UQ, FK `app.adaptation_demo_runs.id`, ON DELETE RESTRICT; requerido sólo para origen `DEMOSTRACION` |
 
 Índices: `(student_id, state)`, `(source_template_id)`. La base restringe a una rutina `PROPUESTA` y una `VIGENTE` por alumno mediante índices parciales independientes.
 
@@ -665,6 +666,25 @@ Propósito: auditoría append-only de operaciones sensibles.
 
 ### Evolución, adaptación y récords
 
+#### `app.adaptation_demo_runs`
+
+Propósito: preparación reversible sobre un alumno existente. Incorporada por las migraciones de demostración del 15 de noviembre de 2026; ver [operación](../operations/adaptation-demo.md).
+
+| Atributo | Tipo | Restricciones / relación |
+| --- | --- | --- |
+| `id` | `uuid` | PK, generado |
+| `student_id` | `uuid` | FK `app.student_profiles.user_id`, ON DELETE RESTRICT |
+| `trainer_id` | `uuid` | FK `app.trainer_profiles.user_id`, ON DELETE RESTRICT |
+| `scenario` | `text` | CHECK de los seis casos operativos admitidos |
+| `original_routine_id` | `uuid` | FK `app.routines.id`, ON DELETE RESTRICT |
+| `original_version_id` | `uuid` | FK `app.routine_versions.id`, ON DELETE RESTRICT |
+| `prepared_on` | `date` | día del diagnóstico, usado para repetición idempotente |
+| `result` | `jsonb` | NULL durante la transacción; resultado calculado al confirmar |
+| `created_at` | `timestamptz(6)` | DEFAULT `now()` |
+| `restored_at` | `timestamptz(6)` | NULL mientras está activa; CHECK no anterior a creación |
+
+Índice parcial único `(student_id) WHERE restored_at IS NULL`; índice `(trainer_id, restored_at)`. La relación única desde `routines.demo_run_id` identifica la rutina preparada. Las rutinas ordinarias conservan su restricción de fuente; una `DEMOSTRACION` no tiene plantilla ni resultado generativo y exige preparación vinculada.
+
 #### `app.evolution_diagnostics`
 
 Propósito: diagnóstico versionado del desempeño de un alumno en un período.
@@ -679,6 +699,7 @@ Propósito: diagnóstico versionado del desempeño de un alumno en un período.
 | `global_situation` | `EvolutionSituation` | clasificación global |
 | `adherence` | `decimal(5,2)` | NULL; porcentaje calculado |
 | `component_version` | `text` | versión del componente que calculó el diagnóstico |
+| `simulated` | `boolean` | DEFAULT `false`; identifica el cálculo sobre historial preparado y lo excluye de jobs e indicadores reales |
 | `criteria_not_evaluated` | `jsonb` | criterios omitidos y motivos; contrato de aplicación |
 | `calculated_at` | `timestamptz(6)` | DEFAULT `now()` |
 

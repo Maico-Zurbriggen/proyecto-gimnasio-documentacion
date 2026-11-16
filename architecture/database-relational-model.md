@@ -1,5 +1,7 @@
 # Modelo relacional de PostgreSQL
 
+**Extensión de demostración 2026-11-15.** Las migraciones nuevas agregan `app.adaptation_demo_runs`, su enlace único desde rutinas, el origen `DEMOSTRACION` y la procedencia simulada del diagnóstico. Un índice parcial limita una preparación activa por alumno; el original y su versión se conservan con claves foráneas restrictivas. La excepción de origen se limita a rutinas con preparación enlazada y sin fuente generativa o plantilla; no relaja las fuentes de las rutinas ordinarias. Ver [campos físicos](database-schema-reference.md#appadaptation_demo_runs) y [comportamiento operativo](../operations/adaptation-demo.md).
+
 **Estado:** migración inicial aprobada; extensión de controles de medición diseñada para migración posterior · **Fecha:** 2026-09-28
 
 ## Alcance y autoridad

@@ -214,8 +214,8 @@ En **Rutinas → Por revisar** también aparecen propuestas de ajustes sobre rut
 1. Abrir la propuesta.
 2. Consultar período, diagnóstico y evidencia disponibles; atender la advertencia de datos desactualizados.
 3. Comparar valores anteriores y propuestos. Los cambios de estructura muestran el detalle de la planilla.
-4. Para aceptar todo, usar **Aprobar**.
-5. Para aceptar parte, marcar los ajustes elegidos y usar **Aprobar parcialmente**, si está habilitado para esa propuesta.
+4. Para aceptar todo, usar **Seleccionar todos → Aprobar todos (cantidad)**.
+5. Para aceptar parte, marcar únicamente los ajustes elegidos y usar **Aprobar seleccionados (cantidad)**. Sin selección no se puede aprobar. Los ajustes sin marcar quedan rechazados al resolver la propuesta. Este control se actualizó el 15 de noviembre de 2026.
 6. Para rechazar, escribir motivo y pulsar **Rechazar**.
 7. Verificar la resolución. La aprobación genera una nueva versión y conserva la anterior.
 

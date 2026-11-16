@@ -1,5 +1,7 @@
 # D10 — Catálogo de casos borde
 
+**Casos de la extensión operativa de demostración (2026-11-15).** Un clic concurrente sobre el mismo caso reutiliza la preparación pendiente; aprobar o rechazar permite una preparación nueva. Si falta una alternativa elegible, se revierte por completo el cambio de caso y continúa vigente el caso anterior. Restaurar es idempotente, conserva la evidencia inmutable y rechaza otra rutina vigente, una regeneración pendiente o entrenamiento real incorporado mientras se preparaba. Una sesión en curso impide preparar/restaurar, y la rutina preparada impide iniciar entrenamiento real. Los casos de progresión adecuada y datos insuficientes concluyen correctamente sin propuesta. Ver [operación y pruebas](../operations/adaptation-demo.md#verificación-y-contrato).
+
 |                |                                        |
 | -------------- | -------------------------------------- |
 | **Versión**    | 2.2                                    |
