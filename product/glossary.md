@@ -267,3 +267,9 @@ Enumerados en el orden de precedencia con que se evalúan (RN-79a).
 ### 4.12 Tipo de aviso — 9 valores
 
 `RUTINA_PROPUESTA_PENDIENTE` · `RUTINA_EN_VIGENCIA` · `RUTINA_RECHAZADA` · `RUTINA_AJUSTADA` · `PROPUESTA_PENDIENTE` · `RECORD_ALCANZADO` · `SENAL_DETECTADA` · `INCOMPATIBILIDAD_SOBREVENIDA` · `APTITUD_POR_VENCER`
+
+### 4.13 Origen de rutina — 3 valores
+
+`PLANTILLA_ENTRENADOR` · `GENERADA` · `DEMOSTRACION`
+
+`DEMOSTRACION` identifica una rutina temporal preparada por el entrenador para la exposición, vinculada a un punto de restauración y sin atribuirla a una plantilla o a una salida generativa inexistente. Su [operación](../operations/adaptation-demo.md) conserva la rutina original y el carácter simulado del historial preparado.

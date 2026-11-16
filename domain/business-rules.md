@@ -342,6 +342,10 @@ Es el núcleo del producto: convierte un diagnóstico en una propuesta concreta.
 | **RN-109** | Los registros de auditoría no contienen credenciales ni contraseñas                                                                                                                                                                                                               | `[F]` A §14.2                 |
 | **RN-110** | Los instantes se almacenan en tiempo universal coordinado y se presentan en la zona horaria del gimnasio. La semana va de lunes a domingo                                                                                                                                         | `[F]` A §5.5                  |
 
+### 12.1 Preparación operativa de demostración
+
+Extensión autorizada por el solicitante el 15 de noviembre de 2026: el entrenador puede preparar y restaurar casos sobre sus alumnos existentes en el despliegue, con habilitación explícita del backend. Las sesiones y diagnósticos resultantes quedan identificados como simulados; la exclusión de RN-107 sigue vigente para indicadores reales y jobs periódicos. El panel invoca RN-79a y RN-89a para producir sus resultados y no modifica sus umbrales. El único retorno excepcional de una rutina archivada a vigente es la restauración de la original registrada en una preparación activa, sin reescribir su historial. El [procedimiento operativo](../operations/adaptation-demo.md) especifica repetición, conservación de evidencia y resolución de conflictos.
+
 ## 13. Estimación energética orientativa — ⏸ **diferida en la Etapa 1**
 
 > RN-119 a RN-123 quedan diferidas con RF-012 (2 votos de 8) y RF-075. Con ellas cae toda la cadena nutricional del producto en esta etapa, y [DD-13](../decisions/design-decisions.md) queda sin efecto. El texto se conserva: la pregunta que resuelve —qué significa «generar la dieta»— volverá si vuelve la nutrición.

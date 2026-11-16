@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "corpus_version": "3.7",
-  "updated_at": "2026-10-19",
+  "corpus_version": "3.8",
+  "updated_at": "2026-11-15",
   "purpose": "Deterministic routing map for humans and AI agents. Paths are canonical and unique.",
   "repositories": {
     "frontend": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio",
@@ -10,6 +10,9 @@
     "documentation": "https://github.com/Maico-Zurbriggen/proyecto-gimnasio-documentacion"
   },
   "documents": [
+    {"id":"OPS-ADAPTATION-DEMO","path":"operations/adaptation-demo.md","scope":"backend,frontend","authoritative_for":["reversible adaptation demonstration operation"],"load_when":["preparing an adaptation demonstration","enabling adaptation demo controls","restoring demonstration data"],"note":"Uses existing deployed students and catalogue with tagged reversible preparation; synthetic activity remains explicit and excluded from real analytics."},
+    {"id":"OPS-ADAPTATION-DEMO-STUDY","path":"operations/guia-estudio-diagnostico-propuesta-2m30.md","scope":"product","authoritative_for":[],"load_when":["studying the diagnosis and proposal presentation","rehearsing the two-and-a-half-minute adaptation demonstration"],"note":"Presentation study aid; normative rules and operation remain in their canonical documents."},
+    {"id":"OPS-ADAPTATION-DEMO-CHECKLIST","path":"operations/preparacion-demo-diagnostico-y-propuestas.md","scope":"product","authoritative_for":[],"load_when":["following the adaptation demo preparation checklist","repeating the adaptation demonstration"],"note":"Brief presenter checklist derived from the canonical adaptation demo operation."},
     {"id":"OPS-USER-MANUAL","path":"operations/user-manual.md","scope":"product","authoritative_for":[],"load_when":["learning to use the application","operating the application by role","preparing a product demonstration"],"note":"Descriptive user manual for the implementation reviewed on 2026-10-19; does not replace normative flows or permissions."},
     {"id":"AUDIT-APPLICATION-2026-10-19","path":"planning/application-status-2026-10-19.md","scope":"system","authoritative_for":["implementation audit snapshot 2026-10-19"],"load_when":["reviewing implemented functionality","auditing coverage","reviewing application readiness"],"note":"Commit-pinned implementation evidence, verification results and limitations; not a production certification."},
     {"id":"INDEX-CORPUS","path":"corpus-guide.md","scope":"system","authoritative_for":["reading order","corpus status"],"load_when":["starting project work","planning documentation changes"]},

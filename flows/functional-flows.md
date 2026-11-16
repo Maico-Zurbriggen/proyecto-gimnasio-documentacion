@@ -1,5 +1,7 @@
 # D7 — Flujos funcionales
 
+**Extensión operativa de demostración (2026-11-15).** Con el panel habilitado, el entrenador selecciona un alumno existente de su cartera, prepara un caso, abre su propuesta en FL-10, la resuelve y restaura el original. El backend prepara historial marcado, ejecuta FL-09 y elabora la propuesta con las reglas vigentes. Cambiar de caso combina restauración y preparación en una transacción; recargar recupera el estado persistido. Rol y asignación se comprueban también al confirmar. Véase el [recorrido operativo](../operations/adaptation-demo.md#preparar-la-presentación-de-230); no se agrega un paso al flujo de entrenamiento ordinario.
+
 |                |                    |
 | -------------- | ------------------ |
 | **Versión**    | 2.4                |
